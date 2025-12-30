@@ -10,6 +10,8 @@ class VirtualTrailRunApp {
         this.workoutStartTime = null;
         this.workoutTimerInterval = null;
         this.isWorkoutActive = false;
+        this.elapsedTime = 0; // Track total elapsed seconds
+        this.lastPauseTime = null; // Track when we paused
         
         // Distance calculation
         // Average adult stride length is ~2.5 feet, ~2 steps per bob
@@ -244,9 +246,8 @@ class VirtualTrailRunApp {
     startWorkoutTimer() {
         if (this.workoutTimerInterval) return; // Already running
         
-        if (!this.workoutStartTime) {
-            this.workoutStartTime = Date.now();
-        }
+        // Record when we're starting/resuming
+        this.workoutStartTime = Date.now();
         
         this.workoutTimerInterval = setInterval(() => {
             this.updateWorkoutTimer();
@@ -260,6 +261,12 @@ class VirtualTrailRunApp {
         if (this.workoutTimerInterval) {
             clearInterval(this.workoutTimerInterval);
             this.workoutTimerInterval = null;
+            
+            // Add the elapsed time since last start to total
+            if (this.workoutStartTime) {
+                this.elapsedTime += Math.floor((Date.now() - this.workoutStartTime) / 1000);
+                this.workoutStartTime = null;
+            }
         }
     }
 
@@ -269,9 +276,12 @@ class VirtualTrailRunApp {
     updateWorkoutTimer() {
         if (!this.workoutStartTime) return;
         
-        const elapsed = Math.floor((Date.now() - this.workoutStartTime) / 1000);
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = elapsed % 60;
+        // Calculate current session time plus any previous elapsed time
+        const currentSessionTime = Math.floor((Date.now() - this.workoutStartTime) / 1000);
+        const totalElapsed = this.elapsedTime + currentSessionTime;
+        
+        const minutes = Math.floor(totalElapsed / 60);
+        const seconds = totalElapsed % 60;
         
         this.elements.workoutTime.textContent = 
             `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -284,6 +294,7 @@ class VirtualTrailRunApp {
         if (confirm('Reset all workout statistics?')) {
             this.headTracker.resetStats();
             this.workoutStartTime = null;
+            this.elapsedTime = 0;
             this.pauseWorkoutTimer();
             
             this.elements.verticalMovement.textContent = '0.0';
