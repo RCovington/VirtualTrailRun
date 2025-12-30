@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Virtual Trail Run - Scenic outdoor videos with head tracking for treadmill workouts">
+    <title>Virtual Trail Run - POC</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🏃 Virtual Trail Run</h1>
+            <p class="subtitle">Proof of Concept: Video Streaming + Head Tracking</p>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- YouTube Video Player -->
+            <div class="video-container">
+                <div id="player"></div>
+                <div class="video-overlay" id="videoOverlay">
+                    <button class="start-button" id="startButton">
+                        🎥 Start Workout
+                    </button>
+                </div>
+            </div>
+
+            <!-- Camera Feed & Head Tracking Stats -->
+            <div class="tracking-panel">
+                <div class="camera-container">
+                    <video id="cameraFeed" autoplay playsinline muted></video>
+                    <canvas id="trackingCanvas"></canvas>
+                    <div class="camera-status" id="cameraStatus">
+                        Camera Off
+                    </div>
+                </div>
+
+                <div class="stats-panel">
+                    <h3>Head Movement Stats</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Vertical Movement:</span>
+                        <span class="stat-value" id="verticalMovement">0.0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Bobs per Minute:</span>
+                        <span class="stat-value" id="bobsPerMinute">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Bobs:</span>
+                        <span class="stat-value" id="totalBobs">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Workout Time:</span>
+                        <span class="stat-value" id="workoutTime">0:00</span>
+                    </div>
+                    <div class="movement-indicator" id="movementIndicator">
+                        <div class="indicator-bar" id="indicatorBar"></div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-button" id="toggleCamera">
+                        📹 Enable Camera
+                    </button>
+                    <button class="control-button" id="toggleFullscreen">
+                        ⛶ Fullscreen Video
+                    </button>
+                    <button class="control-button secondary" id="resetStats">
+                        🔄 Reset Stats
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Video Selection -->
+        <section class="video-selection">
+            <h3>Choose Your Trail</h3>
+            <div class="video-list">
+                <button class="video-option" data-video-id="eTfSqwTeRYw">
+                    🏔️ Mountain Trail Run
+                </button>
+                <button class="video-option" data-video-id="lJJT00wqlOo">
+                    🌲 Forest Path Walk
+                </button>
+                <button class="video-option" data-video-id="UlR1wAvT_Xk">
+                    🏖️ Beach Coastline Run
+                </button>
+                <button class="video-option" data-video-id="2YIFR4_vVk0">
+                    🏙️ Urban City Walk
+                </button>
+            </div>
+        </section>
+
+        <!-- Info Panel -->
+        <section class="info-panel">
+            <h3>How It Works</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>1️⃣ Choose a Trail</h4>
+                    <p>Select from scenic YouTube videos of outdoor trails and paths</p>
+                </div>
+                <div class="info-card">
+                    <h4>2️⃣ Enable Camera</h4>
+                    <p>Allow access to your front-facing camera for head tracking</p>
+                </div>
+                <div class="info-card">
+                    <h4>3️⃣ Start Moving</h4>
+                    <p>Walk or run on your treadmill - the app tracks your head movement</p>
+                </div>
+                <div class="info-card">
+                    <h4>4️⃣ Track Progress</h4>
+                    <p>Monitor your bobs per minute and workout duration</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Proof of Concept - Built with YouTube IFrame API & TensorFlow.js</p>
+            <p class="tech-stack">
+                <span>Technologies: WebRTC • MediaPipe Face Mesh • YouTube API</span>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
+    <script src="videoPlayer.js"></script>
+    <script src="headTracker.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
