@@ -6,7 +6,7 @@
 class VideoPlayer {
     constructor() {
         this.player = null;
-        this.currentVideoId = 'eTfSqwTeRYw'; // Default video
+        this.currentVideoId = 'eg7nQ-H4kbI'; // Default video (Mountain Trail)
         this.isReady = false;
         this.isPlaying = false;
         this.onPlayCallback = null;
