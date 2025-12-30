@@ -11,6 +11,11 @@ class VirtualTrailRunApp {
         this.workoutTimerInterval = null;
         this.isWorkoutActive = false;
         
+        // Distance calculation
+        // Average adult stride length is ~2.5 feet, ~2 steps per bob
+        // So roughly: 1 bob = 2 steps = 5 feet = 0.000947 miles
+        this.milesPerBob = 0.000947;
+        
         // DOM elements
         this.elements = {
             startButton: document.getElementById('startButton'),
@@ -24,7 +29,8 @@ class VirtualTrailRunApp {
             totalBobs: document.getElementById('totalBobs'),
             workoutTime: document.getElementById('workoutTime'),
             indicatorBar: document.getElementById('indicatorBar'),
-            videoOptions: document.querySelectorAll('.video-option')
+            videoOptions: document.querySelectorAll('.video-option'),
+            distanceValue: document.getElementById('distanceValue')
         };
     }
 
@@ -45,6 +51,9 @@ class VirtualTrailRunApp {
             // Set up video player callbacks
             this.videoPlayer.onPlay(() => {
                 console.log('Video playing');
+                if (this.headTracker.isCameraActive() && !this.headTracker.isActive()) {
+                    this.headTracker.startTracking();
+                }
                 if (this.headTracker.isActive()) {
                     this.startWorkoutTimer();
                 }
@@ -52,6 +61,9 @@ class VirtualTrailRunApp {
             
             this.videoPlayer.onPause(() => {
                 console.log('Video paused');
+                if (this.headTracker.isActive()) {
+                    this.headTracker.stopTracking();
+                }
                 this.pauseWorkoutTimer();
             });
             
@@ -220,6 +232,10 @@ class VirtualTrailRunApp {
         // Update bobs per minute
         const bobsPerMinute = this.headTracker.getBobsPerMinute();
         this.elements.bobsPerMinute.textContent = bobsPerMinute;
+        
+        // Calculate and update distance
+        const miles = totalBobs * this.milesPerBob;
+        this.elements.distanceValue.textContent = miles.toFixed(2);
     }
 
     /**
@@ -275,6 +291,7 @@ class VirtualTrailRunApp {
             this.elements.totalBobs.textContent = '0';
             this.elements.workoutTime.textContent = '0:00';
             this.elements.indicatorBar.style.width = '0%';
+            this.elements.distanceValue.textContent = '0.00';
             
             console.log('Stats reset');
         }

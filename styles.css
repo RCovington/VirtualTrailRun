@@ -94,6 +94,39 @@ body {
     pointer-events: none;
 }
 
+/* ===== Distance Overlay ===== */
+.distance-overlay {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 15px 25px;
+    border-radius: 12px;
+    text-align: center;
+    z-index: 5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    min-width: 120px;
+}
+
+.distance-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #10b981;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.distance-unit {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
 .start-button {
     padding: 20px 40px;
     font-size: 1.5rem;

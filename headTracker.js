@@ -222,6 +222,13 @@ class HeadTracker {
     drawFaceKeypoints(face) {
         const keypoints = face.keypoints;
         
+        // Save the current context state
+        this.ctx.save();
+        
+        // Mirror the canvas horizontally to match the mirrored video feed
+        this.ctx.translate(this.canvas.width, 0);
+        this.ctx.scale(-1, 1);
+        
         // Draw face mesh (simplified - just key points)
         this.ctx.fillStyle = '#00ff00';
         this.ctx.strokeStyle = '#00ff00';
@@ -256,6 +263,9 @@ class HeadTracker {
             this.ctx.lineTo(noseTip.x, this.currentNoseY);
             this.ctx.stroke();
         }
+        
+        // Restore the context state
+        this.ctx.restore();
     }
 
     /**
