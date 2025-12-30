@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="95" fill="#2D5016" opacity="0.1"/>
+  
+  <!-- Mountain Silhouette -->
+  <path d="M 30 120 L 60 80 L 80 95 L 100 60 L 130 90 L 150 70 L 170 120 Z" 
+        fill="#2D5016" opacity="0.3"/>
+  
+  <!-- Trail Path -->
+  <path d="M 40 130 Q 70 115 100 120 Q 130 125 160 110" 
+        stroke="#D4A574" 
+        stroke-width="8" 
+        fill="none" 
+        stroke-linecap="round"
+        opacity="0.8"/>
+  
+  <!-- Trees (Left) -->
+  <g transform="translate(50, 100)">
+    <polygon points="0,-25 -10,-10 10,-10" fill="#2D5016"/>
+    <polygon points="0,-20 -8,-8 8,-8" fill="#3D6B1F"/>
+    <rect x="-2" y="-10" width="4" height="15" fill="#6B4423"/>
+  </g>
+  
+  <!-- Trees (Right) -->
+  <g transform="translate(150, 95)">
+    <polygon points="0,-30 -12,-12 12,-12" fill="#2D5016"/>
+    <polygon points="0,-24 -10,-10 10,-10" fill="#3D6B1F"/>
+    <rect x="-2" y="-12" width="4" height="18" fill="#6B4423"/>
+  </g>
+  
+  <!-- Running Figure -->
+  <g transform="translate(100, 110)">
+    <!-- Head -->
+    <circle cx="0" cy="-15" r="6" fill="#FF6B35"/>
+    
+    <!-- Body -->
+    <line x1="0" y1="-9" x2="0" y2="5" stroke="#FF6B35" stroke-width="3" stroke-linecap="round"/>
+    
+    <!-- Arms (running position) -->
+    <line x1="0" y1="-5" x2="-8" y2="2" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="0" y1="-5" x2="7" y2="-2" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+    
+    <!-- Legs (running position) -->
+    <line x1="0" y1="5" x2="-6" y2="15" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="0" y1="5" x2="5" y2="14" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Sun/Circle accent -->
+  <circle cx="160" cy="50" r="12" fill="#FF8C42" opacity="0.6"/>
+  <circle cx="160" cy="50" r="8" fill="#FFB366" opacity="0.8"/>
+  
+  <!-- Motion lines behind runner -->
+  <line x1="75" y1="105" x2="85" y2="105" stroke="#3D6B1F" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+  <line x1="70" y1="110" x2="82" y2="110" stroke="#3D6B1F" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+</svg>

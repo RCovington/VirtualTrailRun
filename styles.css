@@ -6,22 +6,27 @@
 }
 
 :root {
-    --primary-color: #2563eb;
-    --secondary-color: #10b981;
-    --danger-color: #ef4444;
-    --dark-bg: #1f2937;
-    --light-bg: #f3f4f6;
+    --primary-color: #2D5016;        /* Deep Forest Green */
+    --secondary-color: #3D6B1F;      /* Medium Forest Green */
+    --accent-color: #FF6B35;         /* Vibrant Orange */
+    --accent-light: #FF8C42;         /* Light Orange */
+    --tan-primary: #D4A574;          /* Warm Tan */
+    --tan-light: #E8D4B8;            /* Light Tan */
+    --tan-dark: #B8956A;             /* Dark Tan */
+    --danger-color: #C84B31;         /* Earthy Red */
+    --dark-bg: #1f2416;              /* Dark Green-tinted */
+    --light-bg: #F5F1E8;             /* Warm Off-White */
     --card-bg: #ffffff;
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
-    --border-color: #e5e7eb;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --text-primary: #2D3319;         /* Dark Green-tinted Black */
+    --text-secondary: #6B7456;       /* Muted Green-Gray */
+    --border-color: #D4C4A8;         /* Tan Border */
+    --shadow: 0 4px 6px -1px rgba(45, 80, 22, 0.15);
+    --shadow-lg: 0 10px 15px -3px rgba(45, 80, 22, 0.2);
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2D5016 0%, #3D6B1F 50%, #4A7C1F 100%);
     color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
@@ -39,12 +44,23 @@ body {
     color: white;
     margin-bottom: 30px;
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo {
+    width: 120px;
+    height: 120px;
+    filter: drop-shadow(2px 2px 6px rgba(0, 0, 0, 0.3));
 }
 
 .header h1 {
     font-size: 2.5rem;
     margin-bottom: 10px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 1px;
 }
 
 .subtitle {
@@ -113,7 +129,7 @@ body {
 .distance-value {
     font-size: 2.5rem;
     font-weight: bold;
-    color: #10b981;
+    color: var(--accent-color);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     line-height: 1;
     margin-bottom: 5px;
@@ -141,7 +157,7 @@ body {
 }
 
 .start-button:hover {
-    background: #1d4ed8;
+    background: #234011;
     transform: scale(1.05);
 }
 
@@ -195,7 +211,7 @@ body {
 }
 
 .camera-status.active {
-    background: var(--secondary-color);
+    background: var(--accent-color);
 }
 
 /* ===== Stats Panel ===== */
@@ -230,7 +246,7 @@ body {
 }
 
 .stat-value {
-    color: var(--primary-color);
+    color: var(--accent-color);
     font-size: 1.3rem;
     font-weight: bold;
 }
@@ -238,7 +254,7 @@ body {
 /* ===== Movement Indicator ===== */
 .movement-indicator {
     margin-top: 15px;
-    background: var(--light-bg);
+    background: var(--tan-light);
     height: 30px;
     border-radius: 15px;
     overflow: hidden;
@@ -247,7 +263,7 @@ body {
 
 .indicator-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+    background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
     width: 0%;
     transition: width 0.1s ease;
     border-radius: 15px;
@@ -274,7 +290,7 @@ body {
 }
 
 .control-button:hover {
-    background: #1d4ed8;
+    background: #234011;
 }
 
 .control-button:active {
@@ -290,7 +306,11 @@ body {
 }
 
 .control-button.active {
-    background: var(--secondary-color);
+    background: var(--accent-color);
+}
+
+.control-button.active:hover {
+    background: var(--accent-light);
 }
 
 /* ===== Video Selection ===== */
@@ -319,8 +339,8 @@ body {
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
-    background: var(--light-bg);
-    border: 2px solid var(--border-color);
+    background: var(--tan-light);
+    border: 2px solid var(--tan-dark);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
@@ -335,9 +355,9 @@ body {
 }
 
 .video-option.active {
-    background: var(--secondary-color);
+    background: var(--accent-color);
     color: white;
-    border-color: var(--secondary-color);
+    border-color: var(--accent-color);
 }
 
 /* ===== Info Panel ===== */
@@ -363,9 +383,9 @@ body {
 
 .info-card {
     padding: 20px;
-    background: var(--light-bg);
+    background: var(--tan-light);
     border-radius: 8px;
-    border-left: 4px solid var(--primary-color);
+    border-left: 4px solid var(--accent-color);
 }
 
 .info-card h4 {
