@@ -140,11 +140,14 @@
             .then(html => {
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = html;
-                document.body.insertBefore(tempDiv.firstElementChild, document.body.firstChild);
-                // Continue loading after auth UI is inserted
-                while (tempDiv.firstChild) {
-                    document.body.insertBefore(tempDiv.firstChild, document.body.firstChild);
-                }
+                // Insert each top-level element from auth-ui.html
+                const elements = Array.from(tempDiv.children);
+                elements.forEach(element => {
+                    document.body.appendChild(element);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading auth UI:', error);
             });
     </script>
 

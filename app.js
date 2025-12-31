@@ -131,12 +131,38 @@ class VirtualTrailRunApp {
      * Set up authentication UI event listeners
      */
     setupAuthUI() {
-        // Wait for auth UI to load
-        setTimeout(() => {
-            // Login/Signup button
+        // Wait for auth UI to load (retry up to 10 times)
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        const trySetup = () => {
+            attempts++;
             const loginButton = document.getElementById('loginButton');
-            const authModal = document.getElementById('authModal');
-            const authClose = document.getElementById('authClose');
+            
+            if (loginButton) {
+                // Auth UI is loaded, set up event listeners
+                this.initAuthUIListeners();
+            } else if (attempts < maxAttempts) {
+                // Not loaded yet, try again
+                setTimeout(trySetup, 100);
+            } else {
+                console.warn('Auth UI not loaded after timeout');
+            }
+        };
+        
+        trySetup();
+    }
+    
+    /**
+     * Initialize auth UI event listeners (called once UI is loaded)
+     */
+    initAuthUIListeners() {
+        console.log('Setting up auth UI listeners');
+        
+        // Login/Signup button
+        const loginButton = document.getElementById('loginButton');
+        const authModal = document.getElementById('authModal');
+        const authClose = document.getElementById('authClose');
             
             if (loginButton) {
                 loginButton.addEventListener('click', () => {
@@ -279,8 +305,6 @@ class VirtualTrailRunApp {
             window.addEventListener('userLoggedOut', () => {
                 this.updateUIForAuth(false);
             });
-            
-        }, 500); // Give auth UI time to load
     }
 
     /**
@@ -364,8 +388,15 @@ class VirtualTrailRunApp {
         // Hide overlay
         this.elements.videoOverlay.classList.add('hidden');
         
-        // Start video
-        this.videoPlayer.play();
+        // Start video (with ready check)
+        if (this.videoPlayer && this.videoPlayer.isReady) {
+            this.videoPlayer.play();
+        } else {
+            console.error('Video player not ready');
+            alert('Video player is still loading. Please wait a moment and try again.');
+            this.elements.videoOverlay.classList.remove('hidden');
+            return;
+        }
         
         // Track workout start in analytics
         if (this.analytics) {
