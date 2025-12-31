@@ -636,8 +636,14 @@ class VirtualTrailRunApp {
 
         try {
             // Save to Firestore
-            const db = window.firebaseServices.firestore;
-            await db.collection('workouts').add(workoutData);
+            const db = window.firebaseApp.db;
+            if (db) {
+                await db.collection('workouts').add(workoutData);
+                console.log('Workout saved successfully');
+                this.showMessage('Workout saved!', 'success');
+            } else {
+                console.log('Firestore not initialized - workout not saved');
+            }
             
             // Track in analytics
             if (this.analytics) {

@@ -16,7 +16,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase (only if config is set)
-let app = null;
+let firebaseAppInstance = null;
 let auth = null;
 let db = null;
 let analytics = null;
@@ -30,7 +30,7 @@ function initializeFirebase() {
 
     try {
         // Initialize Firebase
-        app = firebase.initializeApp(firebaseConfig);
+        firebaseAppInstance = firebase.initializeApp(firebaseConfig);
         
         // Initialize Authentication
         auth = firebase.auth();
@@ -69,7 +69,7 @@ function initializeFirebase() {
 
 // Export for use in other modules
 window.firebaseApp = {
-    app,
+    app: firebaseAppInstance,
     auth,
     db,
     analytics,
