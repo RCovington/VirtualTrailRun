@@ -10,6 +10,15 @@
     <link rel="stylesheet" href="auth-ui.css">
 </head>
 <body>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-content">
+            <img id="splashLogo" alt="Virtual Trail Run" class="splash-logo">
+            <h1 class="splash-title">Virtual Trail Run</h1>
+            <div class="splash-loader"></div>
+        </div>
+    </div>
+
     <div class="container">
         <!-- Header -->
         <header class="header">
@@ -131,6 +140,42 @@
             </p>
         </footer>
     </div>
+
+    <!-- Splash Screen Script -->
+    <script>
+        // Load random logo for splash screen
+        (function() {
+            const logos = [
+                'logo-01.png', 'logo-02.png', 'logo-03.png', 'logo-4.png',
+                'logo-05.png', 'logo-06.png', 'logo-07.png', 'logo-08.png',
+                'logo-09.png', 'logo-10.png', 'logo-11.png', 'logo-12.png',
+                'logo-13.png', 'logo-14.png', 'logo-15.png', 'logo-16.png',
+                'logo-17.png', 'logo-18.png', 'logo-19.png', 'logo-20.png',
+                'logo-21.png', 'logo-22.png', 'logo-23.png', 'logo-24.png'
+            ];
+            
+            // Select random logo
+            const randomLogo = logos[Math.floor(Math.random() * logos.length)];
+            const splashLogo = document.getElementById('splashLogo');
+            if (splashLogo) {
+                splashLogo.src = `resources/logos/${randomLogo}`;
+            }
+            
+            // Hide splash screen when page is fully loaded
+            window.addEventListener('load', function() {
+                setTimeout(function() {
+                    const splash = document.getElementById('splashScreen');
+                    if (splash) {
+                        splash.classList.add('fade-out');
+                        // Remove from DOM after animation completes
+                        setTimeout(() => {
+                            splash.remove();
+                        }, 800);
+                    }
+                }, 1500); // Show for at least 1.5 seconds
+            });
+        })();
+    </script>
 
     <!-- Authentication UI (included from auth-ui.html) -->
     <script>
