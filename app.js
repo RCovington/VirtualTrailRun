@@ -12,11 +12,18 @@ class VirtualTrailRunApp {
         this.isWorkoutActive = false;
         this.elapsedTime = 0; // Track total elapsed seconds
         this.lastPauseTime = null; // Track when we paused
+        this.currentVideoId = null;
+        this.currentVideoTitle = null;
         
         // Distance calculation
         // Average adult stride length is ~2.5 feet, ~2 steps per bob
         // So roughly: 1 bob = 2 steps = 5 feet = 0.000947 miles
         this.milesPerBob = 0.000947;
+        
+        // Firebase services (initialized later)
+        this.cache = null;
+        this.analytics = null;
+        this.auth = null;
         
         // DOM elements
         this.elements = {
@@ -43,6 +50,9 @@ class VirtualTrailRunApp {
         console.log('Initializing Virtual Trail Run app...');
         
         try {
+            // Initialize Firebase and services
+            this.initializeFirebaseServices();
+            
             // Initialize video player
             await this.videoPlayer.init();
             console.log('Video player initialized');
@@ -83,6 +93,232 @@ class VirtualTrailRunApp {
         } catch (error) {
             console.error('Error initializing app:', error);
             alert('Error initializing app. Please check console for details.');
+        }
+    }
+
+    /**
+     * Initialize Firebase services
+     */
+    initializeFirebaseServices() {
+        // Initialize Firebase
+        if (typeof window.firebaseApp !== 'undefined' && window.firebaseApp.init) {
+            window.firebaseApp.initialized = window.firebaseApp.init();
+        }
+        
+        // Initialize Cache Manager (works with or without Firebase)
+        if (typeof CacheManager !== 'undefined') {
+            this.cache = new CacheManager();
+            console.log('Cache Manager initialized');
+        }
+        
+        // Initialize Analytics Tracker
+        if (typeof AnalyticsTracker !== 'undefined') {
+            this.analytics = new AnalyticsTracker();
+            console.log('Analytics Tracker initialized');
+        }
+        
+        // Initialize Auth Manager
+        if (typeof AuthManager !== 'undefined' && this.cache && this.analytics) {
+            this.auth = new AuthManager(this.cache, this.analytics);
+            console.log('Auth Manager initialized');
+            
+            // Set up auth UI event listeners
+            this.setupAuthUI();
+        }
+    }
+
+    /**
+     * Set up authentication UI event listeners
+     */
+    setupAuthUI() {
+        // Wait for auth UI to load
+        setTimeout(() => {
+            // Login/Signup button
+            const loginButton = document.getElementById('loginButton');
+            const authModal = document.getElementById('authModal');
+            const authClose = document.getElementById('authClose');
+            
+            if (loginButton) {
+                loginButton.addEventListener('click', () => {
+                    authModal?.classList.add('active');
+                });
+            }
+            
+            if (authClose) {
+                authClose.addEventListener('click', () => {
+                    authModal?.classList.remove('active');
+                });
+            }
+            
+            // Auth tabs
+            const authTabs = document.querySelectorAll('.auth-tab');
+            authTabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const tabName = e.target.dataset.tab;
+                    
+                    // Update tabs
+                    authTabs.forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    // Update forms
+                    document.querySelectorAll('.auth-form-container').forEach(form => {
+                        form.classList.remove('active');
+                    });
+                    document.getElementById(`${tabName}Form`)?.classList.add('active');
+                });
+            });
+            
+            // Login form
+            const loginForm = document.getElementById('loginFormElement');
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('loginEmail').value;
+                    const password = document.getElementById('loginPassword').value;
+                    
+                    try {
+                        await this.auth.login(email, password);
+                        authModal?.classList.remove('active');
+                        this.showMessage('Login successful!', 'success');
+                    } catch (error) {
+                        this.showMessage(error.message, 'error');
+                    }
+                });
+            }
+            
+            // Signup form
+            const signupForm = document.getElementById('signupFormElement');
+            if (signupForm) {
+                signupForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const name = document.getElementById('signupName').value;
+                    const email = document.getElementById('signupEmail').value;
+                    const password = document.getElementById('signupPassword').value;
+                    const confirm = document.getElementById('signupPasswordConfirm').value;
+                    
+                    if (password !== confirm) {
+                        this.showMessage('Passwords do not match!', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        await this.auth.signUp(email, password, name);
+                        authModal?.classList.remove('active');
+                        this.showMessage('Account created successfully!', 'success');
+                    } catch (error) {
+                        this.showMessage(error.message, 'error');
+                    }
+                });
+            }
+            
+            // Guest buttons
+            const guestButtons = document.querySelectorAll('#guestLoginBtn, #guestSignupBtn');
+            guestButtons.forEach(btn => {
+                btn?.addEventListener('click', async () => {
+                    await this.auth.continueAsGuest();
+                    authModal?.classList.remove('active');
+                    this.showMessage('Welcome, Guest!', 'success');
+                });
+            });
+            
+            // Password reset
+            const forgotLink = document.getElementById('forgotPasswordLink');
+            if (forgotLink) {
+                forgotLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.auth-form-container').forEach(form => {
+                        form.classList.remove('active');
+                    });
+                    document.getElementById('resetForm')?.classList.add('active');
+                });
+            }
+            
+            const backToLoginLink = document.getElementById('backToLoginLink');
+            if (backToLoginLink) {
+                backToLoginLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.auth-form-container').forEach(form => {
+                        form.classList.remove('active');
+                    });
+                    document.getElementById('loginForm')?.classList.add('active');
+                });
+            }
+            
+            // User menu
+            const userMenuToggle = document.getElementById('userMenuToggle');
+            const userMenuDropdown = document.getElementById('userMenuDropdown');
+            
+            if (userMenuToggle && userMenuDropdown) {
+                userMenuToggle.addEventListener('click', () => {
+                    userMenuDropdown.classList.toggle('active');
+                });
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.user-menu')) {
+                        userMenuDropdown.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Logout button
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    await this.auth.logout();
+                    userMenuDropdown?.classList.remove('active');
+                    this.showMessage('Logged out successfully', 'success');
+                });
+            }
+            
+            // Listen for auth state changes
+            window.addEventListener('userLoggedIn', (e) => {
+                this.updateUIForAuth(true, e.detail);
+            });
+            
+            window.addEventListener('userLoggedOut', () => {
+                this.updateUIForAuth(false);
+            });
+            
+        }, 500); // Give auth UI time to load
+    }
+
+    /**
+     * Update UI based on auth state
+     */
+    updateUIForAuth(loggedIn, user = null) {
+        const loginButton = document.getElementById('loginButton');
+        const userMenu = document.getElementById('userMenu');
+        const userName = document.getElementById('userName');
+        const userNameLarge = document.getElementById('userNameLarge');
+        const userEmail = document.getElementById('userEmail');
+        
+        if (loggedIn && user) {
+            loginButton?.classList.add('auth-hidden');
+            userMenu?.classList.remove('auth-hidden');
+            
+            const displayName = user.displayName || (user.isGuest ? 'Guest' : user.email);
+            if (userName) userName.textContent = displayName;
+            if (userNameLarge) userNameLarge.textContent = displayName;
+            if (userEmail && !user.isGuest) userEmail.textContent = user.email;
+        } else {
+            loginButton?.classList.remove('auth-hidden');
+            userMenu?.classList.add('auth-hidden');
+        }
+    }
+
+    /**
+     * Show message to user
+     */
+    showMessage(message, type = 'info') {
+        const messageDiv = document.getElementById('authMessage');
+        if (messageDiv) {
+            messageDiv.textContent = message;
+            messageDiv.className = `auth-message ${type}`;
+            
+            setTimeout(() => {
+                messageDiv.className = 'auth-message';
+            }, 5000);
         }
     }
 
@@ -130,6 +366,14 @@ class VirtualTrailRunApp {
         
         // Start video
         this.videoPlayer.play();
+        
+        // Track workout start in analytics
+        if (this.analytics) {
+            this.analytics.trackEvent('workout_started', {
+                videoId: this.currentVideoId,
+                videoTitle: this.currentVideoTitle
+            });
+        }
         
         // Initialize camera if not already active
         if (!this.headTracker.isCameraActive()) {
@@ -205,6 +449,18 @@ class VirtualTrailRunApp {
         // Update UI
         this.elements.videoOptions.forEach(btn => btn.classList.remove('active'));
         buttonElement.classList.add('active');
+        
+        // Track current video
+        this.currentVideoId = videoId;
+        this.currentVideoTitle = buttonElement.textContent.trim();
+        
+        // Track video selection in analytics
+        if (this.analytics) {
+            this.analytics.trackEvent('video_selected', {
+                videoId: this.currentVideoId,
+                videoTitle: this.currentVideoTitle
+            });
+        }
         
         // Load video
         this.videoPlayer.loadVideo(videoId);
@@ -290,8 +546,20 @@ class VirtualTrailRunApp {
     /**
      * Reset all statistics
      */
-    resetStats() {
+    async resetStats() {
         if (confirm('Reset all workout statistics?')) {
+            // Save workout before resetting if user is logged in and workout was substantial
+            const totalBobs = parseInt(this.elements.totalBobs.textContent) || 0;
+            const workoutMinutes = Math.floor(this.elapsedTime / 60);
+            
+            if (this.auth && this.auth.user && !this.auth.user.isGuest && totalBobs > 10) {
+                try {
+                    await this.saveWorkout();
+                } catch (error) {
+                    console.error('Error saving workout:', error);
+                }
+            }
+            
             this.headTracker.resetStats();
             this.workoutStartTime = null;
             this.elapsedTime = 0;
@@ -305,6 +573,57 @@ class VirtualTrailRunApp {
             this.elements.distanceValue.textContent = '0.00';
             
             console.log('Stats reset');
+        }
+    }
+
+    /**
+     * Save completed workout to Firebase
+     */
+    async saveWorkout() {
+        if (!this.auth || !this.auth.user || this.auth.user.isGuest) {
+            console.log('Guest user - workout not saved to cloud');
+            return;
+        }
+
+        const totalBobs = parseInt(this.elements.totalBobs.textContent) || 0;
+        const miles = parseFloat(this.elements.distanceValue.textContent) || 0;
+        const bobsPerMinute = parseInt(this.elements.bobsPerMinute.textContent) || 0;
+        const durationSeconds = this.elapsedTime + 
+            (this.workoutStartTime ? Math.floor((Date.now() - this.workoutStartTime) / 1000) : 0);
+
+        const workoutData = {
+            userId: this.auth.user.uid,
+            videoId: this.currentVideoId,
+            videoTitle: this.currentVideoTitle,
+            date: new Date().toISOString(),
+            duration: durationSeconds,
+            totalBobs: totalBobs,
+            distance: miles,
+            avgBobsPerMinute: bobsPerMinute,
+            completedAt: Date.now()
+        };
+
+        try {
+            // Save to Firestore
+            const db = window.firebaseServices.firestore;
+            await db.collection('workouts').add(workoutData);
+            
+            // Track in analytics
+            if (this.analytics) {
+                this.analytics.trackEvent('workout_completed', {
+                    videoId: this.currentVideoId,
+                    videoTitle: this.currentVideoTitle,
+                    duration: durationSeconds,
+                    totalBobs: totalBobs,
+                    distance: miles
+                });
+            }
+            
+            console.log('Workout saved successfully');
+            this.showMessage('Workout saved!', 'success');
+        } catch (error) {
+            console.error('Error saving workout:', error);
+            throw error;
         }
     }
 }

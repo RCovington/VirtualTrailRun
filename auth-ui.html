@@ -1,0 +1,145 @@
+<!-- Authentication Modal -->
+<div class="auth-modal" id="authModal">
+    <div class="auth-modal-content">
+        <button class="auth-close" id="authClose">&times;</button>
+        
+        <!-- Auth Tabs -->
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Log In</button>
+            <button class="auth-tab" data-tab="signup">Sign Up</button>
+        </div>
+        
+        <!-- Login Form -->
+        <div class="auth-form-container active" id="loginForm">
+            <h2>Welcome Back!</h2>
+            <p class="auth-subtitle">Log in to track your workouts</p>
+            
+            <form id="loginFormElement">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required placeholder="you@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                
+                <button type="submit" class="auth-button primary">Log In</button>
+                
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                
+                <button type="button" class="auth-button secondary" id="guestLoginBtn">
+                    Continue as Guest
+                </button>
+                
+                <p class="auth-link">
+                    <a href="#" id="forgotPasswordLink">Forgot password?</a>
+                </p>
+            </form>
+        </div>
+        
+        <!-- Sign Up Form -->
+        <div class="auth-form-container" id="signupForm">
+            <h2>Create Account</h2>
+            <p class="auth-subtitle">Start tracking your fitness journey</p>
+            
+            <form id="signupFormElement">
+                <div class="form-group">
+                    <label for="signupName">Name (optional)</label>
+                    <input type="text" id="signupName" placeholder="Your name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" required placeholder="you@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required placeholder="At least 6 characters" minlength="6">
+                </div>
+                
+                <div class="form-group">
+                    <label for="signupPasswordConfirm">Confirm Password</label>
+                    <input type="password" id="signupPasswordConfirm" required placeholder="Re-enter password">
+                </div>
+                
+                <button type="submit" class="auth-button primary">Create Account</button>
+                
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                
+                <button type="button" class="auth-button secondary" id="guestSignupBtn">
+                    Continue as Guest
+                </button>
+            </form>
+        </div>
+        
+        <!-- Password Reset Form -->
+        <div class="auth-form-container" id="resetForm">
+            <h2>Reset Password</h2>
+            <p class="auth-subtitle">Enter your email to receive reset instructions</p>
+            
+            <form id="resetFormElement">
+                <div class="form-group">
+                    <label for="resetEmail">Email</label>
+                    <input type="email" id="resetEmail" required placeholder="you@example.com">
+                </div>
+                
+                <button type="submit" class="auth-button primary">Send Reset Link</button>
+                
+                <p class="auth-link">
+                    <a href="#" id="backToLoginLink">Back to Login</a>
+                </p>
+            </form>
+        </div>
+        
+        <!-- Error/Success Messages -->
+        <div class="auth-message" id="authMessage"></div>
+    </div>
+</div>
+
+<!-- User Menu (shown when logged in) -->
+<div class="user-menu" id="userMenu">
+    <button class="user-menu-toggle" id="userMenuToggle">
+        <span class="user-avatar" id="userAvatar">👤</span>
+        <span class="user-name" id="userName">Guest</span>
+    </button>
+    
+    <div class="user-menu-dropdown" id="userMenuDropdown">
+        <div class="user-menu-header">
+            <div class="user-info">
+                <div class="user-avatar-large" id="userAvatarLarge">👤</div>
+                <div>
+                    <div class="user-name-large" id="userNameLarge">Guest</div>
+                    <div class="user-email" id="userEmail"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="user-menu-items">
+            <button class="user-menu-item" id="viewProfileBtn">
+                <span>📊</span> Workout History
+            </button>
+            <button class="user-menu-item" id="viewStatsBtn">
+                <span>📈</span> Statistics
+            </button>
+            <button class="user-menu-item" id="settingsBtn">
+                <span>⚙️</span> Settings
+            </button>
+            <hr>
+            <button class="user-menu-item" id="logoutBtn">
+                <span>🚪</span> Log Out
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Login Button (shown when logged out) -->
+<button class="login-button" id="loginButton">
+    Log In / Sign Up
+</button>
