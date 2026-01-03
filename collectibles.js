@@ -892,7 +892,7 @@ class CollectiblesGame {
         
         // Determine color based on pinching state
         const color = this.isGrabbing ? '#00FF00' : '#FFD700'; // Green when pinching, gold otherwise
-        const radius = this.isGrabbing ? 12 : 10;
+        const radius = this.isGrabbing ? 4 : 3; // Reduced from 12/10 to 4/3 (about 1/3 size)
         
         // Draw thumb tip
         this.ctx.beginPath();
@@ -900,7 +900,7 @@ class CollectiblesGame {
         this.ctx.fillStyle = color;
         this.ctx.fill();
         this.ctx.strokeStyle = this.isGrabbing ? '#FFFFFF' : '#FFA500';
-        this.ctx.lineWidth = 3;
+        this.ctx.lineWidth = 1; // Reduced from 3 to 1
         this.ctx.stroke();
         
         // Draw index tip
@@ -909,7 +909,7 @@ class CollectiblesGame {
         this.ctx.fillStyle = color;
         this.ctx.fill();
         this.ctx.strokeStyle = this.isGrabbing ? '#FFFFFF' : '#FFA500';
-        this.ctx.lineWidth = 3;
+        this.ctx.lineWidth = 1; // Reduced from 3 to 1
         this.ctx.stroke();
         
         // Draw line between them when pinching
@@ -918,7 +918,7 @@ class CollectiblesGame {
             this.ctx.moveTo(thumbTip.x, thumbTip.y);
             this.ctx.lineTo(indexTip.x, indexTip.y);
             this.ctx.strokeStyle = '#00FF00';
-            this.ctx.lineWidth = 4;
+            this.ctx.lineWidth = 2; // Reduced from 4 to 2
             this.ctx.stroke();
         }
     }
