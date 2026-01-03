@@ -903,6 +903,164 @@ body {
     50% { transform: scale(1.1); }
 }
 
+/* ===== Inventory Panel ===== */
+.inventory-panel {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 700px;
+    max-height: 80vh;
+    background: rgba(30, 50, 20, 0.98);
+    border: 4px solid var(--orange);
+    border-radius: 20px;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: all;
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    background: rgba(45, 80, 22, 0.9);
+    border-bottom: 3px solid var(--orange);
+}
+
+.inventory-header h2 {
+    margin: 0;
+    color: white;
+    font-size: 2rem;
+}
+
+.inventory-close {
+    background: rgba(220, 38, 38, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.inventory-close:hover {
+    background: rgba(220, 38, 38, 1);
+    transform: scale(1.1);
+}
+
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+    padding: 30px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.inventory-item {
+    background: rgba(45, 80, 22, 0.6);
+    border: 2px solid rgba(255, 140, 0, 0.5);
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.inventory-item:hover {
+    border-color: var(--orange);
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(255, 140, 0, 0.3);
+}
+
+.inventory-item-emoji {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+.inventory-item-name {
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    text-transform: capitalize;
+    margin-bottom: 8px;
+}
+
+.inventory-item-count {
+    color: var(--orange);
+    font-size: 1.5rem;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 10px;
+}
+
+.inventory-item-use {
+    background: rgba(34, 197, 94, 0.8);
+    color: white;
+    border: 2px solid rgba(34, 197, 94, 1);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.inventory-item-use:hover {
+    background: rgba(34, 197, 94, 1);
+    transform: scale(1.05);
+}
+
+.inventory-item-use:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.inventory-footer {
+    background: rgba(45, 80, 22, 0.9);
+    border-top: 3px solid var(--orange);
+    padding: 20px 30px;
+}
+
+.potion-area h3 {
+    color: white;
+    margin: 0 0 10px 0;
+    font-size: 1.3rem;
+}
+
+.potion-area p {
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 15px 0;
+    font-size: 0.9rem;
+}
+
+.potion-brew-btn {
+    background: rgba(147, 51, 234, 0.8);
+    color: white;
+    border: 2px solid rgba(147, 51, 234, 1);
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.potion-brew-btn:hover {
+    background: rgba(147, 51, 234, 1);
+    transform: scale(1.05);
+}
+
 /* Mobile adjustments for collectibles */
 @media (max-width: 768px) {
     .collectibles-counter {
@@ -922,6 +1080,25 @@ body {
     }
     
     .collect-feedback {
+        font-size: 1.5rem;
+    }
+    
+    .inventory-panel {
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .inventory-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 15px;
+        padding: 20px;
+    }
+    
+    .inventory-header {
+        padding: 15px 20px;
+    }
+    
+    .inventory-header h2 {
         font-size: 1.5rem;
     }
 }

@@ -20,9 +20,21 @@ class CollectiblesGame {
         this.lastHandKeypoints = null;
         this.isGrabbing = false;
         this.isFlatHand = false; // Track if hand is flat (dagger mode)
+        this.isOpenHand = false; // Track if hand is open (5 fingers splayed)
+        this.isClosedFist = false; // Track if hand is closed fist
+        this.inventoryOpen = false; // Track if inventory panel is open
         this.lastMissTime = 0;
         this.missThrottleDelay = 500; // Only show miss feedback every 500ms
         this.headTracker = headTracker; // Reference to head tracker for face position
+        
+        // Inventory tracking by type
+        this.inventory = {
+            'acorn': 0,
+            'mushroom': 0,
+            'pinecone': 0,
+            'leaf': 0,
+            'stone': 0
+        };
         
         // Slash gesture tracking
         this.slashHistory = []; // Track hand positions for slash detection
@@ -63,6 +75,9 @@ class CollectiblesGame {
         if (this.debugCanvas) {
             this.debugCtx = this.debugCanvas.getContext('2d');
         }
+        
+        // Set up inventory panel click handlers
+        this.setupInventoryPanel();
         
         // Load hand detection model
         try {
@@ -263,6 +278,18 @@ class CollectiblesGame {
                 const slashDetected = this.detectSlashGesture(hand);
                 if (slashDetected) {
                     this.createSlashAnimation(slashDetected);
+                }
+                
+                // Check for open hand gesture (to open inventory)
+                this.isOpenHand = this.isOpenHandGesture(hand);
+                if (this.isOpenHand && !this.inventoryOpen) {
+                    this.openInventory();
+                }
+                
+                // Check for closed fist gesture (to close inventory)
+                this.isClosedFist = this.isClosedFistGesture(hand);
+                if (this.isClosedFist && this.inventoryOpen) {
+                    this.closeInventory();
                 }
                 
                 // Check if hand is making a grabbing gesture (pinch)
@@ -609,6 +636,64 @@ class CollectiblesGame {
     }
 
     /**
+     * Detect open hand gesture - all 5 fingers splayed
+     */
+    isOpenHandGesture(hand) {
+        const keypoints = hand.keypoints;
+        
+        // Get all fingertips and their bases
+        const thumbTip = keypoints[4];
+        const indexTip = keypoints[8];
+        const middleTip = keypoints[12];
+        const ringTip = keypoints[16];
+        const pinkyTip = keypoints[20];
+        
+        const thumbBase = keypoints[2];
+        const indexBase = keypoints[5];
+        const middleBase = keypoints[9];
+        const ringBase = keypoints[13];
+        const pinkyBase = keypoints[17];
+        
+        // Check if all fingers are extended
+        const thumbExtended = this.distance(thumbTip, thumbBase) > 40;
+        const indexExtended = this.distance(indexTip, indexBase) > 50;
+        const middleExtended = this.distance(middleTip, middleBase) > 50;
+        const ringExtended = this.distance(ringTip, ringBase) > 50;
+        const pinkyExtended = this.distance(pinkyTip, pinkyBase) > 40;
+        
+        const allExtended = thumbExtended && indexExtended && middleExtended && ringExtended && pinkyExtended;
+        
+        // Check if fingers are spread (not together like flat hand)
+        const fingerSpread = this.distance(indexTip, pinkyTip) > 80;
+        
+        return allExtended && fingerSpread;
+    }
+
+    /**
+     * Detect closed fist gesture
+     */
+    isClosedFistGesture(hand) {
+        const keypoints = hand.keypoints;
+        
+        // Get all fingertips and palm
+        const thumbTip = keypoints[4];
+        const indexTip = keypoints[8];
+        const middleTip = keypoints[12];
+        const ringTip = keypoints[16];
+        const pinkyTip = keypoints[20];
+        const palm = keypoints[0];
+        
+        // In a fist, all fingertips should be close to the palm
+        const thumbClose = this.distance(thumbTip, palm) < 60;
+        const indexClose = this.distance(indexTip, palm) < 70;
+        const middleClose = this.distance(middleTip, palm) < 70;
+        const ringClose = this.distance(ringTip, palm) < 70;
+        const pinkyClose = this.distance(pinkyTip, palm) < 70;
+        
+        return thumbClose && indexClose && middleClose && ringClose && pinkyClose;
+    }
+
+    /**
      * Calculate distance between two points
      */
     distance(p1, p2) {
@@ -645,6 +730,9 @@ class CollectiblesGame {
         // Remove from array
         this.collectibles.splice(index, 1);
         
+        // Add to inventory by type
+        this.inventory[collectible.type.name]++;
+        
         // Don't increment immediately - show pending animation first
         // this.collectedCount++; // Will increment after delay
         
@@ -655,12 +743,13 @@ class CollectiblesGame {
         setTimeout(() => {
             this.collectedCount++;
             this.updateCounter();
+            this.updateInventoryDisplay(); // Update inventory display
         }, 2000);
         
         // Show feedback
         this.showCollectFeedback(collectible);
         
-        console.log(`Collected ${collectible.type.name}! Pending increment...`);
+        console.log(`Collected ${collectible.type.name}! Inventory: ${this.inventory[collectible.type.name]}`);
     }
 
     /**
@@ -995,7 +1084,15 @@ class CollectiblesGame {
     reset() {
         this.collectedCount = 0;
         this.collectibles = [];
+        this.inventory = {
+            'acorn': 0,
+            'mushroom': 0,
+            'pinecone': 0,
+            'leaf': 0,
+            'stone': 0
+        };
         this.updateCounter();
+        this.updateInventoryDisplay();
         this.clearCanvas();
     }
 
@@ -1004,6 +1101,130 @@ class CollectiblesGame {
      */
     getScore() {
         return this.collectedCount;
+    }
+
+    /**
+     * Set up inventory panel and event listeners
+     */
+    setupInventoryPanel() {
+        // Add click handler to collectibles counter to open inventory
+        const counter = document.querySelector('.collectibles-counter');
+        if (counter) {
+            counter.style.cursor = 'pointer';
+            counter.addEventListener('click', () => this.openInventory());
+        }
+    }
+
+    /**
+     * Open the inventory panel
+     */
+    openInventory() {
+        if (this.inventoryOpen) return;
+        
+        this.inventoryOpen = true;
+        
+        // Create inventory panel if it doesn't exist
+        let panel = document.getElementById('inventoryPanel');
+        if (!panel) {
+            panel = this.createInventoryPanel();
+        }
+        
+        panel.style.display = 'flex';
+        this.updateInventoryDisplay();
+        
+        console.log('Inventory opened');
+    }
+
+    /**
+     * Close the inventory panel
+     */
+    closeInventory() {
+        if (!this.inventoryOpen) return;
+        
+        this.inventoryOpen = false;
+        
+        const panel = document.getElementById('inventoryPanel');
+        if (panel) {
+            panel.style.display = 'none';
+        }
+        
+        console.log('Inventory closed');
+    }
+
+    /**
+     * Create the inventory panel HTML
+     */
+    createInventoryPanel() {
+        const panel = document.createElement('div');
+        panel.id = 'inventoryPanel';
+        panel.className = 'inventory-panel';
+        
+        panel.innerHTML = `
+            <div class="inventory-header">
+                <h2>🎒 Inventory</h2>
+                <button class="inventory-close" id="inventoryClose">✕</button>
+            </div>
+            <div class="inventory-grid" id="inventoryGrid">
+                ${this.types.map(type => `
+                    <div class="inventory-item" data-type="${type.name}">
+                        <div class="inventory-item-emoji">${type.emoji}</div>
+                        <div class="inventory-item-name">${type.name}</div>
+                        <div class="inventory-item-count" id="inventory-${type.name}">0</div>
+                        <button class="inventory-item-use" data-type="${type.name}">Use</button>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="inventory-footer">
+                <div class="potion-area">
+                    <h3>🧪 Mix Potion</h3>
+                    <p>Select items to combine into potions</p>
+                    <button class="potion-brew-btn">Brew Potion</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(panel);
+        
+        // Add close button handler
+        const closeBtn = panel.querySelector('#inventoryClose');
+        closeBtn.addEventListener('click', () => this.closeInventory());
+        
+        // Add use button handlers
+        const useButtons = panel.querySelectorAll('.inventory-item-use');
+        useButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const itemType = e.target.dataset.type;
+                this.useItem(itemType);
+            });
+        });
+        
+        return panel;
+    }
+
+    /**
+     * Update the inventory display with current counts
+     */
+    updateInventoryDisplay() {
+        this.types.forEach(type => {
+            const countElement = document.getElementById(`inventory-${type.name}`);
+            if (countElement) {
+                countElement.textContent = this.inventory[type.name] || 0;
+            }
+        });
+    }
+
+    /**
+     * Use an item from inventory
+     */
+    useItem(itemType) {
+        if (this.inventory[itemType] > 0) {
+            this.inventory[itemType]--;
+            this.collectedCount--;
+            this.updateCounter();
+            this.updateInventoryDisplay();
+            console.log(`Used ${itemType}. Remaining: ${this.inventory[itemType]}`);
+            // TODO: Add item effect
+        }
     }
 }
 
