@@ -172,7 +172,7 @@ class CollectiblesGame {
             y: this.canvas.height * 0.7, // Start at 70% down the screen
             initialY: this.canvas.height * 0.7,
             size: type.size,
-            speed: 0.3 + Math.random() * 0.2, // Random speed
+            speed: 0.15 + Math.random() * 0.1, // Reduced to half speed (0.15-0.25)
             scale: 0.6, // Start smaller
             maxScale: 1.2, // Grow to this size
             createdAt: Date.now()
