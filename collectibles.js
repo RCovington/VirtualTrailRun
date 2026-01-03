@@ -169,12 +169,12 @@ class CollectiblesGame {
             id: Date.now() + Math.random(),
             type: type,
             x: Math.random() * (this.canvas.width - 100) + 50, // Random horizontal position
-            y: this.canvas.height * 0.35, // Start at 35% down the screen (moved up from 70%)
-            initialY: this.canvas.height * 0.35,
+            y: this.canvas.height * 0.15, // Start at 15% down (top third of screen)
+            initialY: this.canvas.height * 0.15,
             size: type.size,
             speed: 0.15 + Math.random() * 0.1, // Reduced to half speed (0.15-0.25)
-            scale: 0.6, // Start smaller
-            maxScale: 1.2, // Grow to this size
+            scale: 0.3, // Start much smaller (was 0.6)
+            maxScale: 1.5, // Grow larger (was 1.2)
             createdAt: Date.now()
         };
         
@@ -213,9 +213,11 @@ class CollectiblesGame {
             // Move collectible forward (down and grow)
             const age = (now - collectible.createdAt) / 1000; // seconds
             collectible.y = collectible.initialY + (age * 50); // Move down 50px per second
+            
+            // Scale grows from 0.3 to 1.5 over the lifetime for perspective effect
             collectible.scale = Math.min(
                 collectible.maxScale,
-                0.6 + (age * 0.15) // Grow over time
+                0.3 + (age * 0.3) // Grow faster (was 0.6 + age * 0.15)
             );
             
             // Remove if past bottom of screen
