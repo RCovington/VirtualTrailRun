@@ -836,10 +836,17 @@ class CollectiblesGame {
             now - anim.createdAt < anim.duration
         );
         
+        // Debug log active animations
+        if (this.slashAnimations.length > 0) {
+            console.log(`🎨 Drawing ${this.slashAnimations.length} slash animations`);
+        }
+        
         // Draw each active slash
         this.slashAnimations.forEach(slash => {
             const progress = (now - slash.createdAt) / slash.duration;
             const opacity = 1 - progress; // Fade out
+            
+            console.log(`Drawing slash at progress ${(progress * 100).toFixed(0)}%, opacity ${opacity.toFixed(2)}`);
             
             // Calculate current position along the slash path
             const currentX = slash.startX + (slash.endX - slash.startX) * progress;
