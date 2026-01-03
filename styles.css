@@ -783,6 +783,9 @@ body {
     color: white;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
+    pointer-events: auto; /* Allow clicks on counter while parent has pointer-events: none */
+    z-index: 10; /* Ensure counter is above other elements */
+    cursor: pointer; /* Show it's clickable */
 }
 
 .collectibles-icon {
