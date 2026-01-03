@@ -15,6 +15,13 @@ A free, web-based treadmill workout app that streams scenic YouTube videos and t
 - Real-time feedback with visual overlay
 - Privacy-first: all processing happens locally in your browser
 
+### 🎮 Gamification - Collectibles
+- **Trail Objects**: Acorns, mushrooms, pinecones, leaves, and stones randomly appear on the trail
+- **Hand Gesture Detection**: Make a grabbing gesture (close your fist) to collect items
+- **Score Counter**: Track your collectibles in the upper-left corner
+- **Perspective Effect**: Objects start small and grow larger as you "approach" them
+- **Fun Feedback**: Visual animations when you successfully grab an item
+
 ### 📊 Workout Metrics
 - **Bobs**: Total head movement counts
 - **Bobs/min**: Current intensity level
