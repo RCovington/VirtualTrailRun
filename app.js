@@ -16,10 +16,14 @@ class VirtualTrailRunApp {
         this.currentVideoId = null;
         this.currentVideoTitle = null;
         
-        // Distance calculation
-        // Average adult stride length is ~2.5 feet, ~2 steps per bob
-        // So roughly: 1 bob = 2 steps = 5 feet = 0.000947 miles
-        this.milesPerBob = 0.000947;
+        // Health and Magic system
+        this.health = 100; // Start at full health
+        this.maxHealth = 100;
+        this.magic = 0; // Start with no magic
+        this.maxMagic = 100;
+        // About 1 mile worth of bobs = full magic bar
+        // 1 mile = ~1056 bobs (1 mile / 0.000947 miles per bob)
+        this.bobsForFullMagic = 1056;
         
         // Firebase services (initialized later)
         this.cache = null;
@@ -40,7 +44,8 @@ class VirtualTrailRunApp {
             workoutTime: document.getElementById('workoutTime'),
             indicatorBar: document.getElementById('indicatorBar'),
             videoOptions: document.querySelectorAll('.video-option'),
-            distanceValue: document.getElementById('distanceValue')
+            healthBar: document.getElementById('healthBar'),
+            magicBar: document.getElementById('magicBar')
         };
     }
 
@@ -414,6 +419,11 @@ class VirtualTrailRunApp {
             });
         }
         
+        // Initialize health and magic bars
+        this.health = this.maxHealth;
+        this.magic = 0;
+        this.updateStatBars();
+        
         // Initialize camera if not already active
         if (!this.headTracker.isCameraActive()) {
             try {
@@ -536,9 +546,45 @@ class VirtualTrailRunApp {
         const bobsPerMinute = this.headTracker.getBobsPerMinute();
         this.elements.bobsPerMinute.textContent = bobsPerMinute;
         
-        // Calculate and update distance
-        const miles = totalBobs * this.milesPerBob;
-        this.elements.distanceValue.textContent = miles.toFixed(2);
+        // Update magic bar based on total bobs
+        this.magic = Math.min((totalBobs / this.bobsForFullMagic) * 100, this.maxMagic);
+        this.updateStatBars();
+    }
+
+    /**
+     * Update the health and magic bar displays
+     */
+    updateStatBars() {
+        const healthPercent = (this.health / this.maxHealth) * 100;
+        const magicPercent = (this.magic / this.maxMagic) * 100;
+        
+        this.elements.healthBar.style.width = `${healthPercent}%`;
+        this.elements.magicBar.style.width = `${magicPercent}%`;
+    }
+
+    /**
+     * Take damage (reduces health)
+     */
+    takeDamage(amount) {
+        this.health = Math.max(0, this.health - amount);
+        this.updateStatBars();
+        
+        if (this.health === 0) {
+            // Game over logic could go here
+            console.log('Health depleted!');
+        }
+    }
+
+    /**
+     * Use magic (reduces magic bar)
+     */
+    useMagic(amount) {
+        if (this.magic >= amount) {
+            this.magic = Math.max(0, this.magic - amount);
+            this.updateStatBars();
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -628,7 +674,11 @@ class VirtualTrailRunApp {
             this.elements.totalBobs.textContent = '0';
             this.elements.workoutTime.textContent = '0:00';
             this.elements.indicatorBar.style.width = '0%';
-            this.elements.distanceValue.textContent = '0.00';
+            
+            // Reset health and magic
+            this.health = this.maxHealth;
+            this.magic = 0;
+            this.updateStatBars();
             
             // Reset collectibles game
             if (this.collectiblesGame) {
@@ -649,7 +699,6 @@ class VirtualTrailRunApp {
         }
 
         const totalBobs = parseInt(this.elements.totalBobs.textContent) || 0;
-        const miles = parseFloat(this.elements.distanceValue.textContent) || 0;
         const bobsPerMinute = parseInt(this.elements.bobsPerMinute.textContent) || 0;
         const durationSeconds = this.elapsedTime + 
             (this.workoutStartTime ? Math.floor((Date.now() - this.workoutStartTime) / 1000) : 0);
@@ -662,7 +711,8 @@ class VirtualTrailRunApp {
             date: new Date().toISOString(),
             duration: durationSeconds,
             totalBobs: totalBobs,
-            distance: miles,
+            magic: Math.floor(this.magic),
+            health: Math.floor(this.health),
             avgBobsPerMinute: bobsPerMinute,
             collectiblesScore: collectiblesScore,
             completedAt: Date.now()
