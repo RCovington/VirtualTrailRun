@@ -571,11 +571,11 @@ class CollectiblesGame {
         // Show pending increment
         this.showPendingIncrement();
         
-        // Update counter after 3 seconds
+        // Update counter after 2 seconds
         setTimeout(() => {
             this.collectedCount++;
             this.updateCounter();
-        }, 3000);
+        }, 2000);
         
         // Show feedback
         this.showCollectFeedback(collectible);
@@ -614,12 +614,12 @@ class CollectiblesGame {
         // Add to counter container (CSS handles positioning)
         counterContainer.appendChild(pending);
         
-        // Remove after animation (3 seconds)
+        // Remove after animation (2 seconds)
         setTimeout(() => {
             if (pending.parentNode) {
                 pending.remove();
             }
-        }, 3000);
+        }, 2000);
     }
 
     /**
