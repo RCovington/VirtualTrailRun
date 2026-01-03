@@ -305,80 +305,94 @@ class CollectiblesGame {
             const x = point.x;
             const y = point.y;
             
+            // Highlight thumb tip (4) and index tip (8) with larger circles
+            const isThumbTip = index === 4;
+            const isIndexTip = index === 8;
+            const isPinchPoint = isThumbTip || isIndexTip;
+            const radius = isPinchPoint ? 8 : (index === 0 ? 8 : 4);
+            
             this.debugCtx.beginPath();
-            this.debugCtx.arc(x, y, index === 0 ? 8 : 4, 0, 2 * Math.PI);
+            this.debugCtx.arc(x, y, radius, 0, 2 * Math.PI);
             this.debugCtx.fillStyle = pointColor;
             this.debugCtx.fill();
             
+            // Special styling for pinch points
+            if (isPinchPoint) {
+                this.debugCtx.strokeStyle = isGrabbing ? '#00FF00' : '#FFD700'; // Gold when not pinching
+                this.debugCtx.lineWidth = 3;
+                this.debugCtx.stroke();
+            }
             // Draw palm center larger
-            if (index === 0) {
+            else if (index === 0) {
                 this.debugCtx.strokeStyle = isGrabbing ? '#00FF00' : '#FF6B35';
                 this.debugCtx.lineWidth = 3;
                 this.debugCtx.stroke();
             }
         });
         
-        // Draw grabbing indicator
+        // Draw line between thumb and index tip when pinching
         if (isGrabbing) {
-            const wrist = keypoints[0];
-            const x = wrist.x;
-            const y = wrist.y;
+            const thumbTip = keypoints[4];
+            const indexTip = keypoints[8];
+            
+            this.debugCtx.beginPath();
+            this.debugCtx.moveTo(thumbTip.x, thumbTip.y);
+            this.debugCtx.lineTo(indexTip.x, indexTip.y);
+            this.debugCtx.strokeStyle = '#00FF00';
+            this.debugCtx.lineWidth = 4;
+            this.debugCtx.stroke();
+        }
+        
+        // Draw pinching indicator
+        if (isGrabbing) {
+            const thumbTip = keypoints[4];
+            const indexTip = keypoints[8];
+            // Position text near the pinch point
+            const x = (thumbTip.x + indexTip.x) / 2;
+            const y = (thumbTip.y + indexTip.y) / 2;
             
             this.debugCtx.font = 'bold 24px Arial';
             this.debugCtx.fillStyle = '#00FF00';
             this.debugCtx.strokeStyle = '#000000';
             this.debugCtx.lineWidth = 3;
-            this.debugCtx.strokeText('GRABBING! ✊', x + 20, y - 20);
-            this.debugCtx.fillText('GRABBING! ✊', x + 20, y - 20);
+            this.debugCtx.strokeText('PINCHING! 🤏', x + 20, y - 20);
+            this.debugCtx.fillText('PINCHING! 🤏', x + 20, y - 20);
         }
     }
 
     /**
      * Determine if hand is making a grabbing gesture
-     * Returns true if fingers are curled (fist)
+     * Returns true if thumb and index finger are pinched together
      */
     isGrabbingGesture(hand) {
         const keypoints = hand.keypoints;
         
-        // Get palm center (wrist) and middle of palm
-        const wrist = keypoints[0];
-        const palmBase = keypoints[9]; // Middle finger base
-        
-        // Get fingertips
+        // Get thumb and index finger tips
         const thumbTip = keypoints[4];
         const indexTip = keypoints[8];
-        const middleTip = keypoints[12];
-        const ringTip = keypoints[16];
-        const pinkyTip = keypoints[20];
         
-        // Get finger middle joints (PIP joints)
+        // Get thumb and index finger mid joints for reference
+        const thumbMid = keypoints[3];
         const indexMid = keypoints[6];
-        const middleMid = keypoints[10];
-        const ringMid = keypoints[14];
-        const pinkyMid = keypoints[18];
         
-        // Check if fingertips are closer to palm than middle joints (fingers curled)
-        // This is a more reliable indicator of a fist
-        const indexCurled = this.distance(indexTip, palmBase) < this.distance(indexMid, palmBase) + 10;
-        const middleCurled = this.distance(middleTip, palmBase) < this.distance(middleMid, palmBase) + 10;
-        const ringCurled = this.distance(ringTip, palmBase) < this.distance(ringMid, palmBase) + 10;
-        const pinkyCurled = this.distance(pinkyTip, palmBase) < this.distance(pinkyMid, palmBase) + 10;
+        // Calculate distance between thumb tip and index tip
+        const pinchDistance = this.distance(thumbTip, indexTip);
         
-        // Also check if thumb is curled in (thumb tip closer to palm)
-        const thumbCurled = this.distance(thumbTip, palmBase) < 80;
+        // Calculate the "reach" distance (how far apart they could be)
+        // This is roughly the distance from thumb mid to index mid
+        const reachDistance = this.distance(thumbMid, indexMid);
         
-        // Count curled fingers
-        const fingersCurled = [indexCurled, middleCurled, ringCurled, pinkyCurled].filter(Boolean).length;
-        
-        // Consider it a grab if at least 3 fingers are curled OR if all 4 fingers + thumb are curled
-        const isGrab = fingersCurled >= 3 || (fingersCurled >= 2 && thumbCurled);
+        // Consider it a pinch if the tips are close together
+        // Threshold: tips should be within 40 pixels or within 40% of reach distance
+        const pinchThreshold = Math.min(40, reachDistance * 0.4);
+        const isPinching = pinchDistance < pinchThreshold;
         
         // Debug logging occasionally
         if (Math.random() < 0.02) { // Log 2% of the time
-            console.log(`Grab detection: fingers=${fingersCurled}, thumb=${thumbCurled}, isGrab=${isGrab}`);
+            console.log(`Pinch detection: distance=${pinchDistance.toFixed(1)}, threshold=${pinchThreshold.toFixed(1)}, isPinching=${isPinching}`);
         }
         
-        return isGrab;
+        return isPinching;
     }
 
     /**
