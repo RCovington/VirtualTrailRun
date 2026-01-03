@@ -24,6 +24,9 @@ class VirtualTrailRunApp {
         // About 1 mile worth of bobs = full magic bar
         // 1 mile = ~1056 bobs (1 mile / 0.000947 miles per bob)
         this.bobsForFullMagic = 1056;
+        this.lastBobTime = null; // Track last head bob time
+        this.magicDecayInterval = null; // Interval for magic decay
+        this.lastTotalBobs = 0; // Track last bob count
         
         // Firebase services (initialized later)
         this.cache = null;
@@ -422,7 +425,10 @@ class VirtualTrailRunApp {
         // Initialize health and magic bars
         this.health = this.maxHealth;
         this.magic = 0;
+        this.lastBobTime = Date.now();
+        this.lastTotalBobs = 0;
         this.updateStatBars();
+        this.startMagicDecayMonitor();
         
         // Initialize camera if not already active
         if (!this.headTracker.isCameraActive()) {
@@ -546,10 +552,65 @@ class VirtualTrailRunApp {
         const bobsPerMinute = this.headTracker.getBobsPerMinute();
         this.elements.bobsPerMinute.textContent = bobsPerMinute;
         
-        // Update magic bar based on total bobs
-        this.magic = Math.min((totalBobs / this.bobsForFullMagic) * 100, this.maxMagic);
+        // Check if bobs increased (person is walking)
+        if (totalBobs > this.lastTotalBobs) {
+            this.lastBobTime = Date.now();
+            this.lastTotalBobs = totalBobs;
+            
+            // Update magic bar based on total bobs
+            this.magic = Math.min((totalBobs / this.bobsForFullMagic) * 100, this.maxMagic);
+            
+            // Add glowing class when increasing
+            this.elements.magicBar.classList.add('magic-increasing');
+            
+            // Start monitoring for inactivity
+            this.startMagicDecayMonitor();
+        }
+        
         this.updateStatBars();
     }
+
+    /**
+     * Start monitoring for magic decay when user stops walking
+     */
+    startMagicDecayMonitor() {
+        // Clear existing interval if any
+        if (this.magicDecayInterval) {
+            clearInterval(this.magicDecayInterval);
+        }
+        
+        this.magicDecayInterval = setInterval(() => {
+            const timeSinceLastBob = Date.now() - (this.lastBobTime || Date.now());
+            
+            // If more than 2 seconds since last bob and video is playing
+            if (timeSinceLastBob > 2000 && this.isWorkoutActive && !this.videoPlayer.isPaused()) {
+                // Remove glowing effect, add decay effect
+                this.elements.magicBar.classList.remove('magic-increasing');
+                this.elements.magicBar.classList.add('magic-decaying');
+                
+                // Decay magic at twice the rate it increases
+                // Rate: (100 / 1056 bobs) * 2 = ~0.189 per second
+                const decayRate = (100 / this.bobsForFullMagic) * 2;
+                this.magic = Math.max(0, this.magic - decayRate);
+                this.updateStatBars();
+            } else if (timeSinceLastBob <= 2000) {
+                // User is walking, remove decay effect
+                this.elements.magicBar.classList.remove('magic-decaying');
+            }
+        }, 1000); // Check every second
+    }
+
+    /**
+     * Stop magic decay monitor
+     */
+    stopMagicDecayMonitor() {
+        if (this.magicDecayInterval) {
+            clearInterval(this.magicDecayInterval);
+            this.magicDecayInterval = null;
+        }
+        this.elements.magicBar.classList.remove('magic-increasing', 'magic-decaying');
+    }
+
 
     /**
      * Update the health and magic bar displays
@@ -678,6 +739,9 @@ class VirtualTrailRunApp {
             // Reset health and magic
             this.health = this.maxHealth;
             this.magic = 0;
+            this.lastBobTime = null;
+            this.lastTotalBobs = 0;
+            this.stopMagicDecayMonitor();
             this.updateStatBars();
             
             // Reset collectibles game

@@ -165,6 +165,17 @@ class VideoPlayer {
     }
 
     /**
+     * Check if video is paused
+     */
+    isPaused() {
+        if (this.isReady && this.player) {
+            const state = this.player.getPlayerState();
+            return state === YT.PlayerState.PAUSED || state === YT.PlayerState.ENDED;
+        }
+        return true; // If not ready, consider it paused
+    }
+
+    /**
      * Get video duration
      */
     getDuration() {
