@@ -571,11 +571,11 @@ class CollectiblesGame {
         
         // Debug logging for movement
         if (Math.random() < 0.1) { // 10% of the time when hand is flat
-            console.log(`Slash movement: speed=${speed.toFixed(0)} px/s, distance=${distance.toFixed(0)}px, time=${timeDiff}ms, threshold=120, isSlashing=${this.isSlashing}`);
+            console.log(`Slash movement: speed=${speed.toFixed(0)} px/s, distance=${distance.toFixed(0)}px, time=${timeDiff}ms, threshold=60, isSlashing=${this.isSlashing}`);
         }
         
-        // Detect slash if moving fast enough (lowered threshold to 120 px/s for more reliable detection)
-        if (speed > 120 && !this.isSlashing) {
+        // Detect slash if moving fast enough (lowered threshold to 60 px/s for easy detection)
+        if (speed > 60 && !this.isSlashing) {
             this.isSlashing = true;
             
             // Calculate slash angle
