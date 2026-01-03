@@ -239,7 +239,8 @@ class CollectiblesGame {
                 
                 if (this.isGrabbing) {
                     // Get hand position (use palm center)
-                    const handX = this.debugCanvas.width - hand.keypoints[0].x; // Mirror horizontally
+                    // Don't mirror here - CSS transform handles it
+                    const handX = hand.keypoints[0].x;
                     const handY = hand.keypoints[0].y;
                     
                     this.lastHandPosition = { x: handX, y: handY };
@@ -248,7 +249,7 @@ class CollectiblesGame {
                     this.checkCollision(handX, handY);
                 } else {
                     // Still track hand position even when not grabbing
-                    const handX = this.debugCanvas.width - hand.keypoints[0].x;
+                    const handX = hand.keypoints[0].x;
                     const handY = hand.keypoints[0].y;
                     this.lastHandPosition = { x: handX, y: handY };
                 }
@@ -270,7 +271,6 @@ class CollectiblesGame {
         if (!this.debugCtx || !this.debugCanvas) return;
         
         const keypoints = hand.keypoints;
-        const width = this.debugCanvas.width;
         
         // Draw connections between keypoints
         const connections = [
@@ -287,7 +287,7 @@ class CollectiblesGame {
         const lineColor = isGrabbing ? '#00FF00' : '#00BFFF';
         const pointColor = isGrabbing ? '#00FF00' : '#FFFFFF';
         
-        // Draw lines
+        // Draw lines (no manual mirroring - CSS handles it)
         this.debugCtx.strokeStyle = lineColor;
         this.debugCtx.lineWidth = 2;
         connections.forEach(([start, end]) => {
@@ -295,14 +295,14 @@ class CollectiblesGame {
             const endPoint = keypoints[end];
             
             this.debugCtx.beginPath();
-            this.debugCtx.moveTo(width - startPoint.x, startPoint.y);
-            this.debugCtx.lineTo(width - endPoint.x, endPoint.y);
+            this.debugCtx.moveTo(startPoint.x, startPoint.y);
+            this.debugCtx.lineTo(endPoint.x, endPoint.y);
             this.debugCtx.stroke();
         });
         
-        // Draw keypoints
+        // Draw keypoints (no manual mirroring - CSS handles it)
         keypoints.forEach((point, index) => {
-            const x = width - point.x;
+            const x = point.x;
             const y = point.y;
             
             this.debugCtx.beginPath();
@@ -321,7 +321,7 @@ class CollectiblesGame {
         // Draw grabbing indicator
         if (isGrabbing) {
             const wrist = keypoints[0];
-            const x = width - wrist.x;
+            const x = wrist.x;
             const y = wrist.y;
             
             this.debugCtx.font = 'bold 24px Arial';
