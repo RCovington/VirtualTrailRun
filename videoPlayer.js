@@ -139,18 +139,17 @@ class VideoPlayer {
      * Request fullscreen for the video player
      */
     requestFullscreen() {
-        const playerElement = document.getElementById('player');
-        const iframe = playerElement.querySelector('iframe');
+        const videoContainer = document.querySelector('.video-container');
         
-        if (iframe) {
-            if (iframe.requestFullscreen) {
-                iframe.requestFullscreen();
-            } else if (iframe.webkitRequestFullscreen) {
-                iframe.webkitRequestFullscreen();
-            } else if (iframe.mozRequestFullScreen) {
-                iframe.mozRequestFullScreen();
-            } else if (iframe.msRequestFullscreen) {
-                iframe.msRequestFullscreen();
+        if (videoContainer) {
+            if (videoContainer.requestFullscreen) {
+                videoContainer.requestFullscreen();
+            } else if (videoContainer.webkitRequestFullscreen) {
+                videoContainer.webkitRequestFullscreen();
+            } else if (videoContainer.mozRequestFullScreen) {
+                videoContainer.mozRequestFullScreen();
+            } else if (videoContainer.msRequestFullscreen) {
+                videoContainer.msRequestFullscreen();
             }
         }
     }

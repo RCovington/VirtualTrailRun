@@ -505,6 +505,90 @@ body {
     opacity: 0.8;
 }
 
+/* ===== Fullscreen Mode ===== */
+.video-container:fullscreen {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-container:fullscreen #player {
+    width: 100%;
+    height: 100%;
+}
+
+.video-container:fullscreen .distance-overlay,
+.video-container:fullscreen .collectibles-counter,
+.video-container:fullscreen #collectiblesCanvas,
+.video-container:fullscreen .video-overlay {
+    display: block;
+    z-index: 100;
+}
+
+/* Webkit (Chrome, Safari) fullscreen support */
+.video-container:-webkit-full-screen {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-container:-webkit-full-screen #player {
+    width: 100%;
+    height: 100%;
+}
+
+.video-container:-webkit-full-screen .distance-overlay,
+.video-container:-webkit-full-screen .collectibles-counter,
+.video-container:-webkit-full-screen #collectiblesCanvas,
+.video-container:-webkit-full-screen .video-overlay {
+    display: block;
+    z-index: 100;
+}
+
+/* Firefox fullscreen support */
+.video-container:-moz-full-screen {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-container:-moz-full-screen #player {
+    width: 100%;
+    height: 100%;
+}
+
+.video-container:-moz-full-screen .distance-overlay,
+.video-container:-moz-full-screen .collectibles-counter,
+.video-container:-moz-full-screen #collectiblesCanvas,
+.video-container:-moz-full-screen .video-overlay {
+    display: block;
+    z-index: 100;
+}
+
+/* MS fullscreen support */
+.video-container:-ms-fullscreen {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-container:-ms-fullscreen #player {
+    width: 100%;
+    height: 100%;
+}
+
+.video-container:-ms-fullscreen .distance-overlay,
+.video-container:-ms-fullscreen .collectibles-counter,
+.video-container:-ms-fullscreen #collectiblesCanvas,
+.video-container:-ms-fullscreen .video-overlay {
+    display: block;
+    z-index: 100;
+}
+
 /* ===== Responsive Design ===== */
 @media (max-width: 1024px) {
     .main-content {
