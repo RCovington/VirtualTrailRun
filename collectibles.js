@@ -484,8 +484,8 @@ class CollectiblesGame {
         const reachDistance = this.distance(thumbMid, indexMid);
         
         // Consider it a pinch if the tips are close together
-        // Threshold: tips should be within 40 pixels or within 40% of reach distance
-        const pinchThreshold = Math.min(40, reachDistance * 0.4);
+        // Threshold: tips should be within 60 pixels or within 50% of reach distance (more forgiving)
+        const pinchThreshold = Math.min(60, reachDistance * 0.5);
         const isPinching = pinchDistance < pinchThreshold;
         
         // Debug logging occasionally
