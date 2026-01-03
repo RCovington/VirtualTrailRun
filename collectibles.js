@@ -442,17 +442,30 @@ class CollectiblesGame {
         const pinkyBase = keypoints[17];
         
         // Check if fingers are extended (not curled)
-        const indexExtended = this.distance(indexTip, indexBase) > 60;
-        const middleExtended = this.distance(middleTip, middleBase) > 60;
-        const ringExtended = this.distance(ringTip, ringBase) > 60;
-        const pinkyExtended = this.distance(pinkyTip, pinkyBase) > 60;
+        const indexDist = this.distance(indexTip, indexBase);
+        const middleDist = this.distance(middleTip, middleBase);
+        const ringDist = this.distance(ringTip, ringBase);
+        const pinkyDist = this.distance(pinkyTip, pinkyBase);
+        
+        const indexExtended = indexDist > 50; // Lowered threshold
+        const middleExtended = middleDist > 50;
+        const ringExtended = ringDist > 50;
+        const pinkyExtended = pinkyDist > 50;
         
         // Check if fingers are roughly parallel (flat hand)
-        const fingersParallel = Math.abs(indexTip.y - middleTip.y) < 40 &&
-                                Math.abs(middleTip.y - ringTip.y) < 40 &&
-                                Math.abs(ringTip.y - pinkyTip.y) < 40;
+        const yDiff1 = Math.abs(indexTip.y - middleTip.y);
+        const yDiff2 = Math.abs(middleTip.y - ringTip.y);
+        const yDiff3 = Math.abs(ringTip.y - pinkyTip.y);
+        
+        const fingersParallel = yDiff1 < 50 && yDiff2 < 50 && yDiff3 < 50; // Relaxed threshold
         
         const isFlat = indexExtended && middleExtended && ringExtended && fingersParallel;
+        
+        // Debug logging occasionally
+        if (Math.random() < 0.05) { // 5% of the time
+            console.log(`Slash check: idx=${indexDist.toFixed(0)}, mid=${middleDist.toFixed(0)}, ring=${ringDist.toFixed(0)}, ` +
+                       `yDiffs=[${yDiff1.toFixed(0)}, ${yDiff2.toFixed(0)}, ${yDiff3.toFixed(0)}], isFlat=${isFlat}`);
+        }
         
         if (!isFlat) {
             this.slashHistory = []; // Reset if not flat
@@ -482,8 +495,13 @@ class CollectiblesGame {
         const distance = Math.sqrt(dx * dx + dy * dy);
         const speed = distance / (timeDiff / 1000); // pixels per second
         
-        // Detect slash if moving fast enough (>300 px/s)
-        if (speed > 300 && !this.isSlashing) {
+        // Debug logging for movement
+        if (Math.random() < 0.1) { // 10% of the time when hand is flat
+            console.log(`Slash movement: speed=${speed.toFixed(0)} px/s, distance=${distance.toFixed(0)}px, time=${timeDiff}ms`);
+        }
+        
+        // Detect slash if moving fast enough (lowered threshold to 200 px/s)
+        if (speed > 200 && !this.isSlashing) {
             this.isSlashing = true;
             
             // Calculate slash angle
@@ -495,6 +513,7 @@ class CollectiblesGame {
             
             setTimeout(() => { this.isSlashing = false; }, 500); // Cooldown
             
+            console.log(`🗡️ SLASH DETECTED! Speed: ${speed.toFixed(0)} px/s, Angle: ${(angle * 180 / Math.PI).toFixed(0)}°`);
             return {
                 startX: oldest.x,
                 startY: oldest.y,
@@ -695,8 +714,6 @@ class CollectiblesGame {
         };
         
         this.slashAnimations.push(animation);
-        
-        console.log(`Slash detected! Speed: ${slashData.speed.toFixed(0)} px/s, Angle: ${(slashData.angle * 180 / Math.PI).toFixed(0)}°`);
     }
 
     /**
