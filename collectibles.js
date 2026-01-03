@@ -18,6 +18,8 @@ class CollectiblesGame {
         this.debugCtx = null;
         this.lastHandPosition = null;
         this.isGrabbing = false;
+        this.lastMissTime = 0;
+        this.missThrottleDelay = 500; // Only show miss feedback every 500ms
         
         // Timing
         this.minSpawnTime = 10000; // 10 seconds
@@ -238,15 +240,21 @@ class CollectiblesGame {
                 this.isGrabbing = this.isGrabbingGesture(hand);
                 
                 if (this.isGrabbing) {
-                    // Get hand position (use palm center)
-                    // Don't mirror here - CSS transform handles it
-                    const handX = hand.keypoints[0].x;
-                    const handY = hand.keypoints[0].y;
+                    // Get hand position (use pinch point - midpoint between thumb and index)
+                    const thumbTip = hand.keypoints[4];
+                    const indexTip = hand.keypoints[8];
+                    const handX = (thumbTip.x + indexTip.x) / 2;
+                    const handY = (thumbTip.y + indexTip.y) / 2;
                     
                     this.lastHandPosition = { x: handX, y: handY };
                     
                     // Check for collision with any collectible
-                    this.checkCollision(handX, handY);
+                    const grabbed = this.checkCollision(handX, handY);
+                    
+                    // If no collision, show miss feedback
+                    if (!grabbed) {
+                        this.showMissFeedback(handX, handY);
+                    }
                 } else {
                     // Still track hand position even when not grabbing
                     const handX = hand.keypoints[0].x;
@@ -404,6 +412,7 @@ class CollectiblesGame {
 
     /**
      * Check for collision between hand and collectibles
+     * Returns true if a collectible was grabbed
      */
     checkCollision(handX, handY) {
         for (let i = this.collectibles.length - 1; i >= 0; i--) {
@@ -418,9 +427,10 @@ class CollectiblesGame {
             
             if (distance < hitRadius) {
                 this.collectCollectible(collectible, i);
-                break; // Only collect one at a time
+                return true; // Successfully grabbed
             }
         }
+        return false; // Missed
     }
 
     /**
@@ -477,6 +487,35 @@ class CollectiblesGame {
             setTimeout(() => {
                 feedback.remove();
             }, 1000);
+        }
+    }
+
+    /**
+     * Show visual feedback when missing a grab attempt
+     */
+    showMissFeedback(handX, handY) {
+        // Throttle miss feedback to avoid spam
+        const now = Date.now();
+        if (now - this.lastMissTime < this.missThrottleDelay) {
+            return;
+        }
+        this.lastMissTime = now;
+        
+        // Create miss indicator
+        const feedback = document.createElement('div');
+        feedback.className = 'miss-feedback';
+        feedback.textContent = '✗';
+        feedback.style.left = `${handX}px`;
+        feedback.style.top = `${handY}px`;
+        
+        const container = document.getElementById('collectiblesContainer');
+        if (container) {
+            container.appendChild(feedback);
+            
+            // Remove after animation
+            setTimeout(() => {
+                feedback.remove();
+            }, 800);
         }
     }
 
