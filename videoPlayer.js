@@ -45,7 +45,7 @@ class VideoPlayer {
                 'rel': 0,
                 'modestbranding': 1,
                 'iv_load_policy': 3,
-                'fs': 1, // Enable fullscreen button
+                'fs': 0, // Disable YouTube's fullscreen button (we have our own)
                 'autoplay': 0
             },
             events: {
