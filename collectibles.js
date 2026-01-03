@@ -535,10 +535,10 @@ class CollectiblesGame {
         
         const isFlat = indexExtended && middleExtended && ringExtended && fingersParallel;
         
-        // Debug logging occasionally
-        if (Math.random() < 0.05) { // 5% of the time
-            console.log(`Slash check: idx=${indexDist.toFixed(0)}, mid=${middleDist.toFixed(0)}, ring=${ringDist.toFixed(0)}, ` +
-                       `yDiffs=[${yDiff1.toFixed(0)}, ${yDiff2.toFixed(0)}, ${yDiff3.toFixed(0)}], isFlat=${isFlat}`);
+        // Debug logging more frequently to diagnose issues
+        if (Math.random() < 0.2) { // 20% of the time
+            console.log(`Slash check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleDist.toFixed(0)}(${middleExtended}), ring=${ringDist.toFixed(0)}(${ringExtended}), ` +
+                       `yDiffs=[${yDiff1.toFixed(0)}, ${yDiff2.toFixed(0)}, ${yDiff3.toFixed(0)}], parallel=${fingersParallel}, isFlat=${isFlat}`);
         }
         
         if (!isFlat) {
