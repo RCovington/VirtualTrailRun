@@ -852,40 +852,48 @@ class CollectiblesGame {
             
             console.log(`Drawing slash at progress ${(progress * 100).toFixed(0)}%, opacity ${opacity.toFixed(2)}`);
             
-            // Calculate current position along the slash path
-            const currentX = slash.startX + (slash.endX - slash.startX) * progress;
-            const currentY = slash.startY + (slash.endY - slash.startY) * progress;
-            
-            // Draw dagger image/emoji
+            // Draw multiple swoosh lines for motion effect
             this.ctx.save();
-            this.ctx.translate(currentX, currentY);
-            this.ctx.rotate(slash.angle);
             this.ctx.globalAlpha = opacity;
             
-            // Draw dagger as text emoji
-            this.ctx.font = 'bold 80px Arial';
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'middle';
-            
-            // Add motion blur effect with shadow
-            this.ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
-            this.ctx.shadowBlur = 20;
-            this.ctx.shadowOffsetX = -Math.cos(slash.angle) * 15;
-            this.ctx.shadowOffsetY = -Math.sin(slash.angle) * 15;
-            
-            this.ctx.fillText('🗡️', 0, 0);
-            
-            // Draw slash trail
-            this.ctx.shadowColor = 'transparent';
-            const trailLength = 100 * (1 - progress * 0.5);
-            this.ctx.strokeStyle = `rgba(200, 200, 255, ${opacity * 0.6})`;
-            this.ctx.lineWidth = 8;
-            this.ctx.lineCap = 'round';
-            
-            this.ctx.beginPath();
-            this.ctx.moveTo(-trailLength, 0);
-            this.ctx.lineTo(0, 0);
-            this.ctx.stroke();
+            // Draw 3 curved swoosh lines along the slash path
+            for (let i = 0; i < 3; i++) {
+                const offset = (i - 1) * 15; // Spread lines vertically
+                const lineProgress = Math.max(0, progress - i * 0.1); // Stagger the lines
+                const lineOpacity = opacity * (1 - i * 0.2);
+                
+                if (lineProgress > 0) {
+                    // Calculate positions along the slash
+                    const startX = slash.startX + (slash.endX - slash.startX) * (lineProgress - 0.3);
+                    const startY = slash.startY + (slash.endY - slash.startY) * (lineProgress - 0.3);
+                    const endX = slash.startX + (slash.endX - slash.startX) * lineProgress;
+                    const endY = slash.startY + (slash.endY - slash.startY) * lineProgress;
+                    
+                    // Perpendicular offset for line spread
+                    const perpX = -Math.sin(slash.angle) * offset;
+                    const perpY = Math.cos(slash.angle) * offset;
+                    
+                    // Draw swoosh line
+                    this.ctx.strokeStyle = `rgba(200, 230, 255, ${lineOpacity})`;
+                    this.ctx.lineWidth = 12 - i * 3; // Thicker to thinner
+                    this.ctx.lineCap = 'round';
+                    
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(startX + perpX, startY + perpY);
+                    this.ctx.lineTo(endX + perpX, endY + perpY);
+                    this.ctx.stroke();
+                    
+                    // Add glow effect
+                    this.ctx.strokeStyle = `rgba(255, 255, 255, ${lineOpacity * 0.5})`;
+                    this.ctx.lineWidth = 18 - i * 4;
+                    this.ctx.globalAlpha = opacity * 0.3;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(startX + perpX, startY + perpY);
+                    this.ctx.lineTo(endX + perpX, endY + perpY);
+                    this.ctx.stroke();
+                    this.ctx.globalAlpha = opacity;
+                }
+            }
             
             this.ctx.restore();
         });
