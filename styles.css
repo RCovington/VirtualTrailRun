@@ -1087,11 +1087,12 @@ body {
 }
 
 .inventory-item-count {
-    color: var(--orange);
+    color: #FFD700;
     font-size: 1.5rem;
     font-weight: bold;
     font-family: 'Courier New', monospace;
     margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .inventory-item-use {
