@@ -22,6 +22,12 @@ class CollectiblesGame {
         this.lastMissTime = 0;
         this.missThrottleDelay = 500; // Only show miss feedback every 500ms
         
+        // Slash gesture tracking
+        this.slashHistory = []; // Track hand positions for slash detection
+        this.maxSlashHistory = 10; // Keep last 10 positions
+        this.isSlashing = false;
+        this.slashAnimations = []; // Active slash animations
+        
         // Timing
         this.minSpawnTime = 10000; // 10 seconds
         this.maxSpawnTime = 20000; // 20 seconds
@@ -240,7 +246,13 @@ class CollectiblesGame {
                 // Draw hand keypoints for debugging
                 this.drawHandDebug(hand);
                 
-                // Check if hand is making a grabbing gesture (closed fist)
+                // Check for slash gesture
+                const slashDetected = this.detectSlashGesture(hand);
+                if (slashDetected) {
+                    this.createSlashAnimation(slashDetected);
+                }
+                
+                // Check if hand is making a grabbing gesture (pinch)
                 this.isGrabbing = this.isGrabbingGesture(hand);
                 
                 if (this.isGrabbing) {
@@ -411,6 +423,93 @@ class CollectiblesGame {
     }
 
     /**
+     * Detect slash gesture - flat hand moving quickly
+     * Returns slash data if detected, null otherwise
+     */
+    detectSlashGesture(hand) {
+        const keypoints = hand.keypoints;
+        
+        // Get fingertips and their bases
+        const indexTip = keypoints[8];
+        const middleTip = keypoints[12];
+        const ringTip = keypoints[16];
+        const pinkyTip = keypoints[20];
+        const thumbTip = keypoints[4];
+        
+        const indexBase = keypoints[5];
+        const middleBase = keypoints[9];
+        const ringBase = keypoints[13];
+        const pinkyBase = keypoints[17];
+        
+        // Check if fingers are extended (not curled)
+        const indexExtended = this.distance(indexTip, indexBase) > 60;
+        const middleExtended = this.distance(middleTip, middleBase) > 60;
+        const ringExtended = this.distance(ringTip, ringBase) > 60;
+        const pinkyExtended = this.distance(pinkyTip, pinkyBase) > 60;
+        
+        // Check if fingers are roughly parallel (flat hand)
+        const fingersParallel = Math.abs(indexTip.y - middleTip.y) < 40 &&
+                                Math.abs(middleTip.y - ringTip.y) < 40 &&
+                                Math.abs(ringTip.y - pinkyTip.y) < 40;
+        
+        const isFlat = indexExtended && middleExtended && ringExtended && fingersParallel;
+        
+        if (!isFlat) {
+            this.slashHistory = []; // Reset if not flat
+            return null;
+        }
+        
+        // Track hand position for movement detection
+        const wrist = keypoints[0];
+        const currentPos = { x: wrist.x, y: wrist.y, time: Date.now() };
+        
+        this.slashHistory.push(currentPos);
+        if (this.slashHistory.length > this.maxSlashHistory) {
+            this.slashHistory.shift();
+        }
+        
+        // Need at least 5 positions to detect movement
+        if (this.slashHistory.length < 5) {
+            return null;
+        }
+        
+        // Calculate movement speed and direction
+        const oldest = this.slashHistory[0];
+        const newest = this.slashHistory[this.slashHistory.length - 1];
+        const timeDiff = newest.time - oldest.time;
+        const dx = newest.x - oldest.x;
+        const dy = newest.y - oldest.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const speed = distance / (timeDiff / 1000); // pixels per second
+        
+        // Detect slash if moving fast enough (>300 px/s)
+        if (speed > 300 && !this.isSlashing) {
+            this.isSlashing = true;
+            
+            // Calculate slash angle
+            const angle = Math.atan2(dy, dx);
+            
+            // Determine if it's more horizontal or vertical
+            const absAngle = Math.abs(angle);
+            const isHorizontal = absAngle < Math.PI / 4 || absAngle > (3 * Math.PI) / 4;
+            
+            setTimeout(() => { this.isSlashing = false; }, 500); // Cooldown
+            
+            return {
+                startX: oldest.x,
+                startY: oldest.y,
+                endX: newest.x,
+                endY: newest.y,
+                angle: angle,
+                speed: speed,
+                isHorizontal: isHorizontal
+            };
+        }
+        
+        return null;
+    }
+
+    /**
      * Calculate distance between two points
      */
     distance(p1, p2) {
@@ -549,6 +648,21 @@ class CollectiblesGame {
     }
 
     /**
+     * Create slash animation
+     */
+    createSlashAnimation(slashData) {
+        const animation = {
+            ...slashData,
+            createdAt: Date.now(),
+            duration: 400 // Animation lasts 400ms
+        };
+        
+        this.slashAnimations.push(animation);
+        
+        console.log(`Slash detected! Speed: ${slashData.speed.toFixed(0)} px/s, Angle: ${(slashData.angle * 180 / Math.PI).toFixed(0)}°`);
+    }
+
+    /**
      * Draw all collectibles
      */
     draw() {
@@ -556,6 +670,9 @@ class CollectiblesGame {
         
         // Clear canvas
         this.clearCanvas();
+        
+        // Draw slash animations
+        this.drawSlashAnimations();
         
         // Draw fingertip indicators if hand is detected
         if (this.lastHandKeypoints) {
@@ -582,6 +699,63 @@ class CollectiblesGame {
             this.ctx.shadowColor = 'transparent';
             this.ctx.shadowBlur = 0;
             this.ctx.shadowOffsetY = 0;
+        });
+    }
+
+    /**
+     * Draw slash animations
+     */
+    drawSlashAnimations() {
+        if (!this.ctx || !this.canvas) return;
+        
+        const now = Date.now();
+        
+        // Remove expired animations
+        this.slashAnimations = this.slashAnimations.filter(anim => 
+            now - anim.createdAt < anim.duration
+        );
+        
+        // Draw each active slash
+        this.slashAnimations.forEach(slash => {
+            const progress = (now - slash.createdAt) / slash.duration;
+            const opacity = 1 - progress; // Fade out
+            
+            // Calculate current position along the slash path
+            const currentX = slash.startX + (slash.endX - slash.startX) * progress;
+            const currentY = slash.startY + (slash.endY - slash.startY) * progress;
+            
+            // Draw dagger image/emoji
+            this.ctx.save();
+            this.ctx.translate(currentX, currentY);
+            this.ctx.rotate(slash.angle);
+            this.ctx.globalAlpha = opacity;
+            
+            // Draw dagger as text emoji
+            this.ctx.font = 'bold 80px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            
+            // Add motion blur effect with shadow
+            this.ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+            this.ctx.shadowBlur = 20;
+            this.ctx.shadowOffsetX = -Math.cos(slash.angle) * 15;
+            this.ctx.shadowOffsetY = -Math.sin(slash.angle) * 15;
+            
+            this.ctx.fillText('🗡️', 0, 0);
+            
+            // Draw slash trail
+            this.ctx.shadowColor = 'transparent';
+            const trailLength = 100 * (1 - progress * 0.5);
+            this.ctx.strokeStyle = `rgba(200, 200, 255, ${opacity * 0.6})`;
+            this.ctx.lineWidth = 8;
+            this.ctx.lineCap = 'round';
+            
+            this.ctx.beginPath();
+            this.ctx.moveTo(-trailLength, 0);
+            this.ctx.lineTo(0, 0);
+            this.ctx.stroke();
+            
+            this.ctx.restore();
         });
     }
 
