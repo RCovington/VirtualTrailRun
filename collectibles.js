@@ -603,31 +603,23 @@ class CollectiblesGame {
      * Show pending increment next to counter
      */
     showPendingIncrement() {
-        const counterElement = document.getElementById('collectiblesCount');
-        if (!counterElement) return;
+        const counterContainer = document.querySelector('.collectibles-counter');
+        if (!counterContainer) return;
         
         // Create glowing +1 element
         const pending = document.createElement('div');
         pending.className = 'pending-increment';
         pending.textContent = '+1';
         
-        // Position it next to the counter
-        const counterRect = counterElement.getBoundingClientRect();
-        pending.style.position = 'absolute';
-        pending.style.left = `${counterRect.right + 10}px`;
-        pending.style.top = `${counterRect.top}px`;
+        // Add to counter container (CSS handles positioning)
+        counterContainer.appendChild(pending);
         
-        // Add to counter's parent container
-        const counterContainer = document.querySelector('.collectibles-counter');
-        if (counterContainer) {
-            counterContainer.style.position = 'relative';
-            counterContainer.appendChild(pending);
-            
-            // Remove after animation (3 seconds)
-            setTimeout(() => {
+        // Remove after animation (3 seconds)
+        setTimeout(() => {
+            if (pending.parentNode) {
                 pending.remove();
-            }, 3000);
-        }
+            }
+        }, 3000);
     }
 
     /**

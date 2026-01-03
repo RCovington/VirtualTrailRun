@@ -639,12 +639,14 @@ body {
 
 .pending-increment {
     position: absolute;
-    right: -50px;
+    right: -60px;
     top: 50%;
     transform: translateY(-50%);
     font-size: 2rem;
     font-weight: bold;
     color: #FFD700;
+    pointer-events: none; /* Don't interfere with clicks */
+    z-index: 10;
     text-shadow: 
         0 0 10px rgba(255, 215, 0, 0.8),
         0 0 20px rgba(255, 215, 0, 0.6),
