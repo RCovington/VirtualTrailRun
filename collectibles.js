@@ -19,6 +19,7 @@ class CollectiblesGame {
         this.lastHandPosition = null;
         this.lastHandKeypoints = null;
         this.isGrabbing = false;
+        this.isFlatHand = false; // Track if hand is flat (dagger mode)
         this.lastMissTime = 0;
         this.missThrottleDelay = 500; // Only show miss feedback every 500ms
         this.headTracker = headTracker; // Reference to head tracker for face position
@@ -535,6 +536,9 @@ class CollectiblesGame {
         
         const isFlat = indexExtended && middleExtended && ringExtended && fingersParallel;
         
+        // Store flat hand state for visual indicator
+        this.isFlatHand = isFlat;
+        
         // Debug logging more frequently to diagnose issues
         if (Math.random() < 0.2) { // 20% of the time
             console.log(`Slash check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleDist.toFixed(0)}(${middleExtended}), ring=${ringDist.toFixed(0)}(${ringExtended}), ` +
@@ -571,11 +575,11 @@ class CollectiblesGame {
         
         // Debug logging for movement
         if (Math.random() < 0.1) { // 10% of the time when hand is flat
-            console.log(`Slash movement: speed=${speed.toFixed(0)} px/s, distance=${distance.toFixed(0)}px, time=${timeDiff}ms, threshold=60, isSlashing=${this.isSlashing}`);
+            console.log(`Slash movement: speed=${speed.toFixed(0)} px/s, distance=${distance.toFixed(0)}px, time=${timeDiff}ms, threshold=15, isSlashing=${this.isSlashing}`);
         }
         
-        // Detect slash if moving fast enough (lowered threshold to 60 px/s for easy detection)
-        if (speed > 60 && !this.isSlashing) {
+        // Detect slash if moving fast enough (lowered threshold to 15 px/s - realistic for hand tracking)
+        if (speed > 15 && !this.isSlashing) {
             this.isSlashing = true;
             
             // Calculate slash angle
@@ -892,6 +896,40 @@ class CollectiblesGame {
      */
     drawFingertipIndicators(keypoints) {
         if (!this.ctx || !this.canvas) return;
+        
+        // If hand is flat (dagger mode), show dagger indicator instead of fingertip dots
+        if (this.isFlatHand) {
+            const wrist = keypoints[0];
+            const middleTip = keypoints[12];
+            
+            // Draw dagger emoji at the center of the hand
+            this.ctx.save();
+            this.ctx.font = 'bold 60px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            
+            // Add glow effect
+            this.ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+            this.ctx.shadowBlur = 15;
+            
+            // Position dagger near the middle of the hand
+            const centerX = (wrist.x + middleTip.x) / 2;
+            const centerY = (wrist.y + middleTip.y) / 2;
+            
+            this.ctx.fillText('🗡️', centerX, centerY);
+            
+            // Add text label
+            this.ctx.shadowBlur = 0;
+            this.ctx.font = 'bold 16px Arial';
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+            this.ctx.lineWidth = 3;
+            this.ctx.strokeText('DAGGER MODE', centerX, centerY + 50);
+            this.ctx.fillText('DAGGER MODE', centerX, centerY + 50);
+            
+            this.ctx.restore();
+            return;
+        }
         
         // Get thumb and index finger tips
         const thumbTip = keypoints[4];
