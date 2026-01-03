@@ -287,13 +287,19 @@ class CollectiblesGame {
                 }
                 
                 // Check for closed fist gesture (to close inventory)
+                // Must check BEFORE pinch detection since fist can look like pinch
                 this.isClosedFist = this.isClosedFistGesture(hand);
                 if (this.isClosedFist && this.inventoryOpen) {
                     this.closeInventory();
                 }
                 
                 // Check if hand is making a grabbing gesture (pinch)
-                this.isGrabbing = this.isGrabbingGesture(hand);
+                // Skip pinch detection if closed fist is detected
+                if (!this.isClosedFist) {
+                    this.isGrabbing = this.isGrabbingGesture(hand);
+                } else {
+                    this.isGrabbing = false;
+                }
                 
                 if (this.isGrabbing) {
                     // Get hand position (use pinch point - midpoint between thumb and index)
