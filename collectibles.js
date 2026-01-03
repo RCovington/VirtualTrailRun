@@ -280,12 +280,6 @@ class CollectiblesGame {
                     this.createSlashAnimation(slashDetected);
                 }
                 
-                // Check for open hand gesture (to open inventory)
-                this.isOpenHand = this.isOpenHandGesture(hand);
-                if (this.isOpenHand && !this.inventoryOpen) {
-                    this.openInventory();
-                }
-                
                 // Check for closed fist gesture (to close inventory)
                 // Must check BEFORE pinch detection since fist can look like pinch
                 this.isClosedFist = this.isClosedFistGesture(hand);
@@ -299,6 +293,17 @@ class CollectiblesGame {
                     this.isGrabbing = this.isGrabbingGesture(hand);
                 } else {
                     this.isGrabbing = false;
+                }
+                
+                // Check for open hand gesture (to open inventory)
+                // Only check if NOT pinching or in a fist
+                if (!this.isGrabbing && !this.isClosedFist) {
+                    this.isOpenHand = this.isOpenHandGesture(hand);
+                    if (this.isOpenHand && !this.inventoryOpen) {
+                        this.openInventory();
+                    }
+                } else {
+                    this.isOpenHand = false;
                 }
                 
                 if (this.isGrabbing) {
@@ -661,18 +666,19 @@ class CollectiblesGame {
         const pinkyBase = keypoints[17];
         
         // Check if all fingers are extended
-        const thumbExtended = this.distance(thumbTip, thumbBase) > 40;
-        const indexExtended = this.distance(indexTip, indexBase) > 50;
-        const middleExtended = this.distance(middleTip, middleBase) > 50;
-        const ringExtended = this.distance(ringTip, ringBase) > 50;
-        const pinkyExtended = this.distance(pinkyTip, pinkyBase) > 40;
+        const thumbExtended = this.distance(thumbTip, thumbBase) > 50;
+        const indexExtended = this.distance(indexTip, indexBase) > 60;
+        const middleExtended = this.distance(middleTip, middleBase) > 60;
+        const ringExtended = this.distance(ringTip, ringBase) > 60;
+        const pinkyExtended = this.distance(pinkyTip, pinkyBase) > 50;
         
         const allExtended = thumbExtended && indexExtended && middleExtended && ringExtended && pinkyExtended;
         
-        // Check if fingers are spread (not together like flat hand)
-        const fingerSpread = this.distance(indexTip, pinkyTip) > 80;
+        // Check if fingers are widely spread (not together or pinching)
+        const fingerSpread = this.distance(indexTip, pinkyTip) > 100;
+        const thumbIndexSpread = this.distance(thumbTip, indexTip) > 60; // Not pinching
         
-        return allExtended && fingerSpread;
+        return allExtended && fingerSpread && thumbIndexSpread;
     }
 
     /**
