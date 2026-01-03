@@ -511,19 +511,38 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100vw !important;
+    height: 100vh !important;
 }
 
 .video-container:fullscreen #player {
     width: 100%;
     height: 100%;
+    position: relative;
+}
+
+.video-container:fullscreen #collectiblesContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: none;
+    z-index: 100;
 }
 
 .video-container:fullscreen .distance-overlay,
 .video-container:fullscreen .collectibles-counter,
 .video-container:fullscreen #collectiblesCanvas,
 .video-container:fullscreen .video-overlay {
-    display: block;
+    display: block !important;
+    position: absolute !important;
     z-index: 100;
+}
+
+.video-container:fullscreen #collectiblesCanvas {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* Webkit (Chrome, Safari) fullscreen support */
@@ -532,19 +551,38 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100vw !important;
+    height: 100vh !important;
 }
 
 .video-container:-webkit-full-screen #player {
     width: 100%;
     height: 100%;
+    position: relative;
+}
+
+.video-container:-webkit-full-screen #collectiblesContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: none;
+    z-index: 100;
 }
 
 .video-container:-webkit-full-screen .distance-overlay,
 .video-container:-webkit-full-screen .collectibles-counter,
 .video-container:-webkit-full-screen #collectiblesCanvas,
 .video-container:-webkit-full-screen .video-overlay {
-    display: block;
+    display: block !important;
+    position: absolute !important;
     z-index: 100;
+}
+
+.video-container:-webkit-full-screen #collectiblesCanvas {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* Firefox fullscreen support */
@@ -553,19 +591,38 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100vw !important;
+    height: 100vh !important;
 }
 
 .video-container:-moz-full-screen #player {
     width: 100%;
     height: 100%;
+    position: relative;
+}
+
+.video-container:-moz-full-screen #collectiblesContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: none;
+    z-index: 100;
 }
 
 .video-container:-moz-full-screen .distance-overlay,
 .video-container:-moz-full-screen .collectibles-counter,
 .video-container:-moz-full-screen #collectiblesCanvas,
 .video-container:-moz-full-screen .video-overlay {
-    display: block;
+    display: block !important;
+    position: absolute !important;
     z-index: 100;
+}
+
+.video-container:-moz-full-screen #collectiblesCanvas {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* MS fullscreen support */
@@ -574,19 +631,38 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100vw !important;
+    height: 100vh !important;
 }
 
 .video-container:-ms-fullscreen #player {
     width: 100%;
     height: 100%;
+    position: relative;
+}
+
+.video-container:-ms-fullscreen #collectiblesContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: none;
+    z-index: 100;
 }
 
 .video-container:-ms-fullscreen .distance-overlay,
 .video-container:-ms-fullscreen .collectibles-counter,
 .video-container:-ms-fullscreen #collectiblesCanvas,
 .video-container:-ms-fullscreen .video-overlay {
-    display: block;
+    display: block !important;
+    position: absolute !important;
     z-index: 100;
+}
+
+.video-container:-ms-fullscreen #collectiblesCanvas {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* ===== Responsive Design ===== */
