@@ -14,6 +14,10 @@ class CollectiblesGame {
         this.videoElement = null;
         this.canvas = null;
         this.ctx = null;
+        this.debugCanvas = null;
+        this.debugCtx = null;
+        this.lastHandPosition = null;
+        this.isGrabbing = false;
         
         // Timing
         this.minSpawnTime = 10000; // 10 seconds
@@ -41,6 +45,12 @@ class CollectiblesGame {
         this.canvas = document.getElementById('collectiblesCanvas');
         if (this.canvas) {
             this.ctx = this.canvas.getContext('2d');
+        }
+        
+        // Get debug canvas for hand tracking visualization
+        this.debugCanvas = document.getElementById('handDebugCanvas');
+        if (this.debugCanvas) {
+            this.debugCtx = this.debugCanvas.getContext('2d');
         }
         
         // Load hand detection model
@@ -73,10 +83,21 @@ class CollectiblesGame {
         this.isActive = true;
         this.videoElement = videoElement;
         
-        // Reset canvas size to match video
+        // Reset canvas sizes to match video (maintain aspect ratio)
         if (this.canvas && this.videoElement) {
-            this.canvas.width = this.videoElement.videoWidth || 640;
-            this.canvas.height = this.videoElement.videoHeight || 480;
+            const videoWidth = this.videoElement.videoWidth || 640;
+            const videoHeight = this.videoElement.videoHeight || 480;
+            
+            this.canvas.width = videoWidth;
+            this.canvas.height = videoHeight;
+            
+            // Also set debug canvas
+            if (this.debugCanvas) {
+                this.debugCanvas.width = videoWidth;
+                this.debugCanvas.height = videoHeight;
+            }
+            
+            console.log(`Canvas size set to ${videoWidth}x${videoHeight}`);
         }
         
         // Start spawning collectibles
@@ -197,6 +218,11 @@ class CollectiblesGame {
     async detectGesture() {
         if (!this.videoElement || this.videoElement.readyState !== 4) return;
         
+        // Clear debug canvas
+        if (this.debugCtx && this.debugCanvas) {
+            this.debugCtx.clearRect(0, 0, this.debugCanvas.width, this.debugCanvas.height);
+        }
+        
         try {
             const hands = await this.handDetector.estimateHands(this.videoElement, {
                 flipHorizontal: true
@@ -205,20 +231,105 @@ class CollectiblesGame {
             if (hands && hands.length > 0) {
                 const hand = hands[0];
                 
-                // Check if hand is making a grabbing gesture (closed fist)
-                const isGrabbing = this.isGrabbingGesture(hand);
+                // Draw hand keypoints for debugging
+                this.drawHandDebug(hand);
                 
-                if (isGrabbing) {
+                // Check if hand is making a grabbing gesture (closed fist)
+                this.isGrabbing = this.isGrabbingGesture(hand);
+                
+                if (this.isGrabbing) {
                     // Get hand position (use palm center)
-                    const handX = this.canvas.width - hand.keypoints[0].x; // Mirror horizontally
+                    const handX = this.debugCanvas.width - hand.keypoints[0].x; // Mirror horizontally
                     const handY = hand.keypoints[0].y;
+                    
+                    this.lastHandPosition = { x: handX, y: handY };
                     
                     // Check for collision with any collectible
                     this.checkCollision(handX, handY);
+                } else {
+                    // Still track hand position even when not grabbing
+                    const handX = this.debugCanvas.width - hand.keypoints[0].x;
+                    const handY = hand.keypoints[0].y;
+                    this.lastHandPosition = { x: handX, y: handY };
                 }
+            } else {
+                this.lastHandPosition = null;
+                this.isGrabbing = false;
             }
         } catch (error) {
             // Silently handle detection errors
+            this.lastHandPosition = null;
+            this.isGrabbing = false;
+        }
+    }
+
+    /**
+     * Draw hand keypoints for debugging
+     */
+    drawHandDebug(hand) {
+        if (!this.debugCtx || !this.debugCanvas) return;
+        
+        const keypoints = hand.keypoints;
+        const width = this.debugCanvas.width;
+        
+        // Draw connections between keypoints
+        const connections = [
+            [0, 1], [1, 2], [2, 3], [3, 4],        // Thumb
+            [0, 5], [5, 6], [6, 7], [7, 8],        // Index
+            [0, 9], [9, 10], [10, 11], [11, 12],   // Middle
+            [0, 13], [13, 14], [14, 15], [15, 16], // Ring
+            [0, 17], [17, 18], [18, 19], [19, 20], // Pinky
+            [5, 9], [9, 13], [13, 17]              // Palm
+        ];
+        
+        // Determine if currently grabbing for color
+        const isGrabbing = this.isGrabbingGesture(hand);
+        const lineColor = isGrabbing ? '#00FF00' : '#00BFFF';
+        const pointColor = isGrabbing ? '#00FF00' : '#FFFFFF';
+        
+        // Draw lines
+        this.debugCtx.strokeStyle = lineColor;
+        this.debugCtx.lineWidth = 2;
+        connections.forEach(([start, end]) => {
+            const startPoint = keypoints[start];
+            const endPoint = keypoints[end];
+            
+            this.debugCtx.beginPath();
+            this.debugCtx.moveTo(width - startPoint.x, startPoint.y);
+            this.debugCtx.lineTo(width - endPoint.x, endPoint.y);
+            this.debugCtx.stroke();
+        });
+        
+        // Draw keypoints
+        keypoints.forEach((point, index) => {
+            const x = width - point.x;
+            const y = point.y;
+            
+            this.debugCtx.beginPath();
+            this.debugCtx.arc(x, y, index === 0 ? 8 : 4, 0, 2 * Math.PI);
+            this.debugCtx.fillStyle = pointColor;
+            this.debugCtx.fill();
+            
+            // Draw palm center larger
+            if (index === 0) {
+                this.debugCtx.strokeStyle = isGrabbing ? '#00FF00' : '#FF6B35';
+                this.debugCtx.lineWidth = 3;
+                this.debugCtx.stroke();
+            }
+        });
+        
+        // Draw grabbing indicator
+        if (isGrabbing) {
+            const wrist = keypoints[0];
+            const x = width - wrist.x;
+            const y = wrist.y;
+            
+            this.debugCtx.font = 'bold 24px Arial';
+            this.debugCtx.fillStyle = '#00FF00';
+            this.debugCtx.strokeStyle = '#000000';
+            this.debugCtx.lineWidth = 3;
+            this.debugCtx.strokeText('GRABBING! ✊', x + 20, y - 20);
+            this.debugCtx.fillText('GRABBING! ✊', x + 20, y - 20);
         }
     }
 
@@ -229,31 +340,45 @@ class CollectiblesGame {
     isGrabbingGesture(hand) {
         const keypoints = hand.keypoints;
         
-        // Get palm center (wrist)
+        // Get palm center (wrist) and middle of palm
         const wrist = keypoints[0];
+        const palmBase = keypoints[9]; // Middle finger base
         
         // Get fingertips
+        const thumbTip = keypoints[4];
         const indexTip = keypoints[8];
         const middleTip = keypoints[12];
         const ringTip = keypoints[16];
         const pinkyTip = keypoints[20];
         
-        // Get finger bases
-        const indexBase = keypoints[5];
-        const middleBase = keypoints[9];
-        const ringBase = keypoints[13];
-        const pinkyBase = keypoints[17];
+        // Get finger middle joints (PIP joints)
+        const indexMid = keypoints[6];
+        const middleMid = keypoints[10];
+        const ringMid = keypoints[14];
+        const pinkyMid = keypoints[18];
         
-        // Check if fingertips are closer to wrist than bases (fingers curled)
-        const indexCurled = this.distance(indexTip, wrist) < this.distance(indexBase, wrist) + 30;
-        const middleCurled = this.distance(middleTip, wrist) < this.distance(middleBase, wrist) + 30;
-        const ringCurled = this.distance(ringTip, wrist) < this.distance(ringBase, wrist) + 30;
-        const pinkyCurled = this.distance(pinkyTip, wrist) < this.distance(pinkyBase, wrist) + 30;
+        // Check if fingertips are closer to palm than middle joints (fingers curled)
+        // This is a more reliable indicator of a fist
+        const indexCurled = this.distance(indexTip, palmBase) < this.distance(indexMid, palmBase) + 10;
+        const middleCurled = this.distance(middleTip, palmBase) < this.distance(middleMid, palmBase) + 10;
+        const ringCurled = this.distance(ringTip, palmBase) < this.distance(ringMid, palmBase) + 10;
+        const pinkyCurled = this.distance(pinkyTip, palmBase) < this.distance(pinkyMid, palmBase) + 10;
         
-        // At least 3 fingers should be curled for a grab
-        const curledCount = [indexCurled, middleCurled, ringCurled, pinkyCurled].filter(Boolean).length;
+        // Also check if thumb is curled in (thumb tip closer to palm)
+        const thumbCurled = this.distance(thumbTip, palmBase) < 80;
         
-        return curledCount >= 3;
+        // Count curled fingers
+        const fingersCurled = [indexCurled, middleCurled, ringCurled, pinkyCurled].filter(Boolean).length;
+        
+        // Consider it a grab if at least 3 fingers are curled OR if all 4 fingers + thumb are curled
+        const isGrab = fingersCurled >= 3 || (fingersCurled >= 2 && thumbCurled);
+        
+        // Debug logging occasionally
+        if (Math.random() < 0.02) { // Log 2% of the time
+            console.log(`Grab detection: fingers=${fingersCurled}, thumb=${thumbCurled}, isGrab=${isGrab}`);
+        }
+        
+        return isGrab;
     }
 
     /**
