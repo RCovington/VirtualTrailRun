@@ -184,8 +184,8 @@ class CollectiblesGame {
             id: Date.now() + Math.random(),
             type: type,
             x: Math.random() * (this.canvas.width - 100) + 50, // Random horizontal position
-            y: this.canvas.height * 0.15, // Start at 15% down (top third of screen)
-            initialY: this.canvas.height * 0.15,
+            y: this.canvas.height * 0.67, // Start at 67% down (1/3 from bottom)
+            initialY: this.canvas.height * 0.67,
             size: type.size,
             speed: 0.15 + Math.random() * 0.1, // Reduced to half speed (0.15-0.25)
             scale: 0.3, // Start much smaller (was 0.6)
