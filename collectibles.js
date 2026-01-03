@@ -472,12 +472,22 @@ class CollectiblesGame {
      * Show visual feedback when collecting
      */
     showCollectFeedback(collectible) {
+        // Convert from video coordinates to display coordinates
+        const canvas = this.canvas;
+        if (!canvas) return;
+        
+        const scaleX = canvas.offsetWidth / canvas.width;
+        const scaleY = canvas.offsetHeight / canvas.height;
+        
+        const displayX = collectible.x * scaleX;
+        const displayY = collectible.y * scaleY;
+        
         // Create floating text
         const feedback = document.createElement('div');
         feedback.className = 'collect-feedback';
         feedback.textContent = `+1 ${collectible.type.emoji}`;
-        feedback.style.left = `${collectible.x}px`;
-        feedback.style.top = `${collectible.y}px`;
+        feedback.style.left = `${displayX}px`;
+        feedback.style.top = `${displayY}px`;
         
         const container = document.getElementById('collectiblesContainer');
         if (container) {
@@ -501,12 +511,24 @@ class CollectiblesGame {
         }
         this.lastMissTime = now;
         
+        // Convert from video coordinates to display coordinates
+        // The canvas element has internal dimensions (canvas.width/height)
+        // but displays at CSS dimensions (offsetWidth/offsetHeight)
+        const canvas = this.canvas;
+        if (!canvas) return;
+        
+        const scaleX = canvas.offsetWidth / canvas.width;
+        const scaleY = canvas.offsetHeight / canvas.height;
+        
+        const displayX = handX * scaleX;
+        const displayY = handY * scaleY;
+        
         // Create miss indicator
         const feedback = document.createElement('div');
         feedback.className = 'miss-feedback';
         feedback.textContent = '✗';
-        feedback.style.left = `${handX}px`;
-        feedback.style.top = `${handY}px`;
+        feedback.style.left = `${displayX}px`;
+        feedback.style.top = `${displayY}px`;
         
         const container = document.getElementById('collectiblesContainer');
         if (container) {
