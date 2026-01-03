@@ -41,6 +41,14 @@
                     <div class="distance-value" id="distanceValue">0.00</div>
                     <div class="distance-unit">miles</div>
                 </div>
+                <!-- Collectibles game overlay -->
+                <div id="collectiblesContainer">
+                    <canvas id="collectiblesCanvas"></canvas>
+                    <div class="collectibles-counter">
+                        <span class="collectibles-icon">🌰</span>
+                        <span id="collectiblesCount">0</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Camera Feed & Head Tracking Stats -->
@@ -209,6 +217,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection"></script>
     
     <!-- Firebase & App Modules (load in order) -->
     <script src="firebase-config.js"></script>
@@ -217,6 +227,7 @@
     <script src="auth.js"></script>
     <script src="videoPlayer.js"></script>
     <script src="headTracker.js"></script>
+    <script src="collectibles.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

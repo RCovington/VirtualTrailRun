@@ -7,6 +7,7 @@ class VirtualTrailRunApp {
     constructor() {
         this.videoPlayer = new VideoPlayer();
         this.headTracker = new HeadTracker();
+        this.collectiblesGame = new CollectiblesGame();
         this.workoutStartTime = null;
         this.workoutTimerInterval = null;
         this.isWorkoutActive = false;
@@ -416,6 +417,12 @@ class VirtualTrailRunApp {
             }
         }
         
+        // Start collectibles game
+        const cameraFeed = document.getElementById('cameraFeed');
+        if (cameraFeed && this.collectiblesGame) {
+            this.collectiblesGame.start(cameraFeed);
+        }
+        
         this.isWorkoutActive = true;
     }
 
@@ -555,6 +562,11 @@ class VirtualTrailRunApp {
                 this.workoutStartTime = null;
             }
         }
+        
+        // Stop collectibles game
+        if (this.collectiblesGame) {
+            this.collectiblesGame.stop();
+        }
     }
 
     /**
@@ -603,6 +615,11 @@ class VirtualTrailRunApp {
             this.elements.indicatorBar.style.width = '0%';
             this.elements.distanceValue.textContent = '0.00';
             
+            // Reset collectibles game
+            if (this.collectiblesGame) {
+                this.collectiblesGame.reset();
+            }
+            
             console.log('Stats reset');
         }
     }
@@ -621,6 +638,7 @@ class VirtualTrailRunApp {
         const bobsPerMinute = parseInt(this.elements.bobsPerMinute.textContent) || 0;
         const durationSeconds = this.elapsedTime + 
             (this.workoutStartTime ? Math.floor((Date.now() - this.workoutStartTime) / 1000) : 0);
+        const collectiblesScore = this.collectiblesGame ? this.collectiblesGame.getScore() : 0;
 
         const workoutData = {
             userId: this.auth.user.uid,
@@ -631,6 +649,7 @@ class VirtualTrailRunApp {
             totalBobs: totalBobs,
             distance: miles,
             avgBobsPerMinute: bobsPerMinute,
+            collectiblesScore: collectiblesScore,
             completedAt: Date.now()
         };
 
@@ -652,7 +671,8 @@ class VirtualTrailRunApp {
                     videoTitle: this.currentVideoTitle,
                     duration: durationSeconds,
                     totalBobs: totalBobs,
-                    distance: miles
+                    distance: miles,
+                    collectiblesScore: collectiblesScore
                 });
             }
             
