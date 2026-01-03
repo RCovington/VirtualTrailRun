@@ -901,10 +901,25 @@ class CollectiblesGame {
         if (this.isFlatHand) {
             const wrist = keypoints[0];
             const middleTip = keypoints[12];
+            const indexTip = keypoints[8];
             
-            // Draw dagger emoji at the center of the hand
+            // Calculate angle of hand orientation
+            const dx = middleTip.x - wrist.x;
+            const dy = middleTip.y - wrist.y;
+            const angle = Math.atan2(dy, dx);
+            
+            // Draw simple knife/blade (using knife emoji without red jewels)
             this.ctx.save();
-            this.ctx.font = 'bold 60px Arial';
+            
+            // Position at center of hand
+            const centerX = (wrist.x + middleTip.x) / 2;
+            const centerY = (wrist.y + middleTip.y) / 2;
+            
+            this.ctx.translate(centerX, centerY);
+            this.ctx.rotate(angle);
+            
+            // Draw knife emoji (simpler than dagger)
+            this.ctx.font = 'bold 80px Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             
@@ -912,20 +927,7 @@ class CollectiblesGame {
             this.ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
             this.ctx.shadowBlur = 15;
             
-            // Position dagger near the middle of the hand
-            const centerX = (wrist.x + middleTip.x) / 2;
-            const centerY = (wrist.y + middleTip.y) / 2;
-            
-            this.ctx.fillText('🗡️', centerX, centerY);
-            
-            // Add text label
-            this.ctx.shadowBlur = 0;
-            this.ctx.font = 'bold 16px Arial';
-            this.ctx.fillStyle = '#FFD700';
-            this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-            this.ctx.lineWidth = 3;
-            this.ctx.strokeText('DAGGER MODE', centerX, centerY + 50);
-            this.ctx.fillText('DAGGER MODE', centerX, centerY + 50);
+            this.ctx.fillText('🔪', 0, 0);
             
             this.ctx.restore();
             return;
