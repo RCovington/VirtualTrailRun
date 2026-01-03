@@ -70,6 +70,13 @@ class VirtualTrailRunApp {
                 if (this.headTracker.isActive()) {
                     this.startWorkoutTimer();
                 }
+                // Restart collectibles game if camera is active
+                if (this.collectiblesGame && this.headTracker.isCameraActive() && !this.collectiblesGame.isActive) {
+                    const cameraFeed = document.getElementById('cameraFeed');
+                    if (cameraFeed) {
+                        this.collectiblesGame.start(cameraFeed);
+                    }
+                }
             });
             
             this.videoPlayer.onPause(() => {
@@ -546,6 +553,14 @@ class VirtualTrailRunApp {
         this.workoutTimerInterval = setInterval(() => {
             this.updateWorkoutTimer();
         }, 1000);
+        
+        // Restart collectibles game if not already active
+        if (this.collectiblesGame && !this.collectiblesGame.isActive && this.headTracker.isCameraActive()) {
+            const cameraFeed = document.getElementById('cameraFeed');
+            if (cameraFeed) {
+                this.collectiblesGame.start(cameraFeed);
+            }
+        }
     }
 
     /**
