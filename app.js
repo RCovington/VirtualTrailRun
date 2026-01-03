@@ -7,7 +7,7 @@ class VirtualTrailRunApp {
     constructor() {
         this.videoPlayer = new VideoPlayer();
         this.headTracker = new HeadTracker();
-        this.collectiblesGame = new CollectiblesGame();
+        this.collectiblesGame = new CollectiblesGame(this.headTracker);
         this.workoutStartTime = null;
         this.workoutTimerInterval = null;
         this.isWorkoutActive = false;

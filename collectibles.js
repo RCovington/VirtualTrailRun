@@ -4,7 +4,7 @@
  */
 
 class CollectiblesGame {
-    constructor() {
+    constructor(headTracker = null) {
         this.collectibles = [];
         this.collectedCount = 0;
         this.isActive = false;
@@ -21,6 +21,7 @@ class CollectiblesGame {
         this.isGrabbing = false;
         this.lastMissTime = 0;
         this.missThrottleDelay = 500; // Only show miss feedback every 500ms
+        this.headTracker = headTracker; // Reference to head tracker for face position
         
         // Slash gesture tracking
         this.slashHistory = []; // Track hand positions for slash detection
@@ -240,6 +241,15 @@ class CollectiblesGame {
             if (hands && hands.length > 0) {
                 const hand = hands[0];
                 
+                // Filter out hands that are likely the face
+                if (this.isHandWithinFace(hand)) {
+                    // Ignore this detection - it's likely the user's face
+                    this.lastHandPosition = null;
+                    this.lastHandKeypoints = null;
+                    this.isGrabbing = false;
+                    return;
+                }
+                
                 // Store keypoints for drawing on video overlay
                 this.lastHandKeypoints = hand.keypoints;
                 
@@ -384,6 +394,70 @@ class CollectiblesGame {
             this.debugCtx.lineWidth = 3;
             this.debugCtx.strokeText('PINCHING! 🤏', x + 20, y - 20);
             this.debugCtx.fillText('PINCHING! 🤏', x + 20, y - 20);
+        }
+    }
+
+    /**
+     * Check if a hand is within the face area
+     * Returns true if the hand center is within an expanded face bounding box
+     */
+    isHandWithinFace(hand) {
+        // If no head tracker or not tracking, allow all hand detections
+        if (!this.headTracker || !this.headTracker.detector) {
+            return false;
+        }
+
+        try {
+            // Get the palm center (keypoint 0)
+            const palmCenter = hand.keypoints[0];
+            
+            // Get current face detection from head tracker
+            // The head tracker stores the last face detection internally
+            const video = this.videoElement;
+            if (!video || video.readyState !== 4) return false;
+            
+            // We need to check if hand is near where a face would be
+            // Use a simple heuristic: check if palm is in the upper 40% of the frame
+            // and relatively centered (middle 60% horizontally)
+            const videoWidth = video.videoWidth || video.width;
+            const videoHeight = video.videoHeight || video.height;
+            
+            const palmX = palmCenter.x;
+            const palmY = palmCenter.y;
+            
+            // Face is typically in upper portion and centered
+            const isInUpperPortion = palmY < videoHeight * 0.4;
+            const isHorizontallyCentered = palmX > videoWidth * 0.2 && palmX < videoWidth * 0.8;
+            
+            // If hand is in typical face area, consider it suspicious
+            const isInFaceZone = isInUpperPortion && isHorizontallyCentered;
+            
+            // Additional check: if hand keypoints are very close together (face features)
+            // Calculate average distance between keypoints
+            let totalDistance = 0;
+            let count = 0;
+            for (let i = 0; i < hand.keypoints.length - 1; i++) {
+                const dist = this.distance(hand.keypoints[i], hand.keypoints[i + 1]);
+                totalDistance += dist;
+                count++;
+            }
+            const avgDistance = totalDistance / count;
+            
+            // Real hands have larger keypoint spread (>15px avg), faces detect as hands have smaller spread
+            const isLikelyFace = avgDistance < 15;
+            
+            if (isInFaceZone && isLikelyFace) {
+                // Debug log occasionally
+                if (Math.random() < 0.05) {
+                    console.log(`Hand filtered (likely face): avgKeyDist=${avgDistance.toFixed(1)}px, zone=${isInFaceZone}`);
+                }
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
+            // On error, allow the hand detection
+            return false;
         }
     }
 
