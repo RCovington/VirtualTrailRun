@@ -17,6 +17,7 @@ class CollectiblesGame {
         this.debugCanvas = null;
         this.debugCtx = null;
         this.lastHandPosition = null;
+        this.lastHandKeypoints = null;
         this.isGrabbing = false;
         this.lastMissTime = 0;
         this.missThrottleDelay = 500; // Only show miss feedback every 500ms
@@ -233,6 +234,9 @@ class CollectiblesGame {
             if (hands && hands.length > 0) {
                 const hand = hands[0];
                 
+                // Store keypoints for drawing on video overlay
+                this.lastHandKeypoints = hand.keypoints;
+                
                 // Draw hand keypoints for debugging
                 this.drawHandDebug(hand);
                 
@@ -263,10 +267,13 @@ class CollectiblesGame {
                 }
             } else {
                 this.lastHandPosition = null;
+                this.lastHandKeypoints = null;
                 this.isGrabbing = false;
             }
         } catch (error) {
             // Silently handle detection errors
+            this.lastHandPosition = null;
+            this.lastHandKeypoints = null;
             this.lastHandPosition = null;
             this.isGrabbing = false;
         }
@@ -550,6 +557,11 @@ class CollectiblesGame {
         // Clear canvas
         this.clearCanvas();
         
+        // Draw fingertip indicators if hand is detected
+        if (this.lastHandKeypoints) {
+            this.drawFingertipIndicators(this.lastHandKeypoints);
+        }
+        
         // Draw each collectible
         this.collectibles.forEach(collectible => {
             const size = collectible.size * collectible.scale;
@@ -571,6 +583,49 @@ class CollectiblesGame {
             this.ctx.shadowBlur = 0;
             this.ctx.shadowOffsetY = 0;
         });
+    }
+
+    /**
+     * Draw fingertip indicators on the video overlay
+     */
+    drawFingertipIndicators(keypoints) {
+        if (!this.ctx || !this.canvas) return;
+        
+        // Get thumb and index finger tips
+        const thumbTip = keypoints[4];
+        const indexTip = keypoints[8];
+        
+        // Determine color based on pinching state
+        const color = this.isGrabbing ? '#00FF00' : '#FFD700'; // Green when pinching, gold otherwise
+        const radius = this.isGrabbing ? 12 : 10;
+        
+        // Draw thumb tip
+        this.ctx.beginPath();
+        this.ctx.arc(thumbTip.x, thumbTip.y, radius, 0, 2 * Math.PI);
+        this.ctx.fillStyle = color;
+        this.ctx.fill();
+        this.ctx.strokeStyle = this.isGrabbing ? '#FFFFFF' : '#FFA500';
+        this.ctx.lineWidth = 3;
+        this.ctx.stroke();
+        
+        // Draw index tip
+        this.ctx.beginPath();
+        this.ctx.arc(indexTip.x, indexTip.y, radius, 0, 2 * Math.PI);
+        this.ctx.fillStyle = color;
+        this.ctx.fill();
+        this.ctx.strokeStyle = this.isGrabbing ? '#FFFFFF' : '#FFA500';
+        this.ctx.lineWidth = 3;
+        this.ctx.stroke();
+        
+        // Draw line between them when pinching
+        if (this.isGrabbing) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(thumbTip.x, thumbTip.y);
+            this.ctx.lineTo(indexTip.x, indexTip.y);
+            this.ctx.strokeStyle = '#00FF00';
+            this.ctx.lineWidth = 4;
+            this.ctx.stroke();
+        }
     }
 
     /**
