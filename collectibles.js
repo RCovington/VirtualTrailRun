@@ -546,16 +546,22 @@ class CollectiblesGame {
         // Remove from array
         this.collectibles.splice(index, 1);
         
-        // Increment counter
-        this.collectedCount++;
+        // Don't increment immediately - show pending animation first
+        // this.collectedCount++; // Will increment after delay
         
-        // Update UI
-        this.updateCounter();
+        // Show pending increment
+        this.showPendingIncrement();
+        
+        // Update counter after 3 seconds
+        setTimeout(() => {
+            this.collectedCount++;
+            this.updateCounter();
+        }, 3000);
         
         // Show feedback
         this.showCollectFeedback(collectible);
         
-        console.log(`Collected ${collectible.type.name}! Total: ${this.collectedCount}`);
+        console.log(`Collected ${collectible.type.name}! Pending increment...`);
     }
 
     /**
@@ -571,6 +577,37 @@ class CollectiblesGame {
             setTimeout(() => {
                 counter.style.animation = 'collectBounce 0.5s ease-out';
             }, 10);
+        }
+    }
+
+    /**
+     * Show pending increment next to counter
+     */
+    showPendingIncrement() {
+        const counterElement = document.getElementById('collectiblesCount');
+        if (!counterElement) return;
+        
+        // Create glowing +1 element
+        const pending = document.createElement('div');
+        pending.className = 'pending-increment';
+        pending.textContent = '+1';
+        
+        // Position it next to the counter
+        const counterRect = counterElement.getBoundingClientRect();
+        pending.style.position = 'absolute';
+        pending.style.left = `${counterRect.right + 10}px`;
+        pending.style.top = `${counterRect.top}px`;
+        
+        // Add to counter's parent container
+        const counterContainer = document.querySelector('.collectibles-counter');
+        if (counterContainer) {
+            counterContainer.style.position = 'relative';
+            counterContainer.appendChild(pending);
+            
+            // Remove after animation (3 seconds)
+            setTimeout(() => {
+                pending.remove();
+            }, 3000);
         }
     }
 
