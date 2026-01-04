@@ -39,11 +39,15 @@ class CollectiblesGame {
         // Separate bolt counter for crossbow ammunition
         this.boltCount = 0;
         
-        // Slash gesture tracking
-        this.slashHistory = []; // Track hand positions for slash detection
-        this.maxSlashHistory = 10; // Keep last 10 positions
-        this.isSlashing = false;
-        this.slashAnimations = []; // Active slash animations
+        // Crossbow firing tracking
+        this.lastFireTime = 0;
+        this.fireDelay = 500; // Minimum 500ms between shots
+        this.boltProjectiles = []; // Active bolt projectiles on screen
+        
+        // Crossbow firing tracking
+        this.lastFireTime = 0;
+        this.fireDelay = 500; // Minimum 500ms between shots
+        this.boltProjectiles = []; // Active bolt projectiles on screen
         
         // Timing
         this.minSpawnTime = 10000; // 10 seconds
@@ -201,6 +205,29 @@ class CollectiblesGame {
     }
 
     /**
+     * Spawn a collectible at a specific position (for bolt drops)
+     */
+    spawnCollectibleAt(x, y, type) {
+        if (!this.canvas) return;
+        
+        const collectible = {
+            id: Date.now() + Math.random(),
+            type: type,
+            x: x,
+            y: y,
+            initialY: y,
+            size: type.size,
+            speed: 0.15,
+            scale: 1.0, // Start at full size since it's a dropped item
+            maxScale: 1.0,
+            createdAt: Date.now()
+        };
+        
+        this.collectibles.push(collectible);
+        console.log(`Spawned ${type.name} at (${x.toFixed(0)}, ${y.toFixed(0)}) from bolt drop`);
+    }
+
+    /**
      * Main game loop
      */
     async gameLoop() {
@@ -227,6 +254,7 @@ class CollectiblesGame {
     updateCollectibles() {
         const now = Date.now();
         
+        // Update regular collectibles
         this.collectibles = this.collectibles.filter(collectible => {
             // Move collectible forward (down and grow)
             const age = (now - collectible.createdAt) / 1000; // seconds
@@ -241,6 +269,33 @@ class CollectiblesGame {
             // Remove if past bottom of screen
             return collectible.y < this.canvas.height + 50;
         });
+        
+        // Update bolt projectiles
+        this.boltProjectiles = this.boltProjectiles.filter(bolt => {
+            const deltaTime = (now - bolt.createdAt) / 1000; // seconds since creation
+            
+            // Move bolt
+            bolt.x += bolt.vx * (1/60); // Assuming ~60fps
+            bolt.y += bolt.vy * (1/60);
+            
+            // Check if bolt is still on screen and within lifetime
+            const onScreen = bolt.x < this.canvas.width + 50 && bolt.x > -50 &&
+                           bolt.y < this.canvas.height + 50 && bolt.y > -50;
+            const withinLifetime = (now - bolt.createdAt) < bolt.lifetime;
+            
+            // If bolt goes off screen or expires, convert it to a collectible
+            if (!onScreen || !withinLifetime) {
+                // Create a new collectible at bolt's final position (if on screen)
+                if (bolt.x >= 0 && bolt.x <= this.canvas.width && 
+                    bolt.y >= 0 && bolt.y <= this.canvas.height) {
+                    this.spawnCollectibleAt(bolt.x, bolt.y, bolt.type);
+                }
+                return false; // Remove bolt projectile
+            }
+            
+            return true; // Keep bolt
+        });
+    }
     }
 
     /**
@@ -277,11 +332,8 @@ class CollectiblesGame {
                 // Draw hand keypoints for debugging
                 this.drawHandDebug(hand);
                 
-                // Check for slash gesture (pointing)
-                const slashDetected = this.detectSlashGesture(hand);
-                if (slashDetected) {
-                    this.createSlashAnimation(slashDetected);
-                }
+                // Check for crossbow firing gesture (pointing/gun gesture)
+                this.detectCrossbowGesture(hand);
                 
                 // Check for closed fist gesture (to close inventory)
                 this.isClosedFist = this.isClosedFistGesture(hand);
@@ -526,10 +578,10 @@ class CollectiblesGame {
     }
 
     /**
-     * Detect slash gesture - pointing (index finger only) moving quickly
-     * Returns slash data if detected, null otherwise
+     * Detect crossbow firing gesture - pointing/gun gesture
+     * Fires a bolt projectile when detected
      */
-    detectSlashGesture(hand) {
+    detectCrossbowGesture(hand) {
         const keypoints = hand.keypoints;
         
         // Get fingertips and their bases
@@ -541,13 +593,15 @@ class CollectiblesGame {
         const palm = keypoints[0];
         
         const indexBase = keypoints[5];
-        const middleBase = keypoints[9];
-        const ringBase = keypoints[13];
-        const pinkyBase = keypoints[17];
+        const thumbBase = keypoints[2];
         
         // Check if index finger is extended
         const indexDist = this.distance(indexTip, indexBase);
         const indexExtended = indexDist > 50;
+        
+        // Check if thumb is extended (gun gesture)
+        const thumbDist = this.distance(thumbTip, thumbBase);
+        const thumbExtended = thumbDist > 40;
         
         // Check if middle, ring, and pinky are close to palm (curled)
         const middleToPalm = this.distance(middleTip, palm);
@@ -558,76 +612,25 @@ class CollectiblesGame {
         const ringClose = ringToPalm < 90;
         const pinkyClose = pinkyToPalm < 90;
         
-        // Pointing gesture: only index extended, all others closed
-        // Don't strictly check thumb position to avoid conflict with pinch
-        const isPointing = indexExtended && middleClose && ringClose && pinkyClose;
+        // Gun/shooting gesture: index and thumb extended, others closed
+        const isShooting = indexExtended && thumbExtended && middleClose && ringClose && pinkyClose;
         
         // Store state for visual indicator
-        this.isPointing = isPointing;
+        this.isPointing = isShooting;
         
         // Debug logging
-        console.log(`👉 Pointing check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleToPalm.toFixed(0)}(${middleClose}), ` +
-                   `ring=${ringToPalm.toFixed(0)}(${ringClose}), pinky=${pinkyToPalm.toFixed(0)}(${pinkyClose}), 👉=${isPointing}`);
+        console.log(`🎯 Crossbow check: idx=${indexDist.toFixed(0)}(${indexExtended}), thumb=${thumbDist.toFixed(0)}(${thumbExtended}), ` +
+                   `mid=${middleToPalm.toFixed(0)}(${middleClose}), ring=${ringToPalm.toFixed(0)}(${ringClose}), ` +
+                   `pinky=${pinkyToPalm.toFixed(0)}(${pinkyClose}), 🎯=${isShooting}`);
         
-        if (!isPointing) {
-            this.slashHistory = []; // Reset if not pointing
-            return null;
+        // If shooting gesture detected and enough time has passed, fire!
+        if (isShooting) {
+            const now = Date.now();
+            if (now - this.lastFireTime > this.fireDelay) {
+                this.fireBolt(indexTip);
+                this.lastFireTime = now;
+            }
         }
-        
-        // Track hand position for movement detection
-        const wrist = keypoints[0];
-        const currentPos = { x: wrist.x, y: wrist.y, time: Date.now() };
-        
-        this.slashHistory.push(currentPos);
-        if (this.slashHistory.length > this.maxSlashHistory) {
-            this.slashHistory.shift();
-        }
-        
-        // Need at least 5 positions to detect movement
-        if (this.slashHistory.length < 5) {
-            return null;
-        }
-        
-        // Calculate movement speed and direction
-        const oldest = this.slashHistory[0];
-        const newest = this.slashHistory[this.slashHistory.length - 1];
-        const timeDiff = newest.time - oldest.time;
-        const dx = newest.x - oldest.x;
-        const dy = newest.y - oldest.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const speed = distance / (timeDiff / 1000); // pixels per second
-        
-        // Debug logging for movement
-        if (Math.random() < 0.1) { // 10% of the time when in dagger mode
-            console.log(`Slash movement: speed=${speed.toFixed(0)} px/s, distance=${distance.toFixed(0)}px, time=${timeDiff}ms, threshold=15, isSlashing=${this.isSlashing}`);
-        }
-        
-        // Detect slash if moving fast enough (lowered threshold to 15 px/s - realistic for hand tracking)
-        if (speed > 15 && !this.isSlashing) {
-            this.isSlashing = true;
-            
-            // Calculate slash angle
-            const angle = Math.atan2(dy, dx);
-            
-            // Determine if it's more horizontal or vertical
-            const absAngle = Math.abs(angle);
-            const isHorizontal = absAngle < Math.PI / 4 || absAngle > (3 * Math.PI) / 4;
-            
-            setTimeout(() => { this.isSlashing = false; }, 500); // Cooldown
-            
-            console.log(`🗡️ SLASH DETECTED! Speed: ${speed.toFixed(0)} px/s, Angle: ${(angle * 180 / Math.PI).toFixed(0)}°`);
-            return {
-                startX: oldest.x,
-                startY: oldest.y,
-                endX: newest.x,
-                endY: newest.y,
-                angle: angle,
-                speed: speed,
-                isHorizontal: isHorizontal
-            };
-        }
-        
-        return null;
     }
 
     /**
@@ -886,7 +889,10 @@ class CollectiblesGame {
     /**
      * Create slash animation
      */
-    createSlashAnimation(slashData) {
+    /**
+     * Fire a bolt projectile from the crossbow
+     */
+    fireBolt(startPosition) {
         // Check if we have bolts to fire
         if (this.boltCount <= 0) {
             console.log('❌ No bolts! Cannot fire crossbow.');
@@ -899,14 +905,20 @@ class CollectiblesGame {
         this.updateBoltCounter();
         console.log(`🏹 Fired bolt! Remaining: ${this.boltCount}`);
         
-        const animation = {
-            ...slashData,
+        // Create a bolt projectile that travels across screen
+        const bolt = {
+            x: startPosition.x,
+            y: startPosition.y,
+            vx: 400, // pixels per second - travels right
+            vy: 0,
+            size: 30,
             createdAt: Date.now(),
-            duration: 400 // Animation lasts 400ms
+            lifetime: 3000, // Exists for 3 seconds before disappearing
+            type: this.types.find(t => t.name === 'bolt')
         };
         
-        this.slashAnimations.push(animation);
-        console.log(`✅ Slash animation created! Total animations: ${this.slashAnimations.length}`);
+        this.boltProjectiles.push(bolt);
+        console.log(`✅ Bolt projectile created! Position: (${startPosition.x.toFixed(0)}, ${startPosition.y.toFixed(0)})`);
     }
 
     /**
@@ -918,8 +930,8 @@ class CollectiblesGame {
         // Clear canvas
         this.clearCanvas();
         
-        // Draw slash animations
-        this.drawSlashAnimations();
+        // Draw bolt projectiles
+        this.drawBoltProjectiles();
         
         // Draw fingertip indicators if hand is detected
         if (this.lastHandKeypoints) {
@@ -950,72 +962,28 @@ class CollectiblesGame {
     }
 
     /**
-     * Draw slash animations
+     * Draw bolt projectiles
      */
-    drawSlashAnimations() {
+    drawBoltProjectiles() {
         if (!this.ctx || !this.canvas) return;
         
-        const now = Date.now();
-        
-        // Remove expired animations
-        this.slashAnimations = this.slashAnimations.filter(anim => 
-            now - anim.createdAt < anim.duration
-        );
-        
-        // Debug log active animations
-        if (this.slashAnimations.length > 0) {
-            console.log(`🎨 Drawing ${this.slashAnimations.length} slash animations`);
-        }
-        
-        // Draw each active slash
-        this.slashAnimations.forEach(slash => {
-            const progress = (now - slash.createdAt) / slash.duration;
-            const opacity = 1 - progress; // Fade out
-            
-            console.log(`Drawing slash at progress ${(progress * 100).toFixed(0)}%, opacity ${opacity.toFixed(2)}`);
-            
-            // Draw multiple swoosh lines for motion effect
+        // Draw each bolt
+        this.boltProjectiles.forEach(bolt => {
+            // Draw bolt emoji with rotation
             this.ctx.save();
-            this.ctx.globalAlpha = opacity;
+            this.ctx.translate(bolt.x, bolt.y);
+            this.ctx.rotate(0); // Bolt points right (0 radians)
             
-            // Draw 3 curved swoosh lines along the slash path
-            for (let i = 0; i < 3; i++) {
-                const offset = (i - 1) * 15; // Spread lines vertically
-                const lineProgress = Math.max(0, progress - i * 0.1); // Stagger the lines
-                const lineOpacity = opacity * (1 - i * 0.2);
-                
-                if (lineProgress > 0) {
-                    // Calculate positions along the slash
-                    const startX = slash.startX + (slash.endX - slash.startX) * (lineProgress - 0.3);
-                    const startY = slash.startY + (slash.endY - slash.startY) * (lineProgress - 0.3);
-                    const endX = slash.startX + (slash.endX - slash.startX) * lineProgress;
-                    const endY = slash.startY + (slash.endY - slash.startY) * lineProgress;
-                    
-                    // Perpendicular offset for line spread
-                    const perpX = -Math.sin(slash.angle) * offset;
-                    const perpY = Math.cos(slash.angle) * offset;
-                    
-                    // Draw swoosh line
-                    this.ctx.strokeStyle = `rgba(200, 230, 255, ${lineOpacity})`;
-                    this.ctx.lineWidth = 12 - i * 3; // Thicker to thinner
-                    this.ctx.lineCap = 'round';
-                    
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(startX + perpX, startY + perpY);
-                    this.ctx.lineTo(endX + perpX, endY + perpY);
-                    this.ctx.stroke();
-                    
-                    // Add glow effect
-                    this.ctx.strokeStyle = `rgba(255, 255, 255, ${lineOpacity * 0.5})`;
-                    this.ctx.lineWidth = 18 - i * 4;
-                    this.ctx.globalAlpha = opacity * 0.3;
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(startX + perpX, startY + perpY);
-                    this.ctx.lineTo(endX + perpX, endY + perpY);
-                    this.ctx.stroke();
-                    this.ctx.globalAlpha = opacity;
-                }
-            }
+            this.ctx.font = `${bolt.size}px Arial`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            
+            // Add motion blur effect
+            this.ctx.shadowColor = 'rgba(139, 69, 19, 0.5)';
+            this.ctx.shadowBlur = 10;
+            this.ctx.shadowOffsetX = -10; // Trail effect
+            
+            this.ctx.fillText(bolt.type.emoji, 0, 0);
             
             this.ctx.restore();
         });
@@ -1027,7 +995,7 @@ class CollectiblesGame {
     drawFingertipIndicators(keypoints) {
         if (!this.ctx || !this.canvas) return;
         
-        // If pointing (dagger mode), show dagger indicator
+        // If in crossbow mode (shooting gesture), show crossbow indicator
         if (this.isPointing) {
             const wrist = keypoints[0];
             const indexTip = keypoints[8];
@@ -1037,7 +1005,7 @@ class CollectiblesGame {
             const dy = indexTip.y - wrist.y;
             const angle = Math.atan2(dy, dx);
             
-            // Draw knife emoji
+            // Draw crossbow emoji
             this.ctx.save();
             
             // Position at center of hand
@@ -1047,16 +1015,16 @@ class CollectiblesGame {
             this.ctx.translate(centerX, centerY);
             this.ctx.rotate(angle);
             
-            // Draw knife emoji
+            // Draw crossbow emoji
             this.ctx.font = 'bold 80px Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             
             // Add glow effect
-            this.ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+            this.ctx.shadowColor = 'rgba(139, 69, 19, 0.8)';
             this.ctx.shadowBlur = 15;
             
-            this.ctx.fillText('🔪', 0, 0);
+            this.ctx.fillText('🏹', 0, 0);
             
             this.ctx.restore();
             
@@ -1064,11 +1032,11 @@ class CollectiblesGame {
             this.ctx.save();
             this.ctx.font = 'bold 40px Arial';
             this.ctx.textAlign = 'center';
-            this.ctx.fillStyle = '#FFD700';
+            this.ctx.fillStyle = '#8B4513';
             this.ctx.strokeStyle = '#000000';
             this.ctx.lineWidth = 3;
-            this.ctx.strokeText('👉 DAGGER MODE', this.canvas.width / 2, 60);
-            this.ctx.fillText('👉 DAGGER MODE', this.canvas.width / 2, 60);
+            this.ctx.strokeText('🏹 CROSSBOW READY', this.canvas.width / 2, 60);
+            this.ctx.fillText('🏹 CROSSBOW READY', this.canvas.width / 2, 60);
             this.ctx.restore();
             
             return;
