@@ -554,10 +554,15 @@ class CollectiblesGame {
         const indexExtended = indexDist > 50;
         const middleExtended = middleDist > 50;
         
-        // Check if ring, pinky, and thumb are NOT extended (in fist)
-        const ringClose = this.distance(ringTip, palm) < 70;
-        const pinkyClose = this.distance(pinkyTip, palm) < 70;
-        const thumbClose = this.distance(thumbTip, palm) < 60;
+        // Check if ring, pinky, and thumb are close to palm (curled in fist)
+        const ringToPalm = this.distance(ringTip, palm);
+        const pinkyToPalm = this.distance(pinkyTip, palm);
+        const thumbToPalm = this.distance(thumbTip, palm);
+        
+        // More lenient thresholds - fingers just need to be curled, not tightly closed
+        const ringClose = ringToPalm < 90;
+        const pinkyClose = pinkyToPalm < 90;
+        const thumbClose = thumbToPalm < 80;
         
         // Two fingers gesture: index and middle extended, others closed
         const isTwoFingers = indexExtended && middleExtended && ringClose && pinkyClose && thumbClose;
@@ -565,10 +570,11 @@ class CollectiblesGame {
         // Store two-finger state for visual indicator
         this.isTwoFingers = isTwoFingers;
         
-        // Debug logging more frequently to diagnose issues
-        if (Math.random() < 0.2) { // 20% of the time
-            console.log(`Slash check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleDist.toFixed(0)}(${middleExtended}), ` +
-                       `ring=${ringClose}, pinky=${pinkyClose}, thumb=${thumbClose}, isTwoFingers=${isTwoFingers}`);
+        // Debug logging - show actual distances to help tune thresholds
+        if (Math.random() < 0.5) { // 50% of the time for better visibility
+            console.log(`✌️ Two-finger check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleDist.toFixed(0)}(${middleExtended}), ` +
+                       `ring=${ringToPalm.toFixed(0)}(${ringClose}), pinky=${pinkyToPalm.toFixed(0)}(${pinkyClose}), ` +
+                       `thumb=${thumbToPalm.toFixed(0)}(${thumbClose}), ✌️=${isTwoFingers}`);
         }
         
         if (!isTwoFingers) {
@@ -1027,6 +1033,18 @@ class CollectiblesGame {
             this.ctx.fillText('🔪', 0, 0);
             
             this.ctx.restore();
+            
+            // Add text indicator at top of screen
+            this.ctx.save();
+            this.ctx.font = 'bold 40px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.strokeStyle = '#000000';
+            this.ctx.lineWidth = 3;
+            this.ctx.strokeText('✌️ DAGGER MODE', this.canvas.width / 2, 60);
+            this.ctx.fillText('✌️ DAGGER MODE', this.canvas.width / 2, 60);
+            this.ctx.restore();
+            
             return;
         }
         
