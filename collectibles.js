@@ -19,7 +19,7 @@ class CollectiblesGame {
         this.lastHandPosition = null;
         this.lastHandKeypoints = null;
         this.isGrabbing = false;
-        this.isTwoFingers = false; // Track if showing two fingers (dagger mode)
+        this.isPointing = false; // Track if showing pointing gesture (dagger mode)
         this.isOpenHand = false; // Track if hand is open (5 fingers splayed)
         this.isClosedFist = false; // Track if hand is closed fist
         this.inventoryOpen = false; // Track if inventory panel is open
@@ -274,23 +274,29 @@ class CollectiblesGame {
                 // Draw hand keypoints for debugging
                 this.drawHandDebug(hand);
                 
-                // Check for slash gesture (two fingers)
+                // Check for slash gesture (pointing)
                 const slashDetected = this.detectSlashGesture(hand);
                 if (slashDetected) {
                     this.createSlashAnimation(slashDetected);
                 }
                 
-                // Check for closed fist gesture (for grabbing collectibles)
+                // Check for closed fist gesture (to close inventory)
                 this.isClosedFist = this.isClosedFistGesture(hand);
                 
-                // Use closed fist for grabbing (Option 3)
-                this.isGrabbing = this.isClosedFist;
+                // Check if hand is making a pinch gesture for grabbing
+                // Only check pinch if NOT in dagger mode (pointing)
+                if (!this.isPointing) {
+                    this.isGrabbing = this.isGrabbingGesture(hand);
+                } else {
+                    this.isGrabbing = false;
+                }
                 
                 if (this.isGrabbing) {
-                    // Get hand position (use wrist as center point for fist)
-                    const wrist = hand.keypoints[0];
-                    const handX = wrist.x;
-                    const handY = wrist.y;
+                    // Get hand position (use pinch point - midpoint between thumb and index)
+                    const thumbTip = hand.keypoints[4];
+                    const indexTip = hand.keypoints[8];
+                    const handX = (thumbTip.x + indexTip.x) / 2;
+                    const handY = (thumbTip.y + indexTip.y) / 2;
                     
                     this.lastHandPosition = { x: handX, y: handY };
                     
@@ -517,7 +523,7 @@ class CollectiblesGame {
     }
 
     /**
-     * Detect slash gesture - two fingers up (index and middle)
+     * Detect slash gesture - pointing (index finger only) moving quickly
      * Returns slash data if detected, null otherwise
      */
     detectSlashGesture(hand) {
@@ -536,33 +542,32 @@ class CollectiblesGame {
         const ringBase = keypoints[13];
         const pinkyBase = keypoints[17];
         
-        // Check if index and middle fingers are extended
+        // Check if index finger is extended
         const indexDist = this.distance(indexTip, indexBase);
-        const middleDist = this.distance(middleTip, middleBase);
-        
         const indexExtended = indexDist > 50;
-        const middleExtended = middleDist > 50;
         
-        // Check if ring and pinky are close to palm (curled)
+        // Check if middle, ring, and pinky are close to palm (curled)
+        const middleToPalm = this.distance(middleTip, palm);
         const ringToPalm = this.distance(ringTip, palm);
         const pinkyToPalm = this.distance(pinkyTip, palm);
         
+        const middleClose = middleToPalm < 90;
         const ringClose = ringToPalm < 90;
         const pinkyClose = pinkyToPalm < 90;
         
-        // Two fingers gesture: index and middle extended, ring and pinky closed
-        // Don't check thumb - it can be anywhere
-        const isTwoFingers = indexExtended && middleExtended && ringClose && pinkyClose;
+        // Pointing gesture: only index extended, all others closed
+        // Don't strictly check thumb position to avoid conflict with pinch
+        const isPointing = indexExtended && middleClose && ringClose && pinkyClose;
         
         // Store state for visual indicator
-        this.isTwoFingers = isTwoFingers;
+        this.isPointing = isPointing;
         
-        // Debug logging - show actual distances to help tune thresholds
-        console.log(`✌️ Two-finger check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleDist.toFixed(0)}(${middleExtended}), ` +
-                   `ring=${ringToPalm.toFixed(0)}(${ringClose}), pinky=${pinkyToPalm.toFixed(0)}(${pinkyClose}), ✌️=${isTwoFingers}`);
+        // Debug logging
+        console.log(`👉 Pointing check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleToPalm.toFixed(0)}(${middleClose}), ` +
+                   `ring=${ringToPalm.toFixed(0)}(${ringClose}), pinky=${pinkyToPalm.toFixed(0)}(${pinkyClose}), 👉=${isPointing}`);
         
-        if (!isTwoFingers) {
-            this.slashHistory = []; // Reset if not in correct gesture
+        if (!isPointing) {
+            this.slashHistory = []; // Reset if not pointing
             return null;
         }
         
@@ -984,23 +989,22 @@ class CollectiblesGame {
     drawFingertipIndicators(keypoints) {
         if (!this.ctx || !this.canvas) return;
         
-        // If showing two fingers (dagger mode), show dagger indicator
-        if (this.isTwoFingers) {
+        // If pointing (dagger mode), show dagger indicator
+        if (this.isPointing) {
             const wrist = keypoints[0];
-            const middleTip = keypoints[12];
             const indexTip = keypoints[8];
             
             // Calculate angle of hand orientation
-            const dx = middleTip.x - wrist.x;
-            const dy = middleTip.y - wrist.y;
+            const dx = indexTip.x - wrist.x;
+            const dy = indexTip.y - wrist.y;
             const angle = Math.atan2(dy, dx);
             
             // Draw knife emoji
             this.ctx.save();
             
             // Position at center of hand
-            const centerX = (wrist.x + middleTip.x) / 2;
-            const centerY = (wrist.y + middleTip.y) / 2;
+            const centerX = (wrist.x + indexTip.x) / 2;
+            const centerY = (wrist.y + indexTip.y) / 2;
             
             this.ctx.translate(centerX, centerY);
             this.ctx.rotate(angle);
@@ -1025,46 +1029,48 @@ class CollectiblesGame {
             this.ctx.fillStyle = '#FFD700';
             this.ctx.strokeStyle = '#000000';
             this.ctx.lineWidth = 3;
-            this.ctx.strokeText('✌️ DAGGER MODE', this.canvas.width / 2, 60);
-            this.ctx.fillText('✌️ DAGGER MODE', this.canvas.width / 2, 60);
+            this.ctx.strokeText('👉 DAGGER MODE', this.canvas.width / 2, 60);
+            this.ctx.fillText('👉 DAGGER MODE', this.canvas.width / 2, 60);
             this.ctx.restore();
             
             return;
         }
         
-        // If grabbing (closed fist), show fist indicator
-        if (this.isGrabbing) {
-            const wrist = keypoints[0];
-            
-            // Draw fist emoji at wrist position
-            this.ctx.save();
-            this.ctx.font = 'bold 60px Arial';
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'middle';
-            
-            // Add glow effect
-            this.ctx.shadowColor = 'rgba(0, 255, 0, 0.8)';
-            this.ctx.shadowBlur = 15;
-            
-            this.ctx.fillText('👊', wrist.x, wrist.y);
-            this.ctx.restore();
-            return;
-        }
-        
-        // Default: show small dots on index and middle fingertips when hand is visible
+        // Get thumb and index finger tips for pinch visualization
+        const thumbTip = keypoints[4];
         const indexTip = keypoints[8];
-        const middleTip = keypoints[12];
         
-        // Draw small dots
-        this.ctx.beginPath();
-        this.ctx.arc(indexTip.x, indexTip.y, 3, 0, 2 * Math.PI);
-        this.ctx.fillStyle = '#FFD700';
-        this.ctx.fill();
+        // Determine color based on grabbing state
+        const color = this.isGrabbing ? '#00FF00' : '#FFD700';
+        const radius = this.isGrabbing ? 4 : 3;
         
+        // Draw thumb tip
         this.ctx.beginPath();
-        this.ctx.arc(middleTip.x, middleTip.y, 3, 0, 2 * Math.PI);
-        this.ctx.fillStyle = '#FFD700';
+        this.ctx.arc(thumbTip.x, thumbTip.y, radius, 0, 2 * Math.PI);
+        this.ctx.fillStyle = color;
         this.ctx.fill();
+        this.ctx.strokeStyle = this.isGrabbing ? '#FFFFFF' : '#FFA500';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+        
+        // Draw index tip
+        this.ctx.beginPath();
+        this.ctx.arc(indexTip.x, indexTip.y, radius, 0, 2 * Math.PI);
+        this.ctx.fillStyle = color;
+        this.ctx.fill();
+        this.ctx.strokeStyle = this.isGrabbing ? '#FFFFFF' : '#FFA500';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+        
+        // Draw line between them when grabbing
+        if (this.isGrabbing) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(thumbTip.x, thumbTip.y);
+            this.ctx.lineTo(indexTip.x, indexTip.y);
+            this.ctx.strokeStyle = '#00FF00';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+        }
     }
 
     /**
