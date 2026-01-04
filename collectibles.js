@@ -1163,7 +1163,7 @@ class CollectiblesGame {
                 <button class="inventory-close" id="inventoryClose">✕</button>
             </div>
             <div class="inventory-tabs">
-                <button class="inventory-tab active" data-tab="collectibles">🌰 Collectibles</button>
+                <button class="inventory-tab active" data-tab="collectibles">🌰 Objects</button>
                 <button class="inventory-tab" data-tab="weapons">⚔️ Weapons</button>
                 <button class="inventory-tab" data-tab="armor">🛡️ Armor</button>
                 <button class="inventory-tab" data-tab="magic">✨ Magic</button>
