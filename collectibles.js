@@ -1150,7 +1150,7 @@ class CollectiblesGame {
     }
 
     /**
-     * Create the inventory panel HTML
+     * Create the inventory panel HTML with tabbed interface
      */
     createInventoryPanel() {
         const panel = document.createElement('div');
@@ -1162,15 +1162,31 @@ class CollectiblesGame {
                 <h2>🎒 Inventory</h2>
                 <button class="inventory-close" id="inventoryClose">✕</button>
             </div>
-            <div class="inventory-grid" id="inventoryGrid">
-                ${this.types.map(type => `
-                    <div class="inventory-item" data-type="${type.name}">
-                        <div class="inventory-item-emoji">${type.emoji}</div>
-                        <div class="inventory-item-name">${type.name}</div>
-                        <div class="inventory-item-count" id="inventory-${type.name}">0</div>
-                        <button class="inventory-item-use" data-type="${type.name}">Use</button>
+            <div class="inventory-tabs">
+                <button class="inventory-tab active" data-tab="collectibles">🌰 Collectibles</button>
+                <button class="inventory-tab" data-tab="weapons">⚔️ Weapons</button>
+                <button class="inventory-tab" data-tab="armor">🛡️ Armor</button>
+                <button class="inventory-tab" data-tab="magic">✨ Magic</button>
+            </div>
+            <div class="inventory-content">
+                <div class="inventory-tab-content active" id="collectibles-tab">
+                    <div class="inventory-list" id="collectiblesList"></div>
+                </div>
+                <div class="inventory-tab-content" id="weapons-tab">
+                    <div class="inventory-list" id="weaponsList">
+                        <div class="inventory-empty">No weapons yet</div>
                     </div>
-                `).join('')}
+                </div>
+                <div class="inventory-tab-content" id="armor-tab">
+                    <div class="inventory-list" id="armorList">
+                        <div class="inventory-empty">No armor yet</div>
+                    </div>
+                </div>
+                <div class="inventory-tab-content" id="magic-tab">
+                    <div class="inventory-list" id="magicList">
+                        <div class="inventory-empty">No magic items yet</div>
+                    </div>
+                </div>
             </div>
             <div class="inventory-footer">
                 <div class="potion-area">
@@ -1187,12 +1203,12 @@ class CollectiblesGame {
         const closeBtn = panel.querySelector('#inventoryClose');
         closeBtn.addEventListener('click', () => this.closeInventory());
         
-        // Add use button handlers
-        const useButtons = panel.querySelectorAll('.inventory-item-use');
-        useButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const itemType = e.target.dataset.type;
-                this.useItem(itemType);
+        // Add tab switching handlers
+        const tabs = panel.querySelectorAll('.inventory-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.target.dataset.tab;
+                this.switchTab(tabName);
             });
         });
         
@@ -1200,14 +1216,69 @@ class CollectiblesGame {
     }
 
     /**
-     * Update the inventory display with current counts
+     * Switch between inventory tabs
+     */
+    switchTab(tabName) {
+        // Update active tab button
+        const tabs = document.querySelectorAll('.inventory-tab');
+        tabs.forEach(tab => {
+            if (tab.dataset.tab === tabName) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+        
+        // Update active tab content
+        const tabContents = document.querySelectorAll('.inventory-tab-content');
+        tabContents.forEach(content => {
+            if (content.id === `${tabName}-tab`) {
+                content.classList.add('active');
+            } else {
+                content.classList.remove('active');
+            }
+        });
+    }
+
+    /**
+     * Update the inventory display with current counts (sorted by quantity)
      */
     updateInventoryDisplay() {
-        this.types.forEach(type => {
-            const countElement = document.getElementById(`inventory-${type.name}`);
-            if (countElement) {
-                countElement.textContent = this.inventory[type.name] || 0;
-            }
+        const listContainer = document.getElementById('collectiblesList');
+        if (!listContainer) return;
+        
+        // Create array of items with their counts for sorting
+        const items = this.types.map(type => ({
+            type: type,
+            count: this.inventory[type.name] || 0
+        }));
+        
+        // Sort by count (descending) so items with most quantity appear first
+        items.sort((a, b) => b.count - a.count);
+        
+        // Generate HTML for sorted items
+        listContainer.innerHTML = items.map(item => `
+            <div class="inventory-list-item" data-type="${item.type.name}">
+                <div class="inventory-list-emoji">${item.type.emoji}</div>
+                <div class="inventory-list-info">
+                    <div class="inventory-list-name">${item.type.name}</div>
+                    <div class="inventory-list-count" id="inventory-${item.type.name}">
+                        Quantity: <span class="count-value">${item.count}</span>
+                    </div>
+                </div>
+                <button class="inventory-list-use" data-type="${item.type.name}" ${item.count === 0 ? 'disabled' : ''}>
+                    Use
+                </button>
+            </div>
+        `).join('');
+        
+        // Add use button handlers
+        const useButtons = listContainer.querySelectorAll('.inventory-list-use');
+        useButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const itemType = e.target.dataset.type;
+                this.useItem(itemType);
+            });
         });
     }
 
