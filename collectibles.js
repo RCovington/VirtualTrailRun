@@ -19,7 +19,7 @@ class CollectiblesGame {
         this.lastHandPosition = null;
         this.lastHandKeypoints = null;
         this.isGrabbing = false;
-        this.isTwoFingersTucked = false; // Track if showing two fingers with thumb fully tucked (dagger mode)
+        this.isTwoFingers = false; // Track if showing two fingers (dagger mode)
         this.isOpenHand = false; // Track if hand is open (5 fingers splayed)
         this.isClosedFist = false; // Track if hand is closed fist
         this.inventoryOpen = false; // Track if inventory panel is open
@@ -274,30 +274,23 @@ class CollectiblesGame {
                 // Draw hand keypoints for debugging
                 this.drawHandDebug(hand);
                 
-                // Check for slash gesture
+                // Check for slash gesture (two fingers)
                 const slashDetected = this.detectSlashGesture(hand);
                 if (slashDetected) {
                     this.createSlashAnimation(slashDetected);
                 }
                 
-                // Check for closed fist gesture (to close inventory)
-                // Must check BEFORE pinch detection since fist can look like pinch
+                // Check for closed fist gesture (for grabbing collectibles)
                 this.isClosedFist = this.isClosedFistGesture(hand);
                 
-                // Check if hand is making a grabbing gesture (pinch)
-                // Skip pinch detection if closed fist is detected
-                if (!this.isClosedFist) {
-                    this.isGrabbing = this.isGrabbingGesture(hand);
-                } else {
-                    this.isGrabbing = false;
-                }
+                // Use closed fist for grabbing (Option 3)
+                this.isGrabbing = this.isClosedFist;
                 
                 if (this.isGrabbing) {
-                    // Get hand position (use pinch point - midpoint between thumb and index)
-                    const thumbTip = hand.keypoints[4];
-                    const indexTip = hand.keypoints[8];
-                    const handX = (thumbTip.x + indexTip.x) / 2;
-                    const handY = (thumbTip.y + indexTip.y) / 2;
+                    // Get hand position (use wrist as center point for fist)
+                    const wrist = hand.keypoints[0];
+                    const handX = wrist.x;
+                    const handY = wrist.y;
                     
                     this.lastHandPosition = { x: handX, y: handY };
                     
@@ -524,7 +517,7 @@ class CollectiblesGame {
     }
 
     /**
-     * Detect slash gesture - two fingers up with thumb fully tucked behind hand
+     * Detect slash gesture - two fingers up (index and middle)
      * Returns slash data if detected, null otherwise
      */
     detectSlashGesture(hand) {
@@ -542,7 +535,6 @@ class CollectiblesGame {
         const middleBase = keypoints[9];
         const ringBase = keypoints[13];
         const pinkyBase = keypoints[17];
-        const thumbBase = keypoints[2];
         
         // Check if index and middle fingers are extended
         const indexDist = this.distance(indexTip, indexBase);
@@ -551,34 +543,25 @@ class CollectiblesGame {
         const indexExtended = indexDist > 50;
         const middleExtended = middleDist > 50;
         
-        // Check if ring and pinky are close to palm (curled in fist)
+        // Check if ring and pinky are close to palm (curled)
         const ringToPalm = this.distance(ringTip, palm);
         const pinkyToPalm = this.distance(pinkyTip, palm);
         
         const ringClose = ringToPalm < 90;
         const pinkyClose = pinkyToPalm < 90;
         
-        // CRITICAL: Check if thumb is VERY close to palm (fully tucked)
-        // This is what distinguishes it from pinch gesture
-        const thumbToPalm = this.distance(thumbTip, palm);
-        const thumbTucked = thumbToPalm < 70; // Much stricter than before - thumb must be very close
-        
-        // Also check thumb isn't extended outward
-        const thumbToIndex = this.distance(thumbTip, indexTip);
-        const thumbNotPinching = thumbToIndex > 60; // Thumb isn't near index finger (not pinching)
-        
-        // Two fingers with tucked thumb: index and middle extended, ring/pinky closed, thumb TUCKED
-        const isTwoFingersTucked = indexExtended && middleExtended && ringClose && pinkyClose && thumbTucked && thumbNotPinching;
+        // Two fingers gesture: index and middle extended, ring and pinky closed
+        // Don't check thumb - it can be anywhere
+        const isTwoFingers = indexExtended && middleExtended && ringClose && pinkyClose;
         
         // Store state for visual indicator
-        this.isTwoFingersTucked = isTwoFingersTucked;
+        this.isTwoFingers = isTwoFingers;
         
         // Debug logging - show actual distances to help tune thresholds
-        console.log(`✌️🤛 Two-fingers-tucked check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleDist.toFixed(0)}(${middleExtended}), ` +
-                   `ring=${ringToPalm.toFixed(0)}(${ringClose}), pinky=${pinkyToPalm.toFixed(0)}(${pinkyClose}), ` +
-                   `thumb→palm=${thumbToPalm.toFixed(0)}(${thumbTucked}), thumb→idx=${thumbToIndex.toFixed(0)}(${thumbNotPinching}), ✌️🤛=${isTwoFingersTucked}`);
+        console.log(`✌️ Two-finger check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleDist.toFixed(0)}(${middleExtended}), ` +
+                   `ring=${ringToPalm.toFixed(0)}(${ringClose}), pinky=${pinkyToPalm.toFixed(0)}(${pinkyClose}), ✌️=${isTwoFingers}`);
         
-        if (!isTwoFingersTucked) {
+        if (!isTwoFingers) {
             this.slashHistory = []; // Reset if not in correct gesture
             return null;
         }
@@ -1001,8 +984,8 @@ class CollectiblesGame {
     drawFingertipIndicators(keypoints) {
         if (!this.ctx || !this.canvas) return;
         
-        // If showing two fingers with tucked thumb (dagger mode), show dagger indicator
-        if (this.isTwoFingersTucked) {
+        // If showing two fingers (dagger mode), show dagger indicator
+        if (this.isTwoFingers) {
             const wrist = keypoints[0];
             const middleTip = keypoints[12];
             const indexTip = keypoints[8];
@@ -1042,48 +1025,46 @@ class CollectiblesGame {
             this.ctx.fillStyle = '#FFD700';
             this.ctx.strokeStyle = '#000000';
             this.ctx.lineWidth = 3;
-            this.ctx.strokeText('✌️🤛 DAGGER MODE', this.canvas.width / 2, 60);
-            this.ctx.fillText('✌️🤛 DAGGER MODE', this.canvas.width / 2, 60);
+            this.ctx.strokeText('✌️ DAGGER MODE', this.canvas.width / 2, 60);
+            this.ctx.fillText('✌️ DAGGER MODE', this.canvas.width / 2, 60);
             this.ctx.restore();
             
             return;
         }
         
-        // Get thumb and index finger tips
-        const thumbTip = keypoints[4];
-        const indexTip = keypoints[8];
-        
-        // Determine color based on pinching state
-        const color = this.isGrabbing ? '#00FF00' : '#FFD700'; // Green when pinching, gold otherwise
-        const radius = this.isGrabbing ? 4 : 3; // Reduced from 12/10 to 4/3 (about 1/3 size)
-        
-        // Draw thumb tip
-        this.ctx.beginPath();
-        this.ctx.arc(thumbTip.x, thumbTip.y, radius, 0, 2 * Math.PI);
-        this.ctx.fillStyle = color;
-        this.ctx.fill();
-        this.ctx.strokeStyle = this.isGrabbing ? '#FFFFFF' : '#FFA500';
-        this.ctx.lineWidth = 1; // Reduced from 3 to 1
-        this.ctx.stroke();
-        
-        // Draw index tip
-        this.ctx.beginPath();
-        this.ctx.arc(indexTip.x, indexTip.y, radius, 0, 2 * Math.PI);
-        this.ctx.fillStyle = color;
-        this.ctx.fill();
-        this.ctx.strokeStyle = this.isGrabbing ? '#FFFFFF' : '#FFA500';
-        this.ctx.lineWidth = 1; // Reduced from 3 to 1
-        this.ctx.stroke();
-        
-        // Draw line between them when pinching
+        // If grabbing (closed fist), show fist indicator
         if (this.isGrabbing) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(thumbTip.x, thumbTip.y);
-            this.ctx.lineTo(indexTip.x, indexTip.y);
-            this.ctx.strokeStyle = '#00FF00';
-            this.ctx.lineWidth = 2; // Reduced from 4 to 2
-            this.ctx.stroke();
+            const wrist = keypoints[0];
+            
+            // Draw fist emoji at wrist position
+            this.ctx.save();
+            this.ctx.font = 'bold 60px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            
+            // Add glow effect
+            this.ctx.shadowColor = 'rgba(0, 255, 0, 0.8)';
+            this.ctx.shadowBlur = 15;
+            
+            this.ctx.fillText('👊', wrist.x, wrist.y);
+            this.ctx.restore();
+            return;
         }
+        
+        // Default: show small dots on index and middle fingertips when hand is visible
+        const indexTip = keypoints[8];
+        const middleTip = keypoints[12];
+        
+        // Draw small dots
+        this.ctx.beginPath();
+        this.ctx.arc(indexTip.x, indexTip.y, 3, 0, 2 * Math.PI);
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.fill();
+        
+        this.ctx.beginPath();
+        this.ctx.arc(middleTip.x, middleTip.y, 3, 0, 2 * Math.PI);
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.fill();
     }
 
     /**
