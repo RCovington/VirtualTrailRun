@@ -33,8 +33,11 @@ class CollectiblesGame {
             'mushroom': 0,
             'pinecone': 0,
             'leaf': 0,
-            'stone': 0
+            'bolt': 0
         };
+        
+        // Separate bolt counter for crossbow ammunition
+        this.boltCount = 0;
         
         // Slash gesture tracking
         this.slashHistory = []; // Track hand positions for slash detection
@@ -52,7 +55,7 @@ class CollectiblesGame {
             { emoji: '🍄', name: 'mushroom', size: 45 },
             { emoji: '🌲', name: 'pinecone', size: 35 },
             { emoji: '🍂', name: 'leaf', size: 38 },
-            { emoji: '🗿', name: 'stone', size: 42 }
+            { emoji: '🏹', name: 'bolt', size: 42 }
         ];
         
         this.init();
@@ -726,6 +729,13 @@ class CollectiblesGame {
         // Add to inventory by type
         this.inventory[collectible.type.name]++;
         
+        // If it's a bolt, also increment the bolt counter
+        if (collectible.type.name === 'bolt') {
+            this.boltCount++;
+            this.updateBoltCounter();
+            console.log(`🏹 Collected bolt! Total bolts: ${this.boltCount}`);
+        }
+        
         // Don't increment immediately - show pending animation first
         // this.collectedCount++; // Will increment after delay
         
@@ -757,6 +767,22 @@ class CollectiblesGame {
             counter.style.animation = 'none';
             setTimeout(() => {
                 counter.style.animation = 'collectBounce 0.5s ease-out';
+            }, 10);
+        }
+    }
+
+    /**
+     * Update the bolt counter in the UI
+     */
+    updateBoltCounter() {
+        const boltCounter = document.getElementById('boltCount');
+        if (boltCounter) {
+            boltCounter.textContent = this.boltCount;
+            
+            // Add bounce animation
+            boltCounter.style.animation = 'none';
+            setTimeout(() => {
+                boltCounter.style.animation = 'collectBounce 0.5s ease-out';
             }, 10);
         }
     }
@@ -861,6 +887,18 @@ class CollectiblesGame {
      * Create slash animation
      */
     createSlashAnimation(slashData) {
+        // Check if we have bolts to fire
+        if (this.boltCount <= 0) {
+            console.log('❌ No bolts! Cannot fire crossbow.');
+            // TODO: Show "Out of Ammo" feedback to user
+            return;
+        }
+        
+        // Consume one bolt
+        this.boltCount--;
+        this.updateBoltCounter();
+        console.log(`🏹 Fired bolt! Remaining: ${this.boltCount}`);
+        
         const animation = {
             ...slashData,
             createdAt: Date.now(),
@@ -1087,15 +1125,17 @@ class CollectiblesGame {
      */
     reset() {
         this.collectedCount = 0;
+        this.boltCount = 0;
         this.collectibles = [];
         this.inventory = {
             'acorn': 0,
             'mushroom': 0,
             'pinecone': 0,
             'leaf': 0,
-            'stone': 0
+            'bolt': 0
         };
         this.updateCounter();
+        this.updateBoltCounter();
         this.updateInventoryDisplay();
         this.clearCanvas();
     }
