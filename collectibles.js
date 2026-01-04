@@ -560,9 +560,10 @@ class CollectiblesGame {
         const thumbToPalm = this.distance(thumbTip, palm);
         
         // More lenient thresholds - fingers just need to be curled, not tightly closed
+        // Thumb can be further away since it's at a different angle
         const ringClose = ringToPalm < 90;
         const pinkyClose = pinkyToPalm < 90;
-        const thumbClose = thumbToPalm < 80;
+        const thumbClose = thumbToPalm < 130; // Increased from 80 to 130 based on real data
         
         // Two fingers gesture: index and middle extended, others closed
         const isTwoFingers = indexExtended && middleExtended && ringClose && pinkyClose && thumbClose;
