@@ -19,7 +19,7 @@ class CollectiblesGame {
         this.lastHandPosition = null;
         this.lastHandKeypoints = null;
         this.isGrabbing = false;
-        this.isPointing = false; // Track if showing pointing gesture (dagger mode)
+        this.isTwoFingersTucked = false; // Track if showing two fingers with thumb fully tucked (dagger mode)
         this.isOpenHand = false; // Track if hand is open (5 fingers splayed)
         this.isClosedFist = false; // Track if hand is closed fist
         this.inventoryOpen = false; // Track if inventory panel is open
@@ -524,7 +524,7 @@ class CollectiblesGame {
     }
 
     /**
-     * Detect slash gesture - pointing (index finger only) moving quickly
+     * Detect slash gesture - two fingers up with thumb fully tucked behind hand
      * Returns slash data if detected, null otherwise
      */
     detectSlashGesture(hand) {
@@ -544,40 +544,42 @@ class CollectiblesGame {
         const pinkyBase = keypoints[17];
         const thumbBase = keypoints[2];
         
-        // Check if index finger is extended
+        // Check if index and middle fingers are extended
         const indexDist = this.distance(indexTip, indexBase);
         const middleDist = this.distance(middleTip, middleBase);
-        const ringDist = this.distance(ringTip, ringBase);
-        const pinkyDist = this.distance(pinkyTip, pinkyBase);
-        const thumbDist = this.distance(thumbTip, thumbBase);
         
         const indexExtended = indexDist > 50;
+        const middleExtended = middleDist > 50;
         
-        // Check if middle, ring, pinky, and thumb are close to palm (curled in fist)
-        const middleToPalm = this.distance(middleTip, palm);
+        // Check if ring and pinky are close to palm (curled in fist)
         const ringToPalm = this.distance(ringTip, palm);
         const pinkyToPalm = this.distance(pinkyTip, palm);
-        const thumbToPalm = this.distance(thumbTip, palm);
         
-        // Pointing gesture: only index extended, all others closed
-        const middleClose = middleToPalm < 90;
         const ringClose = ringToPalm < 90;
         const pinkyClose = pinkyToPalm < 90;
-        const thumbClose = thumbToPalm < 130;
         
-        // Pointing gesture: index extended, all others closed
-        const isPointing = indexExtended && middleClose && ringClose && pinkyClose && thumbClose;
+        // CRITICAL: Check if thumb is VERY close to palm (fully tucked)
+        // This is what distinguishes it from pinch gesture
+        const thumbToPalm = this.distance(thumbTip, palm);
+        const thumbTucked = thumbToPalm < 70; // Much stricter than before - thumb must be very close
         
-        // Store pointing state for visual indicator
-        this.isPointing = isPointing;
+        // Also check thumb isn't extended outward
+        const thumbToIndex = this.distance(thumbTip, indexTip);
+        const thumbNotPinching = thumbToIndex > 60; // Thumb isn't near index finger (not pinching)
+        
+        // Two fingers with tucked thumb: index and middle extended, ring/pinky closed, thumb TUCKED
+        const isTwoFingersTucked = indexExtended && middleExtended && ringClose && pinkyClose && thumbTucked && thumbNotPinching;
+        
+        // Store state for visual indicator
+        this.isTwoFingersTucked = isTwoFingersTucked;
         
         // Debug logging - show actual distances to help tune thresholds
-        console.log(`👉 Pointing check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleToPalm.toFixed(0)}(${middleClose}), ` +
+        console.log(`✌️🤛 Two-fingers-tucked check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleDist.toFixed(0)}(${middleExtended}), ` +
                    `ring=${ringToPalm.toFixed(0)}(${ringClose}), pinky=${pinkyToPalm.toFixed(0)}(${pinkyClose}), ` +
-                   `thumb=${thumbToPalm.toFixed(0)}(${thumbClose}), 👉=${isPointing}`);
+                   `thumb→palm=${thumbToPalm.toFixed(0)}(${thumbTucked}), thumb→idx=${thumbToIndex.toFixed(0)}(${thumbNotPinching}), ✌️🤛=${isTwoFingersTucked}`);
         
-        if (!isPointing) {
-            this.slashHistory = []; // Reset if not pointing
+        if (!isTwoFingersTucked) {
+            this.slashHistory = []; // Reset if not in correct gesture
             return null;
         }
         
@@ -605,7 +607,7 @@ class CollectiblesGame {
         const speed = distance / (timeDiff / 1000); // pixels per second
         
         // Debug logging for movement
-        if (Math.random() < 0.1) { // 10% of the time when pointing
+        if (Math.random() < 0.1) { // 10% of the time when in dagger mode
             console.log(`Slash movement: speed=${speed.toFixed(0)} px/s, distance=${distance.toFixed(0)}px, time=${timeDiff}ms, threshold=15, isSlashing=${this.isSlashing}`);
         }
         
@@ -999,22 +1001,23 @@ class CollectiblesGame {
     drawFingertipIndicators(keypoints) {
         if (!this.ctx || !this.canvas) return;
         
-        // If pointing (dagger mode), show dagger indicator instead of fingertip dots
-        if (this.isPointing) {
+        // If showing two fingers with tucked thumb (dagger mode), show dagger indicator
+        if (this.isTwoFingersTucked) {
             const wrist = keypoints[0];
+            const middleTip = keypoints[12];
             const indexTip = keypoints[8];
             
             // Calculate angle of hand orientation
-            const dx = indexTip.x - wrist.x;
-            const dy = indexTip.y - wrist.y;
+            const dx = middleTip.x - wrist.x;
+            const dy = middleTip.y - wrist.y;
             const angle = Math.atan2(dy, dx);
             
-            // Draw simple knife/blade (using knife emoji)
+            // Draw knife emoji
             this.ctx.save();
             
             // Position at center of hand
-            const centerX = (wrist.x + indexTip.x) / 2;
-            const centerY = (wrist.y + indexTip.y) / 2;
+            const centerX = (wrist.x + middleTip.x) / 2;
+            const centerY = (wrist.y + middleTip.y) / 2;
             
             this.ctx.translate(centerX, centerY);
             this.ctx.rotate(angle);
@@ -1039,8 +1042,8 @@ class CollectiblesGame {
             this.ctx.fillStyle = '#FFD700';
             this.ctx.strokeStyle = '#000000';
             this.ctx.lineWidth = 3;
-            this.ctx.strokeText('👉 DAGGER MODE', this.canvas.width / 2, 60);
-            this.ctx.fillText('👉 DAGGER MODE', this.canvas.width / 2, 60);
+            this.ctx.strokeText('✌️🤛 DAGGER MODE', this.canvas.width / 2, 60);
+            this.ctx.fillText('✌️🤛 DAGGER MODE', this.canvas.width / 2, 60);
             this.ctx.restore();
             
             return;
