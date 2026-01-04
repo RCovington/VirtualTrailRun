@@ -19,7 +19,7 @@ class CollectiblesGame {
         this.lastHandPosition = null;
         this.lastHandKeypoints = null;
         this.isGrabbing = false;
-        this.isFlatHand = false; // Track if hand is flat (dagger mode)
+        this.isTwoFingers = false; // Track if showing two fingers (dagger mode)
         this.isOpenHand = false; // Track if hand is open (5 fingers splayed)
         this.isClosedFist = false; // Track if hand is closed fist
         this.inventoryOpen = false; // Track if inventory panel is open
@@ -524,7 +524,7 @@ class CollectiblesGame {
     }
 
     /**
-     * Detect slash gesture - flat hand moving quickly
+     * Detect slash gesture - two fingers up (peace sign) moving quickly
      * Returns slash data if detected, null otherwise
      */
     detectSlashGesture(hand) {
@@ -536,43 +536,43 @@ class CollectiblesGame {
         const ringTip = keypoints[16];
         const pinkyTip = keypoints[20];
         const thumbTip = keypoints[4];
+        const palm = keypoints[0];
         
         const indexBase = keypoints[5];
         const middleBase = keypoints[9];
         const ringBase = keypoints[13];
         const pinkyBase = keypoints[17];
+        const thumbBase = keypoints[2];
         
-        // Check if fingers are extended (not curled)
+        // Check if index and middle fingers are extended
         const indexDist = this.distance(indexTip, indexBase);
         const middleDist = this.distance(middleTip, middleBase);
         const ringDist = this.distance(ringTip, ringBase);
         const pinkyDist = this.distance(pinkyTip, pinkyBase);
+        const thumbDist = this.distance(thumbTip, thumbBase);
         
-        const indexExtended = indexDist > 50; // Lowered threshold
+        const indexExtended = indexDist > 50;
         const middleExtended = middleDist > 50;
-        const ringExtended = ringDist > 50;
-        const pinkyExtended = pinkyDist > 50;
         
-        // Check if fingers are roughly parallel (flat hand)
-        const yDiff1 = Math.abs(indexTip.y - middleTip.y);
-        const yDiff2 = Math.abs(middleTip.y - ringTip.y);
-        const yDiff3 = Math.abs(ringTip.y - pinkyTip.y);
+        // Check if ring, pinky, and thumb are NOT extended (in fist)
+        const ringClose = this.distance(ringTip, palm) < 70;
+        const pinkyClose = this.distance(pinkyTip, palm) < 70;
+        const thumbClose = this.distance(thumbTip, palm) < 60;
         
-        const fingersParallel = yDiff1 < 50 && yDiff2 < 50 && yDiff3 < 50; // Relaxed threshold
+        // Two fingers gesture: index and middle extended, others closed
+        const isTwoFingers = indexExtended && middleExtended && ringClose && pinkyClose && thumbClose;
         
-        const isFlat = indexExtended && middleExtended && ringExtended && fingersParallel;
-        
-        // Store flat hand state for visual indicator
-        this.isFlatHand = isFlat;
+        // Store two-finger state for visual indicator
+        this.isTwoFingers = isTwoFingers;
         
         // Debug logging more frequently to diagnose issues
         if (Math.random() < 0.2) { // 20% of the time
-            console.log(`Slash check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleDist.toFixed(0)}(${middleExtended}), ring=${ringDist.toFixed(0)}(${ringExtended}), ` +
-                       `yDiffs=[${yDiff1.toFixed(0)}, ${yDiff2.toFixed(0)}, ${yDiff3.toFixed(0)}], parallel=${fingersParallel}, isFlat=${isFlat}`);
+            console.log(`Slash check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleDist.toFixed(0)}(${middleExtended}), ` +
+                       `ring=${ringClose}, pinky=${pinkyClose}, thumb=${thumbClose}, isTwoFingers=${isTwoFingers}`);
         }
         
-        if (!isFlat) {
-            this.slashHistory = []; // Reset if not flat
+        if (!isTwoFingers) {
+            this.slashHistory = []; // Reset if not two fingers
             return null;
         }
         
@@ -600,7 +600,7 @@ class CollectiblesGame {
         const speed = distance / (timeDiff / 1000); // pixels per second
         
         // Debug logging for movement
-        if (Math.random() < 0.1) { // 10% of the time when hand is flat
+        if (Math.random() < 0.1) { // 10% of the time when showing two fingers
             console.log(`Slash movement: speed=${speed.toFixed(0)} px/s, distance=${distance.toFixed(0)}px, time=${timeDiff}ms, threshold=15, isSlashing=${this.isSlashing}`);
         }
         
@@ -994,8 +994,8 @@ class CollectiblesGame {
     drawFingertipIndicators(keypoints) {
         if (!this.ctx || !this.canvas) return;
         
-        // If hand is flat (dagger mode), show dagger indicator instead of fingertip dots
-        if (this.isFlatHand) {
+        // If showing two fingers (dagger mode), show dagger indicator instead of fingertip dots
+        if (this.isTwoFingers) {
             const wrist = keypoints[0];
             const middleTip = keypoints[12];
             const indexTip = keypoints[8];
