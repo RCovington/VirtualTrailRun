@@ -571,11 +571,9 @@ class CollectiblesGame {
         this.isTwoFingers = isTwoFingers;
         
         // Debug logging - show actual distances to help tune thresholds
-        if (Math.random() < 0.5) { // 50% of the time for better visibility
-            console.log(`✌️ Two-finger check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleDist.toFixed(0)}(${middleExtended}), ` +
-                       `ring=${ringToPalm.toFixed(0)}(${ringClose}), pinky=${pinkyToPalm.toFixed(0)}(${pinkyClose}), ` +
-                       `thumb=${thumbToPalm.toFixed(0)}(${thumbClose}), ✌️=${isTwoFingers}`);
-        }
+        console.log(`✌️ Two-finger check: idx=${indexDist.toFixed(0)}(${indexExtended}), mid=${middleDist.toFixed(0)}(${middleExtended}), ` +
+                   `ring=${ringToPalm.toFixed(0)}(${ringClose}), pinky=${pinkyToPalm.toFixed(0)}(${pinkyClose}), ` +
+                   `thumb=${thumbToPalm.toFixed(0)}(${thumbClose}), ✌️=${isTwoFingers}`);
         
         if (!isTwoFingers) {
             this.slashHistory = []; // Reset if not two fingers
