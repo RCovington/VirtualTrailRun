@@ -1537,6 +1537,42 @@ class CollectiblesGame {
     }
 
     /**
+     * Show visual feedback when a potion is successfully brewed
+     */
+    showBrewSuccessFeedback(potionType) {
+        const feedback = document.createElement('div');
+        feedback.className = 'brew-success-feedback';
+        
+        if (potionType === 'healing') {
+            feedback.innerHTML = '✨ SUCCESS! ✨<br>🧪 Healing Potion';
+            feedback.style.color = '#22C55E';
+            feedback.style.textShadow = '0 0 20px #4ADE80, 0 0 40px #22C55E, 0 0 60px #86EFAC, 3px 3px 6px #000000';
+        } else if (potionType === 'electricity') {
+            feedback.innerHTML = '✨ SUCCESS! ✨<br>⚡ Electricity Potion';
+            feedback.style.color = '#00FFFF';
+            feedback.style.textShadow = '0 0 20px #FFFF00, 0 0 40px #00FFFF, 0 0 60px #0088FF, 3px 3px 6px #000000';
+        }
+        
+        feedback.style.position = 'fixed';
+        feedback.style.top = '50%';
+        feedback.style.left = '50%';
+        feedback.style.transform = 'translate(-50%, -50%)';
+        feedback.style.fontSize = '3rem';
+        feedback.style.fontWeight = 'bold';
+        feedback.style.animation = 'brewSuccessPulse 2s ease-out forwards';
+        feedback.style.pointerEvents = 'none';
+        feedback.style.zIndex = '10000';
+        feedback.style.textAlign = 'center';
+        feedback.style.lineHeight = '1.3';
+        
+        document.body.appendChild(feedback);
+        
+        setTimeout(() => {
+            feedback.remove();
+        }, 2000);
+    }
+
+    /**
      * Show visual feedback when missing a grab attempt
      */
     showMissFeedback(handX, handY) {
@@ -2463,6 +2499,7 @@ class CollectiblesGame {
                 this.potions.healing++;
                 
                 console.log('🧪 Brewed Healing Potion!');
+                this.showBrewSuccessFeedback('healing');
                 this.updateInventoryDisplay();
                 this.updateMagicList();
                 app.updateStatBars();
@@ -2485,6 +2522,7 @@ class CollectiblesGame {
                 this.potions.electricity++;
                 
                 console.log('⚡ Brewed Electricity Potion!');
+                this.showBrewSuccessFeedback('electricity');
                 this.updateInventoryDisplay();
                 this.updateMagicList();
                 app.updateStatBars();
