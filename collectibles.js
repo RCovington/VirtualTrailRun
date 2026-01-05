@@ -28,6 +28,9 @@ class CollectiblesGame {
         this.missThrottleDelay = 500; // Only show miss feedback every 500ms
         this.headTracker = headTracker; // Reference to head tracker for face position
         
+        // Electrified pinch tracking
+        this.electrifiedPinchesRemaining = 0;
+        
         // Inventory tracking by type
         this.inventory = {
             'acorn': 0,
@@ -1049,14 +1052,30 @@ class CollectiblesGame {
                     return false; // On cooldown
                 }
                 
-                // Pinch damages enemy by 10% of health
-                const damage = enemy.maxHealth * 0.1;
+                // Check if electrified and apply 4x damage
+                let damageMultiplier = 1;
+                let damageType = '👊';
+                
+                if (this.electrifiedPinchesRemaining > 0) {
+                    damageMultiplier = 4;
+                    damageType = '⚡👊';
+                    this.electrifiedPinchesRemaining--;
+                    console.log(`⚡ ELECTRIFIED PINCH! ${this.electrifiedPinchesRemaining} remaining`);
+                }
+                
+                // Pinch damages enemy by 10% of health (40% if electrified)
+                const baseDamage = enemy.maxHealth * 0.1;
+                const damage = baseDamage * damageMultiplier;
                 enemy.health = Math.max(0, enemy.health - damage);
                 enemy.lastPinchHitTime = now; // Update cooldown timer
-                console.log(`👊 Pinch hit rat! Damage: ${damage.toFixed(1)}, Remaining health: ${enemy.health.toFixed(1)}`);
+                console.log(`${damageType} Pinch hit rat! Damage: ${damage.toFixed(1)}, Remaining health: ${enemy.health.toFixed(1)}`);
                 
-                // Show "POW!" animation
-                this.showPinchHitFeedback(enemy.x, enemy.y);
+                // Show appropriate animation
+                if (damageMultiplier > 1) {
+                    this.showElectricPinchHitFeedback(enemy.x, enemy.y);
+                } else {
+                    this.showPinchHitFeedback(enemy.x, enemy.y);
+                }
                 
                 return true; // Hit enemy
             }
@@ -1277,6 +1296,74 @@ class CollectiblesGame {
                 feedback.remove();
             }, 600);
         }
+    }
+
+    /**
+     * Show visual feedback when electrified pinch hits an enemy
+     */
+    showElectricPinchHitFeedback(x, y) {
+        const canvas = this.canvas;
+        if (!canvas) return;
+        
+        const scaleX = canvas.offsetWidth / canvas.width;
+        const scaleY = canvas.offsetHeight / canvas.height;
+        
+        const displayX = x * scaleX;
+        const displayY = y * scaleY;
+        
+        // Create "⚡ZAP!⚡" text
+        const feedback = document.createElement('div');
+        feedback.className = 'electric-pinch-feedback';
+        feedback.textContent = '⚡ ZAP! ⚡';
+        feedback.style.left = `${displayX}px`;
+        feedback.style.top = `${displayY}px`;
+        feedback.style.position = 'absolute';
+        feedback.style.transform = 'translate(-50%, -50%)';
+        feedback.style.fontSize = '2.5rem';
+        feedback.style.fontWeight = 'bold';
+        feedback.style.color = '#00FFFF';
+        feedback.style.textShadow = '0 0 10px #FFFF00, 0 0 20px #00FFFF, 0 0 30px #0088FF';
+        feedback.style.animation = 'electricPinchImpact 0.5s ease-out forwards';
+        feedback.style.pointerEvents = 'none';
+        feedback.style.zIndex = '1000';
+        
+        const container = document.getElementById('collectiblesContainer');
+        if (container) {
+            container.appendChild(feedback);
+            
+            // Remove after animation
+            setTimeout(() => {
+                feedback.remove();
+            }, 500);
+        }
+    }
+
+    /**
+     * Show visual feedback when electrified buff is activated
+     */
+    showElectrifiedBuffFeedback() {
+        // Create buff notification
+        const feedback = document.createElement('div');
+        feedback.className = 'electrified-buff-feedback';
+        feedback.textContent = '⚡ ELECTRIFIED! 5 Pinches ⚡';
+        feedback.style.position = 'fixed';
+        feedback.style.top = '50%';
+        feedback.style.left = '50%';
+        feedback.style.transform = 'translate(-50%, -50%)';
+        feedback.style.fontSize = '3rem';
+        feedback.style.fontWeight = 'bold';
+        feedback.style.color = '#FFFF00';
+        feedback.style.textShadow = '0 0 20px #00FFFF, 0 0 40px #FFFF00, 0 0 60px #0088FF, 3px 3px 6px #000000';
+        feedback.style.animation = 'electrifiedBuffPulse 1.5s ease-out forwards';
+        feedback.style.pointerEvents = 'none';
+        feedback.style.zIndex = '10000';
+        
+        document.body.appendChild(feedback);
+        
+        // Remove after animation
+        setTimeout(() => {
+            feedback.remove();
+        }, 1500);
     }
 
     /**
@@ -2087,12 +2174,11 @@ class CollectiblesGame {
             this.updateMagicList();
         } else if (potionType === 'electricity' && this.potions.electricity > 0) {
             this.potions.electricity--;
-            // Damage all enemies
-            this.enemies.forEach(enemy => {
-                enemy.health = Math.max(0, enemy.health - 50);
-            });
-            console.log('⚡ Used Electricity Potion! All enemies damaged!');
+            // Activate electrified pinches
+            this.electrifiedPinchesRemaining = 5;
+            console.log('⚡ Used Electricity Potion! Next 5 pinches will be ELECTRIFIED (4x damage)!');
             this.updateMagicList();
+            this.showElectrifiedBuffFeedback();
         }
     }
 }
