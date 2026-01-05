@@ -30,11 +30,12 @@ class HeadTracker {
         // Wink detection
         this.leftEyeEAR = 1.0;
         this.rightEyeEAR = 1.0;
-        this.eyeClosedThreshold = 0.2; // Eye Aspect Ratio threshold for closed eye
+        this.eyeClosedThreshold = 0.15; // Eye Aspect Ratio threshold for closed eye (stricter)
+        this.eyeOpenThreshold = 0.25; // Eye must be clearly open
         this.leftEyeClosed = false;
         this.rightEyeClosed = false;
         this.lastWinkTime = 0;
-        this.winkCooldown = 500; // Minimum milliseconds between winks
+        this.winkCooldown = 1000; // Minimum milliseconds between winks (increased for reliability)
         
         // Callbacks
         this.onBobDetectedCallback = null;
@@ -286,26 +287,28 @@ class HeadTracker {
         this.leftEyeEAR = this.calculateEyeAspectRatio(leftEye);
         this.rightEyeEAR = this.calculateEyeAspectRatio(rightEye);
         
-        // Determine if eyes are closed
+        // Determine if eyes are closed or open
         const leftClosed = this.leftEyeEAR < this.eyeClosedThreshold;
         const rightClosed = this.rightEyeEAR < this.eyeClosedThreshold;
+        const leftOpen = this.leftEyeEAR > this.eyeOpenThreshold;
+        const rightOpen = this.rightEyeEAR > this.eyeOpenThreshold;
         
         // Debug logging every 30 frames to avoid spam
         if (!this.winkDebugCounter) this.winkDebugCounter = 0;
         this.winkDebugCounter++;
         if (this.winkDebugCounter % 30 === 0) {
-            console.log(`👁️ EAR - Left: ${this.leftEyeEAR.toFixed(3)} (${leftClosed ? 'CLOSED' : 'open'}), Right: ${this.rightEyeEAR.toFixed(3)} (${rightClosed ? 'CLOSED' : 'open'}), Threshold: ${this.eyeClosedThreshold}`);
+            console.log(`👁️ EAR - Left: ${this.leftEyeEAR.toFixed(3)} (${leftClosed ? 'CLOSED' : leftOpen ? 'OPEN' : 'mid'}), Right: ${this.rightEyeEAR.toFixed(3)} (${rightClosed ? 'CLOSED' : rightOpen ? 'OPEN' : 'mid'}), Thresholds: closed<${this.eyeClosedThreshold}, open>${this.eyeOpenThreshold}`);
         }
         
         // Check for cooldown
         const now = Date.now();
         const cooldownPassed = (now - this.lastWinkTime) > this.winkCooldown;
         
-        // Detect wink (one eye closed, other open)
+        // Detect wink (one eye closed, other eye clearly open)
         if (cooldownPassed) {
-            if (leftClosed && !rightClosed && !this.leftEyeClosed) {
+            if (leftClosed && rightOpen && !this.leftEyeClosed) {
                 // Left eye wink detected
-                console.log(`👁️✨ LEFT WINK DETECTED! EAR: ${this.leftEyeEAR.toFixed(3)}`);
+                console.log(`👁️✨ LEFT WINK DETECTED! Left EAR: ${this.leftEyeEAR.toFixed(3)}, Right EAR: ${this.rightEyeEAR.toFixed(3)}`);
                 this.leftEyeClosed = true;
                 this.lastWinkTime = now;
                 if (this.onWinkCallback) {
@@ -313,9 +316,9 @@ class HeadTracker {
                 } else {
                     console.warn('⚠️ No wink callback registered!');
                 }
-            } else if (rightClosed && !leftClosed && !this.rightEyeClosed) {
+            } else if (rightClosed && leftOpen && !this.rightEyeClosed) {
                 // Right eye wink detected
-                console.log(`👁️✨ RIGHT WINK DETECTED! EAR: ${this.rightEyeEAR.toFixed(3)}`);
+                console.log(`👁️✨ RIGHT WINK DETECTED! Left EAR: ${this.leftEyeEAR.toFixed(3)}, Right EAR: ${this.rightEyeEAR.toFixed(3)}`);
                 this.rightEyeClosed = true;
                 this.lastWinkTime = now;
                 if (this.onWinkCallback) {
