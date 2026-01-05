@@ -827,6 +827,7 @@ let app;
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing app...');
     app = new VirtualTrailRunApp();
+    window.app = app; // Expose to window for collectibles access
     app.init();
 });
 

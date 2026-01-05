@@ -434,7 +434,13 @@ class CollectiblesGame {
             if (enemy.state === 'idle') {
                 // Animate pacing back and forth
                 const deltaTime = 1/60; // Assuming ~60fps
+                const oldX = enemy.x;
                 enemy.x += enemy.paceDirection * enemy.paceSpeed * deltaTime;
+                
+                // Debug logging occasionally
+                if (Math.random() < 0.01) { // 1% chance per frame
+                    console.log(`🐾 Rat pacing: x=${enemy.x.toFixed(1)}, moved ${(enemy.x - oldX).toFixed(2)}px, direction=${enemy.paceDirection}`);
+                }
                 
                 // Check if reached edge of pace range
                 const distanceFromCenter = enemy.x - enemy.initialX;
@@ -443,6 +449,7 @@ class CollectiblesGame {
                     enemy.paceDirection *= -1;
                     // Clamp to range
                     enemy.x = enemy.initialX + (enemy.paceRange / 2) * Math.sign(distanceFromCenter);
+                    console.log(`🔄 Rat reversed direction at x=${enemy.x.toFixed(1)}`);
                 }
                 
                 // Check if it's time to attack
