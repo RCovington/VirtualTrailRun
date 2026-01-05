@@ -204,6 +204,9 @@ class CollectiblesGame {
         // Initialize bolt counter display
         this.updateBoltCounter();
         
+        // Initialize potion display
+        this.updatePotionDisplay();
+        
         console.log('Collectibles game started');
     }
 
@@ -2409,6 +2412,47 @@ class CollectiblesGame {
                 this.usePotion(potionType);
             });
         });
+        
+        // Update potion display on screen
+        this.updatePotionDisplay();
+    }
+
+    /**
+     * Update the on-screen potion display (left side of video)
+     */
+    updatePotionDisplay() {
+        const potionDisplay = document.getElementById('potionDisplay');
+        if (!potionDisplay) return;
+        
+        let html = '';
+        
+        // Healing potion (pink/red)
+        if (this.potions.healing > 0) {
+            html += `
+                <div class="potion-display-item healing-potion">
+                    <div class="potion-icon">🧪</div>
+                    <div class="potion-count">${this.potions.healing}</div>
+                </div>
+            `;
+        }
+        
+        // Electricity/Shock potion (yellow/black)
+        if (this.potions.electricity > 0) {
+            html += `
+                <div class="potion-display-item shock-potion">
+                    <div class="potion-icon">⚡</div>
+                    <div class="potion-count">${this.potions.electricity}</div>
+                </div>
+            `;
+        }
+        
+        // Future: Freeze potion (white/light blue)
+        // if (this.potions.freeze > 0) { ... }
+        
+        // Future: Fire potion (orange/red)
+        // if (this.potions.fire > 0) { ... }
+        
+        potionDisplay.innerHTML = html;
     }
 
     /**
