@@ -59,7 +59,7 @@ class CollectiblesGame {
             { emoji: '🍄', name: 'mushroom', size: 45 },
             { emoji: '🌲', name: 'pinecone', size: 35 },
             { emoji: '🍂', name: 'leaf', size: 38 },
-            { emoji: '🏹', name: 'bolt', size: 42 }
+            { emoji: '➳', name: 'bolt', size: 42 }
         ];
         
         this.init();
