@@ -28,6 +28,11 @@ class VirtualTrailRunApp {
         this.magicDecayInterval = null; // Interval for magic decay
         this.lastTotalBobs = 0; // Track last bob count
         
+        // XP and Level system
+        this.xp = 0; // Current experience points
+        this.level = 0; // Current level (0 = no level yet)
+        this.xpForNextLevel = 100; // XP needed for level 1
+        
         // Firebase services (initialized later)
         this.cache = null;
         this.analytics = null;
@@ -48,7 +53,9 @@ class VirtualTrailRunApp {
             indicatorBar: document.getElementById('indicatorBar'),
             videoOptions: document.querySelectorAll('.video-option'),
             healthBar: document.getElementById('healthBar'),
-            magicBar: document.getElementById('magicBar')
+            magicBar: document.getElementById('magicBar'),
+            xpBar: document.getElementById('xpBar'),
+            levelDisplay: document.getElementById('levelDisplay')
         };
     }
 
@@ -619,8 +626,63 @@ class VirtualTrailRunApp {
     }
 
 
+    /**     * Add experience points and check for level up
+     */
+    addXP(amount) {
+        this.xp += amount;
+        console.log(`⭐ Gained ${amount} XP! Total: ${this.xp}/${this.xpForNextLevel}`);
+        
+        // Check for level up
+        if (this.xp >= this.xpForNextLevel) {
+            this.levelUp();
+        }
+        
+        this.updateStatBars();
+    }
+
     /**
-     * Update the health and magic bar displays
+     * Level up the player
+     */
+    levelUp() {
+        this.level++;
+        this.xp = this.xp - this.xpForNextLevel; // Carry over excess XP
+        
+        // Increase XP needed for next level (100 per level)
+        this.xpForNextLevel = (this.level + 1) * 100;
+        
+        console.log(`🎉 LEVEL UP! Now level ${this.level}! Next level at ${this.xpForNextLevel} XP`);
+        
+        // Show level up feedback
+        this.showLevelUpFeedback();
+    }
+
+    /**
+     * Show visual feedback for level up
+     */
+    showLevelUpFeedback() {
+        const feedback = document.createElement('div');
+        feedback.className = 'level-up-feedback';
+        feedback.innerHTML = `<div class="level-up-text">🎉 LEVEL ${this.level}! 🎉</div>`;
+        feedback.style.position = 'fixed';
+        feedback.style.top = '50%';
+        feedback.style.left = '50%';
+        feedback.style.transform = 'translate(-50%, -50%)';
+        feedback.style.fontSize = '3rem';
+        feedback.style.fontWeight = 'bold';
+        feedback.style.color = '#FFD700';
+        feedback.style.textShadow = '0 0 20px #FF6B35, 0 0 40px #FFA500';
+        feedback.style.animation = 'levelUpPulse 2s ease-out forwards';
+        feedback.style.pointerEvents = 'none';
+        feedback.style.zIndex = '10000';
+        
+        document.body.appendChild(feedback);
+        
+        setTimeout(() => {
+            feedback.remove();
+        }, 2000);
+    }
+
+    /**     * Update the health and magic bar displays
      */
     updateStatBars() {
         const healthPercent = (this.health / this.maxHealth) * 100;
@@ -628,6 +690,15 @@ class VirtualTrailRunApp {
         
         this.elements.healthBar.style.width = `${healthPercent}%`;
         this.elements.magicBar.style.width = `${magicPercent}%`;
+        
+        if (this.elements.xpBar) {
+            const xpPercent = (this.xp / this.xpForNextLevel) * 100;
+            this.elements.xpBar.style.width = `${xpPercent}%`;
+        }
+        
+        if (this.elements.levelDisplay) {
+            this.elements.levelDisplay.textContent = this.level;
+        }
     }
 
     /**

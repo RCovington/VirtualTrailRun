@@ -409,6 +409,15 @@ class CollectiblesGame {
             // Check if enemy is dead
             if (enemy.health <= 0) {
                 console.log(`💀 Rat defeated!`);
+                
+                // Award XP to player
+                const app = window.app;
+                if (app && app.addXP) {
+                    app.addXP(10);
+                } else {
+                    console.warn('⚠️ Cannot award XP - app not found or addXP undefined');
+                }
+                
                 return false; // Remove enemy
             }
             
