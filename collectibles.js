@@ -2429,9 +2429,9 @@ class CollectiblesGame {
         // Healing potion (pink/red)
         if (this.potions.healing > 0) {
             html += `
-                <div class="potion-display-item healing-potion" data-potion="healing">
-                    <div class="potion-icon">🧪</div>
-                    <div class="potion-count">${this.potions.healing}</div>
+                <div class="potion-display-item" data-potion="healing">
+                    <span class="potion-display-icon">🧪</span>
+                    <span class="potion-display-count">${this.potions.healing}</span>
                 </div>
             `;
         }
@@ -2439,9 +2439,9 @@ class CollectiblesGame {
         // Electricity/Shock potion (yellow/black)
         if (this.potions.electricity > 0) {
             html += `
-                <div class="potion-display-item shock-potion" data-potion="electricity">
-                    <div class="potion-icon">⚡</div>
-                    <div class="potion-count">${this.potions.electricity}</div>
+                <div class="potion-display-item" data-potion="electricity">
+                    <span class="potion-display-icon">⚡</span>
+                    <span class="potion-display-count">${this.potions.electricity}</span>
                 </div>
             `;
         }
@@ -2504,6 +2504,7 @@ class CollectiblesGame {
         brewModal.className = 'brew-modal';
         brewModal.innerHTML = `
             <div class="brew-modal-content">
+                <button class="brew-close-x" aria-label="Close">&times;</button>
                 <h3>🧪 Brew Potions</h3>
                 ${healingRecipe}
                 ${electricityRecipe}
@@ -2525,6 +2526,12 @@ class CollectiblesGame {
         // Add close button handler
         const closeBtn = brewModal.querySelector('.brew-close-btn');
         closeBtn.addEventListener('click', () => {
+            brewModal.remove();
+        });
+        
+        // Add X button handler
+        const closeX = brewModal.querySelector('.brew-close-x');
+        closeX.addEventListener('click', () => {
             brewModal.remove();
         });
     }
