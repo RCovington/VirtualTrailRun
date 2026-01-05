@@ -61,6 +61,11 @@ class CollectiblesGame {
         this.nextEnemySpawnAt = 2; // DEBUG: First rat after 2 objects
         this.isFirstEnemySpawn = true; // Track if this is the first spawn
         
+        // Boss system
+        this.bossSpawned = false;
+        this.bossSpawnTriggered = false;
+        this.videoPausedForBoss = false;
+        
         // Timing
         this.minSpawnTime = 10000; // 10 seconds
         this.maxSpawnTime = 20000; // 20 seconds
@@ -324,6 +329,79 @@ class CollectiblesGame {
     }
 
     /**
+     * Spawn the final boss (giant rat)
+     */
+    spawnBoss() {
+        if (!this.canvas || this.bossSpawned) return;
+        
+        // Position boss in center of screen
+        const x = this.canvas.width * 0.5;
+        const y = this.canvas.height * 0.67; // 1/3 from bottom
+        
+        const boss = {
+            id: Date.now() + Math.random(),
+            type: 'boss',
+            emoji: '🐀',
+            x: x,
+            y: y,
+            initialX: x,
+            size: 180, // 3x normal size (60 * 3)
+            health: 1000, // 10x normal health (100 * 10)
+            maxHealth: 1000,
+            state: 'idle',
+            attackCount: 0,
+            maxAttacks: 999, // Boss fights until defeated
+            lastAttackTime: Date.now(),
+            nextAttackDelay: this.getRandomInt(2000, 5000), // Slightly faster attacks
+            rearingStartTime: 0,
+            rearingDuration: 500,
+            paceDirection: 1,
+            paceSpeed: 30, // Slower pacing for boss
+            paceRange: 100,
+            jeerBobSpeed: 1.5,
+            lastPinchHitTime: 0,
+            createdAt: Date.now(),
+            isBoss: true,
+            damageMultiplier: 2 // Boss does 2x damage
+        };
+        
+        this.enemies.push(boss);
+        this.bossSpawned = true;
+        console.log('👹 FINAL BOSS SPAWNED! Giant Rat with 10x health and 2x damage!');
+        
+        // Show boss entrance message
+        this.showBossEntrance();
+    }
+
+    /**
+     * Show boss entrance visual feedback
+     */
+    showBossEntrance() {
+        const feedback = document.createElement('div');
+        feedback.className = 'boss-entrance-feedback';
+        feedback.innerHTML = '⚠️ FINAL BOSS ⚠️<br>GIANT RAT!';
+        feedback.style.position = 'fixed';
+        feedback.style.top = '50%';
+        feedback.style.left = '50%';
+        feedback.style.transform = 'translate(-50%, -50%)';
+        feedback.style.fontSize = '4rem';
+        feedback.style.fontWeight = 'bold';
+        feedback.style.color = '#FF0000';
+        feedback.style.textShadow = '0 0 20px #FFFF00, 0 0 40px #FF0000, 0 0 60px #000000, 4px 4px 8px #000000';
+        feedback.style.animation = 'bossEntrancePulse 2s ease-out forwards';
+        feedback.style.pointerEvents = 'none';
+        feedback.style.zIndex = '10000';
+        feedback.style.textAlign = 'center';
+        feedback.style.lineHeight = '1.2';
+        
+        document.body.appendChild(feedback);
+        
+        setTimeout(() => {
+            feedback.remove();
+        }, 2000);
+    }
+
+    /**
      * Spawn a collectible at a specific position (for bolt drops)
      */
     spawnCollectibleAt(x, y, type) {
@@ -352,6 +430,9 @@ class CollectiblesGame {
     async gameLoop() {
         if (!this.isActive) return;
         
+        // Check for boss spawn timing (5 seconds before video ends)
+        this.checkBossSpawnTiming();
+        
         // Update collectibles
         this.updateCollectibles();
         
@@ -365,6 +446,38 @@ class CollectiblesGame {
         
         // Continue loop
         this.animationFrame = requestAnimationFrame(() => this.gameLoop());
+    }
+
+    /**
+     * Check if it's time to spawn the boss (5 seconds before video ends)
+     */
+    checkBossSpawnTiming() {
+        if (this.bossSpawnTriggered || this.bossSpawned) return;
+        
+        const app = window.app;
+        if (!app || !app.videoPlayer) return;
+        
+        const currentTime = app.videoPlayer.getCurrentTime();
+        const duration = app.videoPlayer.getDuration();
+        
+        // Check if we're within 5 seconds of the end
+        if (duration > 0 && currentTime > 0) {
+            const timeRemaining = duration - currentTime;
+            
+            if (timeRemaining <= 5 && timeRemaining > 0) {
+                // Trigger boss spawn
+                this.bossSpawnTriggered = true;
+                
+                // Pause the video
+                app.videoPlayer.pause();
+                this.videoPausedForBoss = true;
+                
+                console.log(`⏸️ Video paused at ${currentTime.toFixed(1)}s (${timeRemaining.toFixed(1)}s remaining)`);
+                
+                // Spawn the boss
+                this.spawnBoss();
+            }
+        }
     }
 
     /**
@@ -520,18 +633,25 @@ class CollectiblesGame {
      * Enemy performs attack on player
      */
     enemyAttack(enemy) {
-        console.log(`⚔️ RAT ATTACKS! (${enemy.attackCount + 1}/${enemy.maxAttacks})`);
+        const isBoss = enemy.isBoss || false;
+        const attackLabel = isBoss ? '👹 BOSS ATTACKS!' : `⚔️ RAT ATTACKS! (${enemy.attackCount + 1}/${enemy.maxAttacks})`;
+        console.log(attackLabel);
         
-        // Damage player health by 10%
+        // Base damage is 10% of max health
         const app = window.app;
         console.log(`🔍 Checking for app reference:`, !!app);
         
         if (app && app.health !== undefined && app.maxHealth !== undefined) {
-            const damage = app.maxHealth * 0.1;
+            const baseDamage = app.maxHealth * 0.1;
+            const damageMultiplier = enemy.damageMultiplier || 1;
+            const damage = baseDamage * damageMultiplier;
+            
             const oldHealth = app.health;
             app.health = Math.max(0, app.health - damage);
             app.updateStatBars();
-            console.log(`💔 Player took ${damage.toFixed(1)} damage! Health: ${oldHealth.toFixed(1)} → ${app.health.toFixed(1)}/${app.maxHealth}`);
+            
+            const damageLabel = isBoss ? `💀 Player took ${damage.toFixed(1)} BOSS DAMAGE (2x)!` : `💔 Player took ${damage.toFixed(1)} damage!`;
+            console.log(`${damageLabel} Health: ${oldHealth.toFixed(1)} → ${app.health.toFixed(1)}/${app.maxHealth}`);
         } else {
             console.error(`❌ Cannot damage player - app not found or health undefined. app=${!!app}, health=${app?.health}, maxHealth=${app?.maxHealth}`);
         }
@@ -1592,8 +1712,9 @@ class CollectiblesGame {
      * Draw health bar above enemy
      */
     drawEnemyHealthBar(enemy) {
-        const barWidth = 80;
-        const barHeight = 8;
+        const isBoss = enemy.isBoss || false;
+        const barWidth = isBoss ? 200 : 80; // Boss gets wider health bar
+        const barHeight = isBoss ? 12 : 8; // Boss gets taller health bar
         const barX = enemy.x - barWidth / 2;
         const barY = enemy.y - enemy.size * 0.8;
         
@@ -1616,10 +1737,24 @@ class CollectiblesGame {
         
         this.ctx.fillRect(barX, barY, healthWidth, barHeight);
         
-        // Border
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-        this.ctx.lineWidth = 1;
+        // Border - make it gold for boss
+        this.ctx.strokeStyle = isBoss ? 'rgba(255, 215, 0, 1)' : 'rgba(255, 255, 255, 0.8)';
+        this.ctx.lineWidth = isBoss ? 2 : 1;
         this.ctx.strokeRect(barX, barY, barWidth, barHeight);
+        
+        // Add boss label above health bar
+        if (isBoss) {
+            this.ctx.save();
+            this.ctx.font = 'bold 16px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'bottom';
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.strokeStyle = '#000000';
+            this.ctx.lineWidth = 3;
+            this.ctx.strokeText('BOSS', enemy.x, barY - 5);
+            this.ctx.fillText('BOSS', enemy.x, barY - 5);
+            this.ctx.restore();
+        }
     }
 
     /**
