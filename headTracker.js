@@ -27,9 +27,19 @@ class HeadTracker {
         this.bobsPerMinuteHistory = [];
         this.bobTimestamps = [];
         
+        // Wink detection
+        this.leftEyeEAR = 1.0;
+        this.rightEyeEAR = 1.0;
+        this.eyeClosedThreshold = 0.2; // Eye Aspect Ratio threshold for closed eye
+        this.leftEyeClosed = false;
+        this.rightEyeClosed = false;
+        this.lastWinkTime = 0;
+        this.winkCooldown = 500; // Minimum milliseconds between winks
+        
         // Callbacks
         this.onBobDetectedCallback = null;
         this.onMovementCallback = null;
+        this.onWinkCallback = null;
         
         // Animation frame
         this.animationFrameId = null;
@@ -187,6 +197,9 @@ class HeadTracker {
         }
         
         this.previousNoseY = this.currentNoseY;
+        
+        // Detect winks
+        this.detectWink(face);
     }
 
     /**
@@ -214,6 +227,95 @@ class HeadTracker {
         if (currentDirection) {
             this.lastBobDirection = currentDirection;
         }
+    }
+
+    /**
+     * Calculate Eye Aspect Ratio (EAR) for wink detection
+     * EAR = (||p2-p6|| + ||p3-p5||) / (2 * ||p1-p4||)
+     */
+    calculateEyeAspectRatio(eyePoints) {
+        // Calculate vertical distances
+        const v1 = this.euclideanDistance(eyePoints[1], eyePoints[5]);
+        const v2 = this.euclideanDistance(eyePoints[2], eyePoints[4]);
+        
+        // Calculate horizontal distance
+        const h = this.euclideanDistance(eyePoints[0], eyePoints[3]);
+        
+        // Calculate EAR
+        const ear = (v1 + v2) / (2.0 * h);
+        return ear;
+    }
+
+    /**
+     * Calculate Euclidean distance between two points
+     */
+    euclideanDistance(p1, p2) {
+        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+    }
+
+    /**
+     * Detect winks using Eye Aspect Ratio
+     * MediaPipe Face Mesh eye landmarks:
+     * Left eye: 33, 160, 158, 133, 153, 144
+     * Right eye: 362, 385, 387, 263, 373, 380
+     */
+    detectWink(face) {
+        const keypoints = face.keypoints;
+        
+        // Left eye landmarks (6 points around the eye)
+        const leftEye = [
+            keypoints[33],  // left corner
+            keypoints[160], // top
+            keypoints[158], // top
+            keypoints[133], // right corner
+            keypoints[153], // bottom
+            keypoints[144]  // bottom
+        ];
+        
+        // Right eye landmarks (6 points around the eye)
+        const rightEye = [
+            keypoints[362], // right corner
+            keypoints[385], // top
+            keypoints[387], // top
+            keypoints[263], // left corner
+            keypoints[373], // bottom
+            keypoints[380]  // bottom
+        ];
+        
+        // Calculate Eye Aspect Ratios
+        this.leftEyeEAR = this.calculateEyeAspectRatio(leftEye);
+        this.rightEyeEAR = this.calculateEyeAspectRatio(rightEye);
+        
+        // Determine if eyes are closed
+        const leftClosed = this.leftEyeEAR < this.eyeClosedThreshold;
+        const rightClosed = this.rightEyeEAR < this.eyeClosedThreshold;
+        
+        // Check for cooldown
+        const now = Date.now();
+        const cooldownPassed = (now - this.lastWinkTime) > this.winkCooldown;
+        
+        // Detect wink (one eye closed, other open)
+        if (cooldownPassed) {
+            if (leftClosed && !rightClosed && !this.leftEyeClosed) {
+                // Left eye wink detected
+                this.leftEyeClosed = true;
+                this.lastWinkTime = now;
+                if (this.onWinkCallback) {
+                    this.onWinkCallback('left');
+                }
+            } else if (rightClosed && !leftClosed && !this.rightEyeClosed) {
+                // Right eye wink detected
+                this.rightEyeClosed = true;
+                this.lastWinkTime = now;
+                if (this.onWinkCallback) {
+                    this.onWinkCallback('right');
+                }
+            }
+        }
+        
+        // Reset eye closed state when eyes are open
+        if (!leftClosed) this.leftEyeClosed = false;
+        if (!rightClosed) this.rightEyeClosed = false;
     }
 
     /**
@@ -310,6 +412,13 @@ class HeadTracker {
      */
     onMovement(callback) {
         this.onMovementCallback = callback;
+    }
+
+    /**
+     * Register callback for wink detection
+     */
+    onWink(callback) {
+        this.onWinkCallback = callback;
     }
 
     /**

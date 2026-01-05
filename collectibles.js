@@ -116,6 +116,20 @@ class CollectiblesGame {
         this.isActive = true;
         this.videoElement = videoElement;
         
+        // Set up wink detection callback for crossbow firing
+        if (this.headTracker) {
+            this.headTracker.onWink((eye) => {
+                console.log(`👁️ Wink detected: ${eye} eye`);
+                // Fire bolt on any wink (left or right)
+                if (this.boltCount > 0) {
+                    // Use center of screen as firing position
+                    const centerX = this.canvas ? this.canvas.width / 2 : 320;
+                    const centerY = this.canvas ? this.canvas.height / 2 : 240;
+                    this.fireBolt({ x: centerX, y: centerY });
+                }
+            });
+        }
+        
         // Reset canvas sizes to match video (maintain aspect ratio)
         if (this.canvas && this.videoElement) {
             const videoWidth = this.videoElement.videoWidth || 640;
@@ -331,19 +345,11 @@ class CollectiblesGame {
                 // Draw hand keypoints for debugging
                 this.drawHandDebug(hand);
                 
-                // Check for crossbow firing gesture (pointing/gun gesture)
-                this.detectCrossbowGesture(hand);
-                
                 // Check for closed fist gesture (to close inventory)
                 this.isClosedFist = this.isClosedFistGesture(hand);
                 
                 // Check if hand is making a pinch gesture for grabbing
-                // Only check pinch if NOT in dagger mode (pointing)
-                if (!this.isPointing) {
-                    this.isGrabbing = this.isGrabbingGesture(hand);
-                } else {
-                    this.isGrabbing = false;
-                }
+                this.isGrabbing = this.isGrabbingGesture(hand);
                 
                 if (this.isGrabbing) {
                     // Get hand position (use pinch point - midpoint between thumb and index)
@@ -577,9 +583,10 @@ class CollectiblesGame {
     }
 
     /**
-     * Detect crossbow firing gesture - pointing/gun gesture
-     * Fires a bolt projectile when detected
+     * Detect crossbow firing gesture - DEPRECATED: Now using wink detection
+     * Left here for reference in case we want to add alternative firing methods
      */
+    /*
     detectCrossbowGesture(hand) {
         const keypoints = hand.keypoints;
         
@@ -631,6 +638,7 @@ class CollectiblesGame {
             }
         }
     }
+    */
 
     /**
      * Detect open hand gesture - all 5 fingers splayed
