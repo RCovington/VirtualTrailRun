@@ -48,7 +48,8 @@ class CollectiblesGame {
         // Potion inventory
         this.potions = {
             'healing': 0,
-            'electricity': 0
+            'electricity': 0,
+            'mana': 0
         };
         
         // Separate bolt counter for crossbow ammunition
@@ -1554,6 +1555,10 @@ class CollectiblesGame {
             feedback.innerHTML = '✨ SUCCESS! ✨<br>⚡ Electricity Potion';
             feedback.style.color = '#00FFFF';
             feedback.style.textShadow = '0 0 20px #FFFF00, 0 0 40px #00FFFF, 0 0 60px #0088FF, 3px 3px 6px #000000';
+        } else if (potionType === 'mana') {
+            feedback.innerHTML = '✨ SUCCESS! ✨<br>🔮 Mana Potion';
+            feedback.style.color = '#3B82F6';
+            feedback.style.textShadow = '0 0 20px #60A5FA, 0 0 40px #3B82F6, 0 0 60px #93C5FD, 3px 3px 6px #000000';
         }
         
         feedback.style.position = 'fixed';
@@ -2366,7 +2371,7 @@ class CollectiblesGame {
         const magicList = document.getElementById('magicList');
         if (!magicList) return;
         
-        if (this.potions.healing === 0 && this.potions.electricity === 0) {
+        if (this.potions.healing === 0 && this.potions.electricity === 0 && this.potions.mana === 0) {
             magicList.innerHTML = '<div class="inventory-empty">No magic items yet</div>';
             return;
         }
@@ -2398,6 +2403,21 @@ class CollectiblesGame {
                         </div>
                     </div>
                     <button class="inventory-list-use" data-potion="electricity">Use</button>
+                </div>
+            `;
+        }
+        
+        if (this.potions.mana > 0) {
+            html += `
+                <div class="inventory-list-item" data-type="mana">
+                    <div class="inventory-list-emoji">🔮</div>
+                    <div class="inventory-list-info">
+                        <div class="inventory-list-name">Mana Potion</div>
+                        <div class="inventory-list-count">
+                            Quantity: <span class="count-value">${this.potions.mana}</span>
+                        </div>
+                    </div>
+                    <button class="inventory-list-use" data-potion="mana">Use</button>
                 </div>
             `;
         }
@@ -2442,6 +2462,16 @@ class CollectiblesGame {
                 <div class="potion-display-item" data-potion="electricity">
                     <span class="potion-display-icon">⚡</span>
                     <span class="potion-display-count">${this.potions.electricity}</span>
+                </div>
+            `;
+        }
+        
+        // Mana potion (blue)
+        if (this.potions.mana > 0) {
+            html += `
+                <div class="potion-display-item" data-potion="mana">
+                    <span class="potion-display-icon">🔮</span>
+                    <span class="potion-display-count">${this.potions.mana}</span>
                 </div>
             `;
         }
@@ -2508,6 +2538,7 @@ class CollectiblesGame {
                 <h3>🧪 Brew Potions</h3>
                 ${healingRecipe}
                 ${electricityRecipe}
+                ${manaRecipe}
                 <button class="brew-close-btn">Close</button>
             </div>
         `;
@@ -2592,6 +2623,30 @@ class CollectiblesGame {
                 console.log('❌ Not enough ingredients for Electricity Potion');
                 alert('Not enough ingredients! Need: 3 Crystals, 33 Magic');
             }
+        } else if (recipe === 'mana') {
+            // Check ingredients
+            if (this.inventory.acorn >= 1 && this.inventory.leaf >= 1 && app.magic >= 50) {
+                // Consume ingredients
+                this.inventory.acorn--;
+                this.inventory.leaf--;
+                app.magic -= 50;
+                
+                // Reduce total collected count
+                this.collectedCount -= 2; // 1 acorn + 1 leaf
+                this.updateCounter();
+                
+                // Create potion
+                this.potions.mana++;
+                
+                console.log('🔮 Brewed Mana Potion!');
+                this.showBrewSuccessFeedback('mana');
+                this.updateInventoryDisplay();
+                this.updateMagicList();
+                app.updateStatBars();
+            } else {
+                console.log('❌ Not enough ingredients for Mana Potion');
+                alert('Not enough ingredients! Need: 1 Acorn, 1 Leaf, 50 Magic');
+            }
         }
     }
 
@@ -2617,6 +2672,14 @@ class CollectiblesGame {
             console.log('⚡ Used Electricity Potion! Next 5 pinches will be ELECTRIFIED (4x damage)!');
             this.updateMagicList();
             this.showElectrifiedBuffFeedback();
+        } else if (potionType === 'mana' && this.potions.mana > 0) {
+            this.potions.mana--;
+            const oldMagic = app.magic;
+            app.magic = app.maxMagic;
+            const magicRestored = app.magic - oldMagic;
+            app.updateStatBars();
+            console.log(`🔮 Used Mana Potion! Magic: ${oldMagic.toFixed(1)} → ${app.magic.toFixed(1)} (+${magicRestored.toFixed(1)})`);
+            this.updateMagicList();
         }
     }
 }
