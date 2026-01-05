@@ -57,7 +57,7 @@ class CollectiblesGame {
         this.types = [
             { emoji: '🌰', name: 'acorn', size: 40 },
             { emoji: '🍄', name: 'mushroom', size: 45 },
-            { emoji: '🌲', name: 'pinecone', size: 35 },
+            { emoji: '🥜', name: 'pinecone', size: 35 },
             { emoji: '🍂', name: 'leaf', size: 38 },
             { emoji: '➳', name: 'bolt', size: 42 }
         ];
