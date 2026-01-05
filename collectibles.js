@@ -528,6 +528,9 @@ class CollectiblesGame {
                 // Draw hand keypoints for debugging
                 this.drawHandDebug(hand);
                 
+                // Check for pinky-to-nose gesture (to open inventory)
+                this.checkPinkyToNose(hand);
+                
                 // Check for closed fist gesture (to close inventory)
                 this.isClosedFist = this.isClosedFistGesture(hand);
                 
@@ -890,6 +893,32 @@ class CollectiblesGame {
      */
     distance(p1, p2) {
         return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+    }
+
+    /**
+     * Check if pinky finger is touching nose to open inventory
+     */
+    checkPinkyToNose(hand) {
+        if (!this.headTracker) return;
+        
+        const nosePos = this.headTracker.getNosePosition();
+        if (!nosePos) return;
+        
+        // Get pinky tip (keypoint 20)
+        const pinkyTip = hand.keypoints[20];
+        
+        // Calculate distance between pinky tip and nose
+        const distance = Math.sqrt(
+            Math.pow(pinkyTip.x - nosePos.x, 2) + 
+            Math.pow(pinkyTip.y - nosePos.y, 2)
+        );
+        
+        // If pinky is close to nose (within 30 pixels), open inventory
+        const threshold = 30;
+        if (distance < threshold && !this.inventoryOpen) {
+            console.log(`👃 Pinky-to-nose detected! Distance: ${distance.toFixed(1)}px`);
+            this.openInventory();
+        }
     }
 
     /**

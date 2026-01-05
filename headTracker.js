@@ -16,6 +16,7 @@ class HeadTracker {
         // Head position tracking
         this.previousNoseY = null;
         this.currentNoseY = null;
+        this.currentNoseX = null;
         this.verticalMovement = 0;
         this.movementHistory = [];
         this.maxHistoryLength = 30; // Track last 30 frames
@@ -183,6 +184,7 @@ class HeadTracker {
         // Get nose tip position (keypoint 1 in MediaPipe Face Mesh)
         const noseTip = face.keypoints[1];
         this.currentNoseY = noseTip.y;
+        this.currentNoseX = noseTip.x;
         
         if (this.previousNoseY !== null) {
             // Calculate vertical movement
@@ -516,6 +518,16 @@ class HeadTracker {
      */
     onTongue(callback) {
         this.onTongueCallback = callback;
+    }
+
+    /**
+     * Get current nose position
+     */
+    getNosePosition() {
+        if (this.currentNoseX !== null && this.currentNoseY !== null) {
+            return { x: this.currentNoseX, y: this.currentNoseY };
+        }
+        return null;
     }
 
     /**
