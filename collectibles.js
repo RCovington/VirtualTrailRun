@@ -493,21 +493,17 @@ class CollectiblesGame {
         const currentTime = app.videoPlayer.getCurrentTime();
         const duration = app.videoPlayer.getDuration();
         
-        // Check if we're within 5 seconds of the end
+        // Check if we're within 2 minutes (120 seconds) of the end
         if (duration > 0 && currentTime > 0) {
             const timeRemaining = duration - currentTime;
             
-            if (timeRemaining <= 5 && timeRemaining > 0) {
+            if (timeRemaining <= 120 && timeRemaining > 0) {
                 // Trigger boss spawn
                 this.bossSpawnTriggered = true;
                 
-                // Pause the video
-                app.videoPlayer.pause();
-                this.videoPausedForBoss = true;
+                console.log(`👹 Boss spawning at ${currentTime.toFixed(1)}s (${timeRemaining.toFixed(1)}s remaining)`);
                 
-                console.log(`⏸️ Video paused at ${currentTime.toFixed(1)}s (${timeRemaining.toFixed(1)}s remaining)`);
-                
-                // Spawn the boss
+                // Spawn the boss (video continues playing)
                 this.spawnBoss();
             }
         }
@@ -1868,37 +1864,142 @@ class CollectiblesGame {
         const thumbTip = keypoints[4];
         const indexTip = keypoints[8];
         
-        // Determine color based on grabbing state
-        const color = this.isGrabbing ? '#00FF00' : '#FFD700';
-        const radius = this.isGrabbing ? 4 : 3;
+        // Check if electricity is active
+        const isElectrified = this.electrifiedPinchesRemaining > 0;
+        
+        // Determine color based on grabbing state and electricity
+        const color = this.isGrabbing ? '#00FF00' : (isElectrified ? '#00FFFF' : '#FFD700');
+        const radius = this.isGrabbing ? 4 : (isElectrified ? 4 : 3);
         
         // Draw thumb tip
         this.ctx.beginPath();
         this.ctx.arc(thumbTip.x, thumbTip.y, radius, 0, 2 * Math.PI);
         this.ctx.fillStyle = color;
         this.ctx.fill();
-        this.ctx.strokeStyle = this.isGrabbing ? '#FFFFFF' : '#FFA500';
-        this.ctx.lineWidth = 1;
+        this.ctx.strokeStyle = this.isGrabbing ? '#FFFFFF' : (isElectrified ? '#FFFF00' : '#FFA500');
+        this.ctx.lineWidth = isElectrified ? 2 : 1;
         this.ctx.stroke();
+        
+        // Add electric glow for electrified mode
+        if (isElectrified && !this.isGrabbing) {
+            this.ctx.shadowColor = '#00FFFF';
+            this.ctx.shadowBlur = 15;
+            this.ctx.beginPath();
+            this.ctx.arc(thumbTip.x, thumbTip.y, radius + 2, 0, 2 * Math.PI);
+            this.ctx.strokeStyle = '#FFFF00';
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
+            this.ctx.shadowBlur = 0;
+        }
         
         // Draw index tip
         this.ctx.beginPath();
         this.ctx.arc(indexTip.x, indexTip.y, radius, 0, 2 * Math.PI);
         this.ctx.fillStyle = color;
         this.ctx.fill();
-        this.ctx.strokeStyle = this.isGrabbing ? '#FFFFFF' : '#FFA500';
-        this.ctx.lineWidth = 1;
+        this.ctx.strokeStyle = this.isGrabbing ? '#FFFFFF' : (isElectrified ? '#FFFF00' : '#FFA500');
+        this.ctx.lineWidth = isElectrified ? 2 : 1;
         this.ctx.stroke();
+        
+        // Add electric glow for electrified mode
+        if (isElectrified && !this.isGrabbing) {
+            this.ctx.shadowColor = '#00FFFF';
+            this.ctx.shadowBlur = 15;
+            this.ctx.beginPath();
+            this.ctx.arc(indexTip.x, indexTip.y, radius + 2, 0, 2 * Math.PI);
+            this.ctx.strokeStyle = '#FFFF00';
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
+            this.ctx.shadowBlur = 0;
+        }
+        
+        // Draw animated electricity between fingers when electrified and not grabbing
+        if (isElectrified && !this.isGrabbing) {
+            const distance = Math.sqrt(
+                Math.pow(indexTip.x - thumbTip.x, 2) + 
+                Math.pow(indexTip.y - thumbTip.y, 2)
+            );
+            
+            // Only show electricity if fingers are close but not touching (pinching range)
+            if (distance < 100 && distance > 10) {
+                this.drawElectricArc(thumbTip.x, thumbTip.y, indexTip.x, indexTip.y);
+            }
+        }
         
         // Draw line between them when grabbing
         if (this.isGrabbing) {
             this.ctx.beginPath();
             this.ctx.moveTo(thumbTip.x, thumbTip.y);
             this.ctx.lineTo(indexTip.x, indexTip.y);
-            this.ctx.strokeStyle = '#00FF00';
+            this.ctx.strokeStyle = isElectrified ? '#00FFFF' : '#00FF00';
             this.ctx.lineWidth = 2;
             this.ctx.stroke();
         }
+    }
+
+    /**
+     * Draw animated electric arc between two points
+     */
+    drawElectricArc(x1, y1, x2, y2) {
+        if (!this.ctx) return;
+        
+        const segments = 8; // Number of segments for the lightning bolt
+        const jitter = 15; // Maximum offset from straight line
+        
+        // Create array of points along the path with random offsets
+        const points = [{x: x1, y: y1}];
+        
+        for (let i = 1; i < segments; i++) {
+            const t = i / segments;
+            const midX = x1 + (x2 - x1) * t;
+            const midY = y1 + (y2 - y1) * t;
+            
+            // Add random perpendicular offset
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const perpX = -dy;
+            const perpY = dx;
+            const length = Math.sqrt(perpX * perpX + perpY * perpY);
+            
+            const offset = (Math.random() - 0.5) * jitter;
+            const offsetX = (perpX / length) * offset;
+            const offsetY = (perpY / length) * offset;
+            
+            points.push({
+                x: midX + offsetX,
+                y: midY + offsetY
+            });
+        }
+        
+        points.push({x: x2, y: y2});
+        
+        // Draw main lightning bolt
+        this.ctx.save();
+        this.ctx.strokeStyle = '#00FFFF';
+        this.ctx.lineWidth = 2;
+        this.ctx.shadowColor = '#00FFFF';
+        this.ctx.shadowBlur = 10;
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            this.ctx.lineTo(points[i].x, points[i].y);
+        }
+        this.ctx.stroke();
+        
+        // Draw brighter inner bolt
+        this.ctx.strokeStyle = '#FFFF00';
+        this.ctx.lineWidth = 1;
+        this.ctx.shadowBlur = 5;
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            this.ctx.lineTo(points[i].x, points[i].y);
+        }
+        this.ctx.stroke();
+        
+        this.ctx.restore();
     }
 
     /**
@@ -2354,6 +2455,10 @@ class CollectiblesGame {
                 this.inventory.leaf--;
                 app.magic -= 33;
                 
+                // Reduce total collected count
+                this.collectedCount -= 3; // 1 acorn + 1 mushroom + 1 leaf
+                this.updateCounter();
+                
                 // Create potion
                 this.potions.healing++;
                 
@@ -2371,6 +2476,10 @@ class CollectiblesGame {
                 // Consume ingredients
                 this.inventory.crystal -= 3;
                 app.magic -= 33;
+                
+                // Reduce total collected count
+                this.collectedCount -= 3; // 3 crystals
+                this.updateCounter();
                 
                 // Create potion
                 this.potions.electricity++;
