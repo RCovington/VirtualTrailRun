@@ -44,10 +44,11 @@ class CollectiblesGame {
         this.fireDelay = 500; // Minimum 500ms between shots
         this.boltProjectiles = []; // Active bolt projectiles on screen
         
-        // Crossbow firing tracking
-        this.lastFireTime = 0;
-        this.fireDelay = 500; // Minimum 500ms between shots
-        this.boltProjectiles = []; // Active bolt projectiles on screen
+        // Enemy system
+        this.enemies = []; // Active enemies on screen
+        this.collectiblesSpawnedSinceLastEnemy = 0;
+        this.enemySpawnInterval = { min: 10, max: 20 }; // Spawn after 10-20 collectibles
+        this.nextEnemySpawnAt = this.getRandomInt(this.enemySpawnInterval.min, this.enemySpawnInterval.max);
         
         // Timing
         this.minSpawnTime = 10000; // 10 seconds
@@ -226,6 +227,54 @@ class CollectiblesGame {
         
         this.collectibles.push(collectible);
         console.log(`Spawned ${type.name} at (${collectible.x.toFixed(0)}, ${collectible.y.toFixed(0)})`);
+        
+        // Track spawns for enemy spawning
+        this.collectiblesSpawnedSinceLastEnemy++;
+        if (this.collectiblesSpawnedSinceLastEnemy >= this.nextEnemySpawnAt) {
+            this.spawnEnemy();
+            this.collectiblesSpawnedSinceLastEnemy = 0;
+            this.nextEnemySpawnAt = this.getRandomInt(this.enemySpawnInterval.min, this.enemySpawnInterval.max);
+        }
+    }
+    
+    /**
+     * Get random integer between min and max (inclusive)
+     */
+    getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    
+    /**
+     * Spawn an enemy (rat)
+     */
+    spawnEnemy() {
+        if (!this.canvas) return;
+        
+        // Position rat in center-ish area
+        const x = this.canvas.width * 0.5 + (Math.random() - 0.5) * 100;
+        const y = this.canvas.height * 0.5;
+        
+        const enemy = {
+            id: Date.now() + Math.random(),
+            type: 'rat',
+            emoji: '🐀',
+            x: x,
+            y: y,
+            size: 60,
+            health: 100,
+            maxHealth: 100,
+            state: 'idle', // idle, rearing, attacking
+            attackCount: 0,
+            maxAttacks: this.getRandomInt(3, 6),
+            lastAttackTime: Date.now(),
+            nextAttackDelay: this.getRandomInt(2000, 7000),
+            rearingStartTime: 0,
+            rearingDuration: 500, // 0.5 second warning
+            createdAt: Date.now()
+        };
+        
+        this.enemies.push(enemy);
+        console.log(`🐀 RAT SPAWNED! Will make ${enemy.maxAttacks} attacks`);
     }
 
     /**
@@ -302,6 +351,28 @@ class CollectiblesGame {
             bolt.x += bolt.vx * (1/60); // Assuming ~60fps
             bolt.y += bolt.vy * (1/60);
             
+            // Check for collision with enemies
+            let hitEnemy = false;
+            for (let enemy of this.enemies) {
+                const distance = Math.sqrt(
+                    Math.pow(bolt.x - enemy.x, 2) + 
+                    Math.pow(bolt.y - enemy.y, 2)
+                );
+                
+                if (distance < enemy.size / 2) {
+                    // Bolt hit enemy - damage 50% of health
+                    const damage = enemy.maxHealth * 0.5;
+                    enemy.health = Math.max(0, enemy.health - damage);
+                    console.log(`🎯 Bolt hit rat! Damage: ${damage.toFixed(1)}, Remaining health: ${enemy.health.toFixed(1)}`);
+                    hitEnemy = true;
+                    break;
+                }
+            }
+            
+            if (hitEnemy) {
+                return false; // Remove bolt that hit enemy
+            }
+            
             // Check if bolt is still on screen and within lifetime
             const onScreen = bolt.x < this.canvas.width + 50 && bolt.x > -50 &&
                            bolt.y < this.canvas.height + 50 && bolt.y > -50;
@@ -319,6 +390,69 @@ class CollectiblesGame {
             
             return true; // Keep bolt
         });
+        
+        // Update enemies
+        this.updateEnemies();
+    }
+    
+    /**
+     * Update enemy states and behaviors
+     */
+    updateEnemies() {
+        const now = Date.now();
+        
+        this.enemies = this.enemies.filter(enemy => {
+            // Check if enemy is dead
+            if (enemy.health <= 0) {
+                console.log(`💀 Rat defeated!`);
+                return false; // Remove enemy
+            }
+            
+            // Check if enemy has made all attacks
+            if (enemy.attackCount >= enemy.maxAttacks) {
+                console.log(`🏃 Rat fleeing after ${enemy.attackCount} attacks`);
+                return false; // Remove enemy
+            }
+            
+            // Handle attack state machine
+            if (enemy.state === 'idle') {
+                // Check if it's time to attack
+                if (now - enemy.lastAttackTime >= enemy.nextAttackDelay) {
+                    enemy.state = 'rearing';
+                    enemy.rearingStartTime = now;
+                    console.log(`⚠️ Rat rearing back!`);
+                }
+            } else if (enemy.state === 'rearing') {
+                // Check if rearing animation is complete
+                if (now - enemy.rearingStartTime >= enemy.rearingDuration) {
+                    enemy.state = 'attacking';
+                    this.enemyAttack(enemy);
+                }
+            } else if (enemy.state === 'attacking') {
+                // Return to idle after attack
+                enemy.state = 'idle';
+                enemy.attackCount++;
+                enemy.lastAttackTime = now;
+                enemy.nextAttackDelay = this.getRandomInt(2000, 7000);
+            }
+            
+            return true; // Keep enemy
+        });
+    }
+    
+    /**
+     * Enemy performs attack on player
+     */
+    enemyAttack(enemy) {
+        console.log(`⚔️ RAT ATTACKS! (${enemy.attackCount + 1}/${enemy.maxAttacks})`);
+        
+        // Damage player health by 10%
+        if (window.app && window.app.health !== undefined) {
+            const damage = window.app.maxHealth * 0.1;
+            window.app.health = Math.max(0, window.app.health - damage);
+            window.app.updateStatBars();
+            console.log(`💔 Player took ${damage.toFixed(1)} damage! Health: ${window.app.health.toFixed(1)}/${window.app.maxHealth}`);
+        }
     }
 
     /**
@@ -370,11 +504,14 @@ class CollectiblesGame {
                     
                     this.lastHandPosition = { x: handX, y: handY };
                     
-                    // Check for collision with any collectible
+                    // Check for collision with enemies first
+                    const hitEnemy = this.checkEnemyCollision(handX, handY);
+                    
+                    // Then check for collision with any collectible
                     const grabbed = this.checkCollision(handX, handY);
                     
-                    // Only show miss feedback if nothing was grabbed AND there are collectibles on screen
-                    if (!grabbed && this.collectibles.length > 0) {
+                    // Only show miss feedback if nothing was grabbed/hit AND there are collectibles on screen
+                    if (!grabbed && !hitEnemy && this.collectibles.length > 0) {
                         this.showMissFeedback(handX, handY);
                     }
                 } else {
@@ -739,6 +876,29 @@ class CollectiblesGame {
         }
         return false; // Missed
     }
+    
+    /**
+     * Check for collision between pinch and enemies
+     * Returns true if an enemy was hit
+     */
+    checkEnemyCollision(handX, handY) {
+        for (let enemy of this.enemies) {
+            const distance = Math.sqrt(
+                Math.pow(handX - enemy.x, 2) + 
+                Math.pow(handY - enemy.y, 2)
+            );
+            
+            // Hit detection with enemy size
+            if (distance < enemy.size) {
+                // Pinch damages enemy by 10% of health
+                const damage = enemy.maxHealth * 0.1;
+                enemy.health = Math.max(0, enemy.health - damage);
+                console.log(`👊 Pinch hit rat! Damage: ${damage.toFixed(1)}, Remaining health: ${enemy.health.toFixed(1)}`);
+                return true; // Hit enemy
+            }
+        }
+        return false; // Missed
+    }
 
     /**
      * Collect a collectible
@@ -963,6 +1123,9 @@ class CollectiblesGame {
         // Draw bolt projectiles
         this.drawBoltProjectiles();
         
+        // Draw enemies
+        this.drawEnemies();
+        
         // Draw fingertip indicators if hand is detected
         if (this.lastHandKeypoints) {
             this.drawFingertipIndicators(this.lastHandKeypoints);
@@ -1017,6 +1180,87 @@ class CollectiblesGame {
             
             this.ctx.restore();
         });
+    }
+
+    /**
+     * Draw enemies on screen
+     */
+    drawEnemies() {
+        if (!this.ctx || !this.canvas) return;
+        
+        this.enemies.forEach(enemy => {
+            // Determine visual state
+            let displayEmoji = enemy.emoji;
+            let scale = 1;
+            let rotation = 0;
+            
+            if (enemy.state === 'rearing') {
+                // Rearing animation - scale up and rotate slightly
+                const rearingProgress = (Date.now() - enemy.rearingStartTime) / enemy.rearingDuration;
+                scale = 1 + (rearingProgress * 0.3); // Grow 30% larger
+                rotation = Math.sin(rearingProgress * Math.PI) * 0.2; // Slight tilt
+            } else if (enemy.state === 'attacking') {
+                // Attack animation - lunge forward
+                scale = 1.3;
+                rotation = 0.3;
+            }
+            
+            // Draw enemy emoji
+            this.ctx.save();
+            this.ctx.translate(enemy.x, enemy.y);
+            this.ctx.rotate(rotation);
+            
+            const size = enemy.size * scale;
+            this.ctx.font = `${size}px Arial`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            
+            // Add red glow when attacking/rearing
+            if (enemy.state !== 'idle') {
+                this.ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
+                this.ctx.shadowBlur = 20;
+            }
+            
+            this.ctx.fillText(displayEmoji, 0, 0);
+            this.ctx.restore();
+            
+            // Draw health bar above enemy
+            this.drawEnemyHealthBar(enemy);
+        });
+    }
+    
+    /**
+     * Draw health bar above enemy
+     */
+    drawEnemyHealthBar(enemy) {
+        const barWidth = 80;
+        const barHeight = 8;
+        const barX = enemy.x - barWidth / 2;
+        const barY = enemy.y - enemy.size * 0.8;
+        
+        // Background bar (dark)
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(barX, barY, barWidth, barHeight);
+        
+        // Health bar (red to yellow gradient based on health)
+        const healthPercent = enemy.health / enemy.maxHealth;
+        const healthWidth = barWidth * healthPercent;
+        
+        // Color gradient: red when low, yellow when medium, green when high
+        if (healthPercent > 0.5) {
+            this.ctx.fillStyle = '#4ade80'; // Green
+        } else if (healthPercent > 0.25) {
+            this.ctx.fillStyle = '#fbbf24'; // Yellow
+        } else {
+            this.ctx.fillStyle = '#ef4444'; // Red
+        }
+        
+        this.ctx.fillRect(barX, barY, healthWidth, barHeight);
+        
+        // Border
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(barX, barY, barWidth, barHeight);
     }
 
     /**
