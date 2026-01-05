@@ -79,7 +79,7 @@ class CollectiblesGame {
         this.types = [
             { emoji: '🌰', name: 'acorn', size: 40 },
             { emoji: '🍄', name: 'mushroom', size: 45 },
-            { emoji: '🔹', name: 'crystal', size: 35 },
+            { emoji: '�', name: 'crystal', size: 35 },
             { emoji: '🍂', name: 'leaf', size: 38 },
             { emoji: '➳', name: 'bolt', size: 42 }
         ];
@@ -2429,7 +2429,7 @@ class CollectiblesGame {
         // Healing potion (pink/red)
         if (this.potions.healing > 0) {
             html += `
-                <div class="potion-display-item healing-potion">
+                <div class="potion-display-item healing-potion" data-potion="healing">
                     <div class="potion-icon">🧪</div>
                     <div class="potion-count">${this.potions.healing}</div>
                 </div>
@@ -2439,7 +2439,7 @@ class CollectiblesGame {
         // Electricity/Shock potion (yellow/black)
         if (this.potions.electricity > 0) {
             html += `
-                <div class="potion-display-item shock-potion">
+                <div class="potion-display-item shock-potion" data-potion="electricity">
                     <div class="potion-icon">⚡</div>
                     <div class="potion-count">${this.potions.electricity}</div>
                 </div>
@@ -2453,6 +2453,17 @@ class CollectiblesGame {
         // if (this.potions.fire > 0) { ... }
         
         potionDisplay.innerHTML = html;
+        
+        // Add click handlers to potion items
+        const potionItems = potionDisplay.querySelectorAll('.potion-display-item');
+        potionItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                const potionType = e.currentTarget.dataset.potion;
+                if (potionType) {
+                    this.usePotion(potionType);
+                }
+            });
+        });
     }
 
     /**
@@ -2481,7 +2492,7 @@ class CollectiblesGame {
                 <h4>⚡ Electricity Potion</h4>
                 <p>Damages all enemies on screen</p>
                 <div class="brew-ingredients">
-                    <span>3 🔹 Crystals</span>
+                    <span>3 � Crystals</span>
                     <span>33 ✨ Magic</span>
                 </div>
                 <button class="brew-btn" data-recipe="electricity">Brew</button>

@@ -955,6 +955,18 @@ body {
     backdrop-filter: blur(8px);
     animation: potionGlow 2s ease-in-out infinite;
     position: relative;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.potion-display-item:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 20px currentColor;
+}
+
+.potion-display-item:active {
+    transform: scale(0.95);
 }
 
 .potion-display-item .potion-icon {
