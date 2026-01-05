@@ -861,16 +861,16 @@ body {
     top: 20px;
     left: 20px;
     background: rgba(45, 80, 22, 0.9);
-    border: 3px solid var(--orange);
-    border-radius: 15px;
-    padding: 10px 20px;
+    border: 2px solid var(--orange);
+    border-radius: 8px;
+    padding: 4px 12px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 1.5rem;
+    gap: 6px;
+    font-size: 1rem;
     font-weight: bold;
     color: white;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     pointer-events: auto; /* Allow clicks on counter while parent has pointer-events: none */
     z-index: 10; /* Ensure counter is above other elements */
@@ -882,16 +882,16 @@ body {
     top: 20px;
     left: 190px;
     background: rgba(80, 45, 22, 0.9);
-    border: 3px solid #8B4513;
-    border-radius: 15px;
-    padding: 10px 20px;
+    border: 2px solid #8B4513;
+    border-radius: 8px;
+    padding: 4px 12px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 1.5rem;
+    gap: 6px;
+    font-size: 1rem;
     font-weight: bold;
     color: white;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     pointer-events: auto;
     z-index: 10;
@@ -905,8 +905,9 @@ body {
 
 #boltCount {
     font-family: 'Courier New', monospace;
-    font-size: 1.8rem;
-    min-width: 40px;
+    font-size: 1rem;
+    line-height: 1;
+    min-width: 24px;
     text-align: center;
 }
 
@@ -918,8 +919,9 @@ body {
 
 #collectiblesCount {
     font-family: 'Courier New', monospace;
-    font-size: 1.8rem;
-    min-width: 40px;
+    font-size: 1rem;
+    line-height: 1;
+    min-width: 24px;
     text-align: center;
 }
 
