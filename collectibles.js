@@ -49,7 +49,7 @@ class CollectiblesGame {
         this.potions = {
             'healing': 0,
             'electricity': 0,
-            'mana': 0
+            'mana': 1  // DEBUG: Start with 1 mana potion
         };
         
         // Separate bolt counter for crossbow ammunition
