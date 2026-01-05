@@ -208,6 +208,12 @@ class CollectiblesGame {
         // Initialize potion display
         this.updatePotionDisplay();
         
+        // Create inventory panel (so XP elements exist for updates)
+        if (!document.getElementById('inventoryPanel')) {
+            const panel = this.createInventoryPanel();
+            panel.style.display = 'none'; // Start hidden
+        }
+        
         console.log('Collectibles game started');
     }
 
