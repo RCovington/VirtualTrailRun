@@ -2079,9 +2079,11 @@ class CollectiblesGame {
         
         if (potionType === 'healing' && this.potions.healing > 0) {
             this.potions.healing--;
+            const oldHealth = app.health;
             app.health = Math.min(app.maxHealth, app.health + 30);
+            const actualHealing = app.health - oldHealth;
             app.updateStatBars();
-            console.log('🧪 Used Healing Potion! +30 Health');
+            console.log(`🧪 Used Healing Potion! Health: ${oldHealth.toFixed(1)} → ${app.health.toFixed(1)} (+${actualHealing.toFixed(1)})`);
             this.updateMagicList();
         } else if (potionType === 'electricity' && this.potions.electricity > 0) {
             this.potions.electricity--;
