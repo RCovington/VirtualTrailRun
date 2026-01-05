@@ -48,7 +48,8 @@ class CollectiblesGame {
         this.enemies = []; // Active enemies on screen
         this.collectiblesSpawnedSinceLastEnemy = 0;
         this.enemySpawnInterval = { min: 10, max: 20 }; // Spawn after 10-20 collectibles
-        this.nextEnemySpawnAt = this.getRandomInt(this.enemySpawnInterval.min, this.enemySpawnInterval.max);
+        this.nextEnemySpawnAt = 2; // DEBUG: First rat after 2 objects
+        this.isFirstEnemySpawn = true; // Track if this is the first spawn
         
         // Timing
         this.minSpawnTime = 10000; // 10 seconds
@@ -230,10 +231,19 @@ class CollectiblesGame {
         
         // Track spawns for enemy spawning
         this.collectiblesSpawnedSinceLastEnemy++;
+        console.log(`📊 Collectibles since last enemy: ${this.collectiblesSpawnedSinceLastEnemy}/${this.nextEnemySpawnAt}`);
+        
         if (this.collectiblesSpawnedSinceLastEnemy >= this.nextEnemySpawnAt) {
             this.spawnEnemy();
             this.collectiblesSpawnedSinceLastEnemy = 0;
+            
+            // After first spawn, use normal 10-20 range
+            if (this.isFirstEnemySpawn) {
+                this.isFirstEnemySpawn = false;
+                console.log(`✅ First rat spawned. Next rats will spawn after 10-20 collectibles.`);
+            }
             this.nextEnemySpawnAt = this.getRandomInt(this.enemySpawnInterval.min, this.enemySpawnInterval.max);
+            console.log(`🎲 Next enemy will spawn after ${this.nextEnemySpawnAt} more collectibles`);
         }
     }
     
