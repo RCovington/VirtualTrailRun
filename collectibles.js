@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Collectibles Game Module
  * Spawns objects on the trail and detects hand gestures to collect them
  */
@@ -2539,19 +2539,31 @@ class CollectiblesGame {
         const app = window.app;
         if (!app) return;
         
+        // Check healing potion ingredients
+        const hasAcornHealing = this.inventory.acorn >= 1;
+        const hasMushroom = this.inventory.mushroom >= 1;
+        const hasLeafHealing = this.inventory.leaf >= 1;
+        const hasMagicHealing = app.magic >= 33;
+        const canBrewHealing = hasAcornHealing && hasMushroom && hasLeafHealing && hasMagicHealing;
+        
         const healingRecipe = `
             <div class="brew-recipe">
                 <h4>🧪 Healing Potion</h4>
                 <p>Restores 30 health</p>
                 <div class="brew-ingredients">
-                    <span>1 🌰 Acorn</span>
-                    <span>1 🍄 Mushroom</span>
-                    <span>1 🍂 Leaf</span>
-                    <span>33 ✨ Magic</span>
+                    <span class="${hasAcornHealing ? 'ingredient-available' : 'ingredient-missing'}">1 🌰 Acorn</span>
+                    <span class="${hasMushroom ? 'ingredient-available' : 'ingredient-missing'}">1 🍄 Mushroom</span>
+                    <span class="${hasLeafHealing ? 'ingredient-available' : 'ingredient-missing'}">1 🍂 Leaf</span>
+                    <span class="${hasMagicHealing ? 'ingredient-available' : 'ingredient-missing'}">33 ✨ Magic</span>
                 </div>
-                <button class="brew-btn" data-recipe="healing">Brew</button>
+                <button class="brew-btn" data-recipe="healing" ${canBrewHealing ? '' : 'disabled'}>Brew</button>
             </div>
         `;
+        
+        // Check electricity potion ingredients
+        const hasCrystals = this.inventory.crystal >= 3;
+        const hasMagicElectricity = app.magic >= 33;
+        const canBrewElectricity = hasCrystals && hasMagicElectricity;
         
         const electricityRecipe = `
             <div class="brew-recipe">
@@ -2561,20 +2573,26 @@ class CollectiblesGame {
                     <span>3 � Crystals</span>
                     <span>33 ✨ Magic</span>
                 </div>
-                <button class="brew-btn" data-recipe="electricity">Brew</button>
+                <button class="brew-btn" data-recipe="electricity" ${canBrewElectricity ? '' : 'disabled'}>Brew</button>
             </div>
         `;
+        
+        // Check mana potion ingredients
+        const hasAcornMana = this.inventory.acorn >= 1;
+        const hasLeafMana = this.inventory.leaf >= 1;
+        const hasMagicMana = app.magic >= 50;
+        const canBrewMana = hasAcornMana && hasLeafMana && hasMagicMana;
         
         const manaRecipe = `
             <div class="brew-recipe">
                 <h4>🔮 Mana Potion</h4>
                 <p>Refills your magic bar</p>
                 <div class="brew-ingredients">
-                    <span>1 🌰 Acorn</span>
-                    <span>1 🍂 Leaf</span>
-                    <span>50 ✨ Magic</span>
+                    <span class="${hasAcornMana ? 'ingredient-available' : 'ingredient-missing'}">1 🌰 Acorn</span>
+                    <span class="${hasLeafMana ? 'ingredient-available' : 'ingredient-missing'}">1 🍂 Leaf</span>
+                    <span class="${hasMagicMana ? 'ingredient-available' : 'ingredient-missing'}">50 ✨ Magic</span>
                 </div>
-                <button class="brew-btn" data-recipe="mana">Brew</button>
+                <button class="brew-btn" data-recipe="mana" ${canBrewMana ? '' : 'disabled'}>Brew</button>
             </div>
         `;
         
