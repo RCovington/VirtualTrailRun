@@ -287,6 +287,19 @@ class HeadTracker {
         this.leftEyeEAR = this.calculateEyeAspectRatio(leftEye);
         this.rightEyeEAR = this.calculateEyeAspectRatio(rightEye);
         
+        // Validate that both eyes are visible and trackable
+        // If either eye has invalid EAR (NaN, undefined, or extremely low), don't detect winks
+        const leftEyeVisible = !isNaN(this.leftEyeEAR) && this.leftEyeEAR > 0.05;
+        const rightEyeVisible = !isNaN(this.rightEyeEAR) && this.rightEyeEAR > 0.05;
+        
+        // Only proceed with wink detection if BOTH eyes are clearly visible
+        if (!leftEyeVisible || !rightEyeVisible) {
+            // One or both eyes not visible - reset states and skip wink detection
+            this.leftEyeClosed = false;
+            this.rightEyeClosed = false;
+            return;
+        }
+        
         // Determine if eyes are closed or open
         const leftClosed = this.leftEyeEAR < this.eyeClosedThreshold;
         const rightClosed = this.rightEyeEAR < this.eyeClosedThreshold;
