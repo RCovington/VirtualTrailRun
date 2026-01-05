@@ -1122,6 +1122,31 @@ body {
     transform: scale(1.1);
 }
 
+/* Inventory XP Section */
+.inventory-xp-section {
+    padding: 15px 30px;
+    background: rgba(35, 60, 18, 0.9);
+    border-bottom: 2px solid rgba(255, 140, 0, 0.3);
+}
+
+.inventory-xp-section .stat-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.inventory-xp-section .stat-label {
+    font-weight: bold;
+    color: #fbbf24;
+    min-width: 80px;
+    font-size: 1rem;
+}
+
+.inventory-xp-section .stat-bar-container {
+    flex: 1;
+    height: 20px;
+}
+
 /* Inventory Tabs */
 .inventory-tabs {
     display: flex;

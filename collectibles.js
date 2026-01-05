@@ -1550,6 +1550,14 @@ class CollectiblesGame {
                 <h2>🎒 Inventory</h2>
                 <button class="inventory-close" id="inventoryClose">✕</button>
             </div>
+            <div class="inventory-xp-section">
+                <div class="stat-bar">
+                    <div class="stat-label">Level <span id="levelDisplay">0</span></div>
+                    <div class="stat-bar-container">
+                        <div class="stat-bar-fill xp-bar" id="xpBar"></div>
+                    </div>
+                </div>
+            </div>
             <div class="inventory-tabs">
                 <button class="inventory-tab active" data-tab="collectibles">🌰 Objects</button>
                 <button class="inventory-tab" data-tab="weapons">⚔️ Weapons</button>

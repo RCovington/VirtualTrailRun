@@ -647,10 +647,21 @@ class VirtualTrailRunApp {
         this.level++;
         this.xp = this.xp - this.xpForNextLevel; // Carry over excess XP
         
+        // Increase max health and max magic by 10%
+        const oldMaxHealth = this.maxHealth;
+        const oldMaxMagic = this.maxMagic;
+        this.maxHealth = Math.floor(this.maxHealth * 1.1);
+        this.maxMagic = Math.floor(this.maxMagic * 1.1);
+        
+        // Also restore some health and magic on level up
+        this.health = Math.min(this.maxHealth, this.health + (this.maxHealth - oldMaxHealth));
+        this.magic = Math.min(this.maxMagic, this.magic + (this.maxMagic - oldMaxMagic));
+        
         // Increase XP needed for next level (100 per level)
         this.xpForNextLevel = (this.level + 1) * 100;
         
-        console.log(`🎉 LEVEL UP! Now level ${this.level}! Next level at ${this.xpForNextLevel} XP`);
+        console.log(`🎉 LEVEL UP! Now level ${this.level}! Max Health: ${oldMaxHealth} → ${this.maxHealth}, Max Magic: ${oldMaxMagic} → ${this.maxMagic}`);
+        console.log(`📊 Next level at ${this.xpForNextLevel} XP`);
         
         // Show level up feedback
         this.showLevelUpFeedback();
