@@ -296,7 +296,6 @@ class CollectiblesGame {
             return true; // Keep bolt
         });
     }
-    }
 
     /**
      * Detect hand gesture for grabbing
