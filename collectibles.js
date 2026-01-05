@@ -457,11 +457,17 @@ class CollectiblesGame {
         console.log(`⚔️ RAT ATTACKS! (${enemy.attackCount + 1}/${enemy.maxAttacks})`);
         
         // Damage player health by 10%
-        if (window.app && window.app.health !== undefined) {
-            const damage = window.app.maxHealth * 0.1;
-            window.app.health = Math.max(0, window.app.health - damage);
-            window.app.updateStatBars();
-            console.log(`💔 Player took ${damage.toFixed(1)} damage! Health: ${window.app.health.toFixed(1)}/${window.app.maxHealth}`);
+        const app = window.app;
+        console.log(`🔍 Checking for app reference:`, !!app);
+        
+        if (app && app.health !== undefined && app.maxHealth !== undefined) {
+            const damage = app.maxHealth * 0.1;
+            const oldHealth = app.health;
+            app.health = Math.max(0, app.health - damage);
+            app.updateStatBars();
+            console.log(`💔 Player took ${damage.toFixed(1)} damage! Health: ${oldHealth.toFixed(1)} → ${app.health.toFixed(1)}/${app.maxHealth}`);
+        } else {
+            console.error(`❌ Cannot damage player - app not found or health undefined. app=${!!app}, health=${app?.health}, maxHealth=${app?.maxHealth}`);
         }
     }
 

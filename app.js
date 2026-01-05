@@ -563,6 +563,10 @@ class VirtualTrailRunApp {
             const magicIncrement = (bobsIncrement / this.bobsForFullMagic) * 100;
             this.magic = Math.min(this.magic + magicIncrement, this.maxMagic);
             
+            // Increment health at half the rate of magic
+            const healthIncrement = magicIncrement / 2;
+            this.health = Math.min(this.health + healthIncrement, this.maxHealth);
+            
             // Add glowing class when increasing
             this.elements.magicBar.classList.add('magic-increasing');
             
