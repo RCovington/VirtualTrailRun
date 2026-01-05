@@ -363,8 +363,8 @@ class CollectiblesGame {
                     // Check for collision with any collectible
                     const grabbed = this.checkCollision(handX, handY);
                     
-                    // If no collision, show miss feedback
-                    if (!grabbed) {
+                    // Only show miss feedback if nothing was grabbed AND there are collectibles on screen
+                    if (!grabbed && this.collectibles.length > 0) {
                         this.showMissFeedback(handX, handY);
                     }
                 } else {
@@ -711,6 +711,9 @@ class CollectiblesGame {
      * Returns true if a collectible was grabbed
      */
     checkCollision(handX, handY) {
+        // Use half the screen width as the grab radius
+        const halfScreenDistance = this.canvas ? this.canvas.width / 2 : 320;
+        
         for (let i = this.collectibles.length - 1; i >= 0; i--) {
             const collectible = this.collectibles[i];
             const distance = Math.sqrt(
@@ -718,10 +721,8 @@ class CollectiblesGame {
                 Math.pow(handY - collectible.y, 2)
             );
             
-            // Collision detection with scaled size
-            const hitRadius = (collectible.size * collectible.scale) / 2 + 30; // Extra margin
-            
-            if (distance < hitRadius) {
+            // Collision detection with half screen distance
+            if (distance < halfScreenDistance) {
                 this.collectCollectible(collectible, i);
                 return true; // Successfully grabbed
             }
