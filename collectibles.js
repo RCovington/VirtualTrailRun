@@ -118,12 +118,12 @@ class CollectiblesGame {
         this.isActive = true;
         this.videoElement = videoElement;
         
-        // Set up wink detection callback for crossbow firing
+        // Set up tongue detection callback for crossbow firing
         if (this.headTracker) {
-            console.log('🎯 Setting up wink callback...');
-            this.headTracker.onWink((eye) => {
-                console.log(`👁️ Wink detected: ${eye} eye, boltCount=${this.boltCount}`);
-                // Fire bolt on any wink (left or right)
+            console.log('🎯 Setting up tongue callback...');
+            this.headTracker.onTongue(() => {
+                console.log(`👅 Tongue out detected, boltCount=${this.boltCount}`);
+                // Fire bolt on tongue out
                 if (this.boltCount > 0) {
                     // Use center of screen as firing position
                     const centerX = this.canvas ? this.canvas.width / 2 : 320;
@@ -134,9 +134,9 @@ class CollectiblesGame {
                     console.log('⚠️ No bolts to fire!');
                 }
             });
-            console.log('✅ Wink callback registered');
+            console.log('✅ Tongue callback registered');
         } else {
-            console.warn('⚠️ No headTracker available for wink detection!');
+            console.warn('⚠️ No headTracker available for tongue detection!');
         }
         
         // Reset canvas sizes to match video (maintain aspect ratio)

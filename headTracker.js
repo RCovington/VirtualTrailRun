@@ -37,10 +37,17 @@ class HeadTracker {
         this.lastWinkTime = 0;
         this.winkCooldown = 1000; // Minimum milliseconds between winks (increased for reliability)
         
+        // Tongue detection
+        this.tongueOut = false;
+        this.lastTongueTime = 0;
+        this.tongueCooldown = 1000; // Minimum milliseconds between tongue detections
+        this.mouthOpenThreshold = 0.4; // Mouth Aspect Ratio threshold for open mouth
+        
         // Callbacks
         this.onBobDetectedCallback = null;
         this.onMovementCallback = null;
         this.onWinkCallback = null;
+        this.onTongueCallback = null;
         
         // Animation frame
         this.animationFrameId = null;
@@ -201,6 +208,9 @@ class HeadTracker {
         
         // Detect winks
         this.detectWink(face);
+        
+        // Detect tongue out
+        this.detectTongue(face);
     }
 
     /**
@@ -348,6 +358,57 @@ class HeadTracker {
     }
 
     /**
+     * Detect tongue sticking out gesture
+     * Uses mouth landmarks to detect when mouth is very open (indicating tongue out)
+     */
+    detectTongue(face) {
+        const keypoints = face.keypoints;
+        
+        // Mouth landmarks
+        // Upper lip: 13 (top center)
+        // Lower lip: 14 (bottom center)
+        // Left mouth corner: 61
+        // Right mouth corner: 291
+        const upperLip = keypoints[13];
+        const lowerLip = keypoints[14];
+        const leftMouth = keypoints[61];
+        const rightMouth = keypoints[291];
+        
+        // Calculate mouth aspect ratio (vertical opening / horizontal width)
+        const mouthHeight = Math.abs(lowerLip.y - upperLip.y);
+        const mouthWidth = Math.abs(rightMouth.x - leftMouth.x);
+        const mouthAspectRatio = mouthHeight / mouthWidth;
+        
+        // Check for cooldown
+        const now = Date.now();
+        const cooldownPassed = (now - this.lastTongueTime) > this.tongueCooldown;
+        
+        // Debug logging every 60 frames to avoid spam
+        if (!this.tongueDebugCounter) this.tongueDebugCounter = 0;
+        this.tongueDebugCounter++;
+        if (this.tongueDebugCounter % 60 === 0) {
+            console.log(`👅 Mouth Aspect Ratio: ${mouthAspectRatio.toFixed(3)}, Threshold: ${this.mouthOpenThreshold}`);
+        }
+        
+        // Detect tongue out (mouth very open)
+        if (cooldownPassed && mouthAspectRatio > this.mouthOpenThreshold && !this.tongueOut) {
+            console.log(`👅✨ TONGUE OUT DETECTED! Mouth Aspect Ratio: ${mouthAspectRatio.toFixed(3)}`);
+            this.tongueOut = true;
+            this.lastTongueTime = now;
+            if (this.onTongueCallback) {
+                this.onTongueCallback();
+            } else {
+                console.warn('⚠️ No tongue callback registered!');
+            }
+        }
+        
+        // Reset tongue state when mouth closes
+        if (mouthAspectRatio < this.mouthOpenThreshold * 0.7) {
+            this.tongueOut = false;
+        }
+    }
+
+    /**
      * Draw face keypoints on canvas for visual feedback
      */
     drawFaceKeypoints(face) {
@@ -448,6 +509,13 @@ class HeadTracker {
      */
     onWink(callback) {
         this.onWinkCallback = callback;
+    }
+
+    /**
+     * Register callback for tongue out detection
+     */
+    onTongue(callback) {
+        this.onTongueCallback = callback;
     }
 
     /**
