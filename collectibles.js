@@ -375,6 +375,11 @@ class CollectiblesGame {
                     Math.pow(bolt.y - enemy.y, 2)
                 );
                 
+                // Debug logging for collision detection
+                if (Math.random() < 0.1) { // 10% chance
+                    console.log(`🔍 Bolt collision check: bolt(${bolt.x.toFixed(0)}, ${bolt.y.toFixed(0)}) vs rat(${enemy.x.toFixed(0)}, ${enemy.y.toFixed(0)}), distance=${distance.toFixed(1)}, hitRadius=${(enemy.size / 2).toFixed(1)}`);
+                }
+                
                 if (distance < enemy.size / 2) {
                     // Bolt hit enemy - damage 50% of health
                     const damage = enemy.maxHealth * 0.5;
