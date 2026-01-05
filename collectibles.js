@@ -2635,6 +2635,106 @@ class CollectiblesGame {
     }
 
     /**
+     * Refresh the brew menu to update ingredient availability
+     */
+    refreshBrewMenu() {
+        const brewModal = document.querySelector('.brew-modal');
+        if (!brewModal) return;
+        
+        const app = window.app;
+        if (!app) return;
+        
+        // Check healing potion ingredients
+        const hasAcornHealing = this.inventory.acorn >= 1;
+        const hasMushroom = this.inventory.mushroom >= 1;
+        const hasLeafHealing = this.inventory.leaf >= 1;
+        const hasMagicHealing = app.magic >= 33;
+        const canBrewHealing = hasAcornHealing && hasMushroom && hasLeafHealing && hasMagicHealing;
+        
+        const healingRecipe = `
+            <div class="brew-recipe">
+                <h4>🧪 Healing Potion</h4>
+                <p>Restores 30 health</p>
+                <div class="brew-ingredients">
+                    <span class="${hasAcornHealing ? 'ingredient-available' : 'ingredient-missing'}">1 🌰 Acorn</span>
+                    <span class="${hasMushroom ? 'ingredient-available' : 'ingredient-missing'}">1 🍄 Mushroom</span>
+                    <span class="${hasLeafHealing ? 'ingredient-available' : 'ingredient-missing'}">1 🍂 Leaf</span>
+                    <span class="${hasMagicHealing ? 'ingredient-available' : 'ingredient-missing'}">33 ✨ Magic</span>
+                </div>
+                <button class="brew-btn" data-recipe="healing" ${canBrewHealing ? '' : 'disabled'}>Brew</button>
+            </div>
+        `;
+        
+        // Check electricity potion ingredients
+        const hasCrystals = this.inventory.crystal >= 3;
+        const hasMagicElectricity = app.magic >= 33;
+        const canBrewElectricity = hasCrystals && hasMagicElectricity;
+        
+        const electricityRecipe = `
+            <div class="brew-recipe">
+                <h4>⚡ Electricity Potion</h4>
+                <p>Damages all enemies on screen</p>
+                <div class="brew-ingredients">
+                    <span class="${hasCrystals ? 'ingredient-available' : 'ingredient-missing'}">3 🔶 Crystals</span>
+                    <span class="${hasMagicElectricity ? 'ingredient-available' : 'ingredient-missing'}">33 ✨ Magic</span>
+                </div>
+                <button class="brew-btn" data-recipe="electricity" ${canBrewElectricity ? '' : 'disabled'}>Brew</button>
+            </div>
+        `;
+        
+        // Check mana potion ingredients
+        const hasAcornMana = this.inventory.acorn >= 1;
+        const hasLeafMana = this.inventory.leaf >= 1;
+        const hasMagicMana = app.magic >= 50;
+        const canBrewMana = hasAcornMana && hasLeafMana && hasMagicMana;
+        
+        const manaRecipe = `
+            <div class="brew-recipe">
+                <h4>🔮 Mana Potion</h4>
+                <p>Refills your magic bar</p>
+                <div class="brew-ingredients">
+                    <span class="${hasAcornMana ? 'ingredient-available' : 'ingredient-missing'}">1 🌰 Acorn</span>
+                    <span class="${hasLeafMana ? 'ingredient-available' : 'ingredient-missing'}">1 🍂 Leaf</span>
+                    <span class="${hasMagicMana ? 'ingredient-available' : 'ingredient-missing'}">50 ✨ Magic</span>
+                </div>
+                <button class="brew-btn" data-recipe="mana" ${canBrewMana ? '' : 'disabled'}>Brew</button>
+            </div>
+        `;
+        
+        // Update the modal content (preserving close buttons)
+        const modalContent = brewModal.querySelector('.brew-modal-content');
+        if (modalContent) {
+            modalContent.innerHTML = `
+                <button class="brew-close-x" aria-label="Close">&times;</button>
+                <h3>🧪 Brew Potions</h3>
+                ${healingRecipe}
+                ${electricityRecipe}
+                ${manaRecipe}
+                <button class="brew-close-btn">Close</button>
+            `;
+            
+            // Re-attach event handlers
+            const brewButtons = modalContent.querySelectorAll('.brew-btn');
+            brewButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const recipe = e.target.dataset.recipe;
+                    this.brewPotion(recipe);
+                });
+            });
+            
+            const closeBtn = modalContent.querySelector('.brew-close-btn');
+            closeBtn.addEventListener('click', () => {
+                brewModal.remove();
+            });
+            
+            const closeX = modalContent.querySelector('.brew-close-x');
+            closeX.addEventListener('click', () => {
+                brewModal.remove();
+            });
+        }
+    }
+
+    /**
      * Brew a potion based on recipe
      */
     brewPotion(recipe) {
@@ -2663,6 +2763,7 @@ class CollectiblesGame {
                 this.updateInventoryDisplay();
                 this.updateMagicList();
                 app.updateStatBars();
+                this.refreshBrewMenu();
             } else {
                 console.log('❌ Not enough ingredients for Healing Potion');
                 alert('Not enough ingredients! Need: 1 Acorn, 1 Mushroom, 1 Leaf, 33 Magic');
@@ -2686,6 +2787,7 @@ class CollectiblesGame {
                 this.updateInventoryDisplay();
                 this.updateMagicList();
                 app.updateStatBars();
+                this.refreshBrewMenu();
             } else {
                 console.log('❌ Not enough ingredients for Electricity Potion');
                 alert('Not enough ingredients! Need: 3 Crystals, 33 Magic');
@@ -2710,6 +2812,7 @@ class CollectiblesGame {
                 this.updateInventoryDisplay();
                 this.updateMagicList();
                 app.updateStatBars();
+                this.refreshBrewMenu();
             } else {
                 console.log('❌ Not enough ingredients for Mana Potion');
                 alert('Not enough ingredients! Need: 1 Acorn, 1 Leaf, 50 Magic');
