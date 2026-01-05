@@ -260,9 +260,9 @@ class CollectiblesGame {
     spawnEnemy() {
         if (!this.canvas) return;
         
-        // Position rat in center-ish area
+        // Position rat on the trail (1/3 from bottom, same as collectibles)
         const x = this.canvas.width * 0.5 + (Math.random() - 0.5) * 100;
-        const y = this.canvas.height * 0.5;
+        const y = this.canvas.height * 0.67; // 1/3 from bottom
         
         const enemy = {
             id: Date.now() + Math.random(),
