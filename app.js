@@ -572,9 +572,12 @@ class VirtualTrailRunApp {
             const bobsIncrement = totalBobs - this.lastTotalBobs;
             this.lastTotalBobs = totalBobs;
             
+            // DEBUG: 2x regeneration rate
+            const debugMultiplier = 2;
+            
             // Increment magic bar gradually based on new bobs (not total)
             // Each bob adds a small amount to magic
-            const magicIncrement = (bobsIncrement / this.bobsForFullMagic) * 100;
+            const magicIncrement = (bobsIncrement / this.bobsForFullMagic) * 100 * debugMultiplier;
             this.magic = Math.min(this.magic + magicIncrement, this.maxMagic);
             
             // Increment health at half the rate of magic

@@ -40,6 +40,11 @@ class CollectiblesGame {
             'bolt': 0
         };
         
+        // Armor inventory
+        this.armor = {
+            'buckler': 0
+        };
+        
         // Potion inventory
         this.potions = {
             'healing': 0,
@@ -402,6 +407,34 @@ class CollectiblesGame {
     }
 
     /**
+     * Show boss victory visual feedback
+     */
+    showBossVictoryFeedback() {
+        const feedback = document.createElement('div');
+        feedback.className = 'boss-victory-feedback';
+        feedback.innerHTML = '🏆 VICTORY! 🏆<br>+70 XP<br>🛡️ Buckler Shield';
+        feedback.style.position = 'fixed';
+        feedback.style.top = '50%';
+        feedback.style.left = '50%';
+        feedback.style.transform = 'translate(-50%, -50%)';
+        feedback.style.fontSize = '3.5rem';
+        feedback.style.fontWeight = 'bold';
+        feedback.style.color = '#FFD700';
+        feedback.style.textShadow = '0 0 20px #FFA500, 0 0 40px #FFD700, 0 0 60px #FFF, 4px 4px 8px #000000';
+        feedback.style.animation = 'bossVictoryPulse 3s ease-out forwards';
+        feedback.style.pointerEvents = 'none';
+        feedback.style.zIndex = '10000';
+        feedback.style.textAlign = 'center';
+        feedback.style.lineHeight = '1.3';
+        
+        document.body.appendChild(feedback);
+        
+        setTimeout(() => {
+            feedback.remove();
+        }, 3000);
+    }
+
+    /**
      * Spawn a collectible at a specific position (for bolt drops)
      */
     spawnCollectibleAt(x, y, type) {
@@ -564,14 +597,35 @@ class CollectiblesGame {
         this.enemies = this.enemies.filter(enemy => {
             // Check if enemy is dead
             if (enemy.health <= 0) {
-                console.log(`💀 Rat defeated!`);
+                const isBoss = enemy.isBoss || false;
                 
-                // Award XP to player
-                const app = window.app;
-                if (app && app.addXP) {
-                    app.addXP(10);
+                if (isBoss) {
+                    console.log(`👹💀 FINAL BOSS DEFEATED!`);
+                    
+                    // Award 7x XP for boss
+                    const app = window.app;
+                    if (app && app.addXP) {
+                        app.addXP(70); // 7 times normal 10 XP
+                        console.log(`⭐ BOSS BONUS: +70 XP!`);
+                    }
+                    
+                    // Award buckler shield armor
+                    this.armor.buckler++;
+                    console.log(`🛡️ LEGENDARY REWARD: Buckler Shield acquired!`);
+                    this.updateInventoryDisplay();
+                    
+                    // Show victory message
+                    this.showBossVictoryFeedback();
                 } else {
-                    console.warn('⚠️ Cannot award XP - app not found or addXP undefined');
+                    console.log(`💀 Rat defeated!`);
+                    
+                    // Award normal XP to player
+                    const app = window.app;
+                    if (app && app.addXP) {
+                        app.addXP(10);
+                    } else {
+                        console.warn('⚠️ Cannot award XP - app not found or addXP undefined');
+                    }
                 }
                 
                 return false; // Remove enemy
@@ -2109,6 +2163,46 @@ class CollectiblesGame {
                 weaponsList.innerHTML = '<div class="inventory-empty">No weapons yet</div>';
             }
         }
+        
+        // Update armor tab
+        this.updateArmorList();
+    }
+
+    /**
+     * Update armor tab list
+     */
+    updateArmorList() {
+        const armorList = document.getElementById('armorList');
+        if (!armorList) return;
+        
+        if (this.armor.buckler === 0) {
+            armorList.innerHTML = '<div class="inventory-empty">No armor yet</div>';
+            return;
+        }
+        
+        const armorItems = [];
+        
+        if (this.armor.buckler > 0) {
+            armorItems.push({
+                name: 'Buckler Shield',
+                emoji: '🛡️',
+                count: this.armor.buckler,
+                description: 'Blocks enemy attacks with closed fist + elbow gesture'
+            });
+        }
+        
+        armorList.innerHTML = armorItems.map(item => `
+            <div class="inventory-list-item armor-item">
+                <div class="inventory-list-emoji">${item.emoji}</div>
+                <div class="inventory-list-info">
+                    <div class="inventory-list-name">${item.name}</div>
+                    <div class="inventory-list-description">${item.description}</div>
+                    <div class="inventory-list-count">
+                        Quantity: <span class="count-value">${item.count}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
     }
 
     /**
