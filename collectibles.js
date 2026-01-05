@@ -759,23 +759,27 @@ class CollectiblesGame {
             console.log(`🏹 Collected bolt! Total bolts BEFORE update: ${this.boltCount}`);
             this.updateBoltCounter();
             console.log(`🏹 Bolt counter updated. New value: ${this.boltCount}`);
+            // Don't increment collectedCount for bolts - they're tracked separately
+            this.updateInventoryDisplay(); // Update inventory display immediately
+            this.showCollectFeedback(collectible);
+        } else {
+            // For non-bolt collectibles, show pending animation and increment counter
+            // Don't increment immediately - show pending animation first
+            // this.collectedCount++; // Will increment after delay
+            
+            // Show pending increment
+            this.showPendingIncrement();
+            
+            // Update counter after 2 seconds
+            setTimeout(() => {
+                this.collectedCount++;
+                this.updateCounter();
+                this.updateInventoryDisplay(); // Update inventory display
+            }, 2000);
+            
+            // Show feedback
+            this.showCollectFeedback(collectible);
         }
-        
-        // Don't increment immediately - show pending animation first
-        // this.collectedCount++; // Will increment after delay
-        
-        // Show pending increment
-        this.showPendingIncrement();
-        
-        // Update counter after 2 seconds
-        setTimeout(() => {
-            this.collectedCount++;
-            this.updateCounter();
-            this.updateInventoryDisplay(); // Update inventory display
-        }, 2000);
-        
-        // Show feedback
-        this.showCollectFeedback(collectible);
         
         console.log(`Collected ${collectible.type.name}! Inventory: ${this.inventory[collectible.type.name]}`);
     }
@@ -1288,10 +1292,13 @@ class CollectiblesGame {
         if (!listContainer) return;
         
         // Create array of items with their counts for sorting
-        const items = this.types.map(type => ({
-            type: type,
-            count: this.inventory[type.name] || 0
-        }));
+        // Filter out bolts - they're displayed only in Weapons section
+        const items = this.types
+            .filter(type => type.name !== 'bolt')
+            .map(type => ({
+                type: type,
+                count: this.inventory[type.name] || 0
+            }));
         
         // Sort by count (descending) so items with most quantity appear first
         items.sort((a, b) => b.count - a.count);
