@@ -61,6 +61,7 @@ class VirtualTrailRunApp {
             magicBar: document.getElementById('magicBar'),
             xpBar: document.getElementById('xpBar'),
             levelDisplay: document.getElementById('levelDisplay'),
+            xpText: document.getElementById('xpText'),
             shieldBar: document.getElementById('shieldBar')
         };
     }
@@ -715,6 +716,10 @@ class VirtualTrailRunApp {
         
         if (this.elements.levelDisplay) {
             this.elements.levelDisplay.textContent = this.level;
+        }
+        
+        if (this.elements.xpText) {
+            this.elements.xpText.textContent = `${this.xp}/${this.xpForNextLevel} XP`;
         }
         
         if (this.elements.shieldBar) {

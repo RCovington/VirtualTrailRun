@@ -1718,7 +1718,10 @@ class CollectiblesGame {
             </div>
             <div class="inventory-xp-section">
                 <div class="stat-bar">
-                    <div class="stat-label">Level <span id="levelDisplay">0</span></div>
+                    <div class="stat-label">
+                        Level <span id="levelDisplay">0</span>
+                        <span class="xp-text" id="xpText">0/100 XP</span>
+                    </div>
                     <div class="stat-bar-container">
                         <div class="stat-bar-fill xp-bar" id="xpBar"></div>
                     </div>

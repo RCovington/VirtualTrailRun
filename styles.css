@@ -1171,6 +1171,16 @@ body {
     color: #fbbf24;
     min-width: 80px;
     font-size: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.inventory-xp-section .xp-text {
+    font-size: 0.85rem;
+    font-weight: normal;
+    color: #fcd34d;
+    opacity: 0.9;
 }
 
 .inventory-xp-section .stat-bar-container {
