@@ -555,10 +555,13 @@ class VirtualTrailRunApp {
         // Check if bobs increased (person is walking)
         if (totalBobs > this.lastTotalBobs) {
             this.lastBobTime = Date.now();
+            const bobsIncrement = totalBobs - this.lastTotalBobs;
             this.lastTotalBobs = totalBobs;
             
-            // Update magic bar based on total bobs
-            this.magic = Math.min((totalBobs / this.bobsForFullMagic) * 100, this.maxMagic);
+            // Increment magic bar gradually based on new bobs (not total)
+            // Each bob adds a small amount to magic
+            const magicIncrement = (bobsIncrement / this.bobsForFullMagic) * 100;
+            this.magic = Math.min(this.magic + magicIncrement, this.maxMagic);
             
             // Add glowing class when increasing
             this.elements.magicBar.classList.add('magic-increasing');
