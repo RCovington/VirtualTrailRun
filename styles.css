@@ -1079,6 +1079,25 @@ body {
     }
 }
 
+@keyframes boltImpact {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0.3) rotate(-5deg);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.4) rotate(5deg);
+    }
+    40% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2) rotate(-3deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5) translateY(-30px);
+    }
+}
+
 /* ===== Inventory Panel ===== */
 .inventory-panel {
     display: none;

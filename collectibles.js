@@ -388,13 +388,27 @@ class CollectiblesGame {
             bolt.x += bolt.vx * (1/60); // Assuming ~60fps
             bolt.y += bolt.vy * (1/60);
             
-            // Auto-hit: every bolt automatically hits the first enemy
+            // Check collision with enemies
             if (this.enemies.length > 0) {
-                const enemy = this.enemies[0]; // Always hit first enemy
-                const damage = enemy.maxHealth * 0.5;
-                enemy.health = Math.max(0, enemy.health - damage);
-                console.log(`🎯 Bolt auto-hit rat! Damage: ${damage.toFixed(1)}, Remaining health: ${enemy.health.toFixed(1)}`);
-                return false; // Remove bolt after hitting
+                const enemy = this.enemies[0]; // Target first enemy
+                
+                // Calculate distance to enemy
+                const distance = Math.sqrt(
+                    Math.pow(bolt.x - enemy.x, 2) + 
+                    Math.pow(bolt.y - enemy.y, 2)
+                );
+                
+                // Hit if within 40 pixels of enemy
+                if (distance < 40) {
+                    const damage = enemy.maxHealth * 0.5;
+                    enemy.health = Math.max(0, enemy.health - damage);
+                    console.log(`🎯 Bolt hit rat! Damage: ${damage.toFixed(1)}, Remaining health: ${enemy.health.toFixed(1)}`);
+                    
+                    // Show impact animation
+                    this.showBoltImpactFeedback(enemy.x, enemy.y);
+                    
+                    return false; // Remove bolt after hitting
+                }
             }
             
             // Check if bolt is still on screen and within lifetime
@@ -1220,6 +1234,46 @@ class CollectiblesGame {
     }
 
     /**
+     * Show visual feedback when bolt hits an enemy
+     */
+    showBoltImpactFeedback(x, y) {
+        const canvas = this.canvas;
+        if (!canvas) return;
+        
+        const scaleX = canvas.offsetWidth / canvas.width;
+        const scaleY = canvas.offsetHeight / canvas.height;
+        
+        const displayX = x * scaleX;
+        const displayY = y * scaleY;
+        
+        // Create "THWAAK!" text
+        const feedback = document.createElement('div');
+        feedback.className = 'bolt-impact-feedback';
+        feedback.textContent = '🎯 THWAAK!';
+        feedback.style.left = `${displayX}px`;
+        feedback.style.top = `${displayY}px`;
+        feedback.style.position = 'absolute';
+        feedback.style.transform = 'translate(-50%, -50%)';
+        feedback.style.fontSize = '2.5rem';
+        feedback.style.fontWeight = 'bold';
+        feedback.style.color = '#8B4513';
+        feedback.style.textShadow = '0 0 10px #FFD700, 0 0 20px #FF8C00, 2px 2px 4px #000000';
+        feedback.style.animation = 'boltImpact 0.6s ease-out forwards';
+        feedback.style.pointerEvents = 'none';
+        feedback.style.zIndex = '1000';
+        
+        const container = document.getElementById('collectiblesContainer');
+        if (container) {
+            container.appendChild(feedback);
+            
+            // Remove after animation
+            setTimeout(() => {
+                feedback.remove();
+            }, 600);
+        }
+    }
+
+    /**
      * Show visual feedback when missing a grab attempt
      */
     showMissFeedback(handX, handY) {
@@ -1279,12 +1333,31 @@ class CollectiblesGame {
         this.updateBoltCounter();
         console.log(`🏹 Fired bolt! Remaining: ${this.boltCount}`);
         
+        // Calculate trajectory towards first enemy if one exists
+        let vx = 400; // Default: travels right
+        let vy = 0;
+        
+        if (this.enemies.length > 0) {
+            const enemy = this.enemies[0];
+            // Calculate direction to enemy
+            const dx = enemy.x - startPosition.x;
+            const dy = enemy.y - startPosition.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Normalize and scale to speed of 400 px/s
+            const speed = 400;
+            vx = (dx / distance) * speed;
+            vy = (dy / distance) * speed;
+            
+            console.log(`🎯 Bolt aimed at rat: (${enemy.x.toFixed(0)}, ${enemy.y.toFixed(0)})`);
+        }
+        
         // Create a bolt projectile that travels across screen
         const bolt = {
             x: startPosition.x,
             y: startPosition.y,
-            vx: 400, // pixels per second - travels right
-            vy: 0,
+            vx: vx,
+            vy: vy,
             size: 30,
             createdAt: Date.now(),
             lifetime: 3000, // Exists for 3 seconds before disappearing
