@@ -270,6 +270,7 @@ class CollectiblesGame {
             emoji: '🐀',
             x: x,
             y: y,
+            initialX: x, // Store initial position
             size: 60,
             health: 100,
             maxHealth: 100,
@@ -280,6 +281,11 @@ class CollectiblesGame {
             nextAttackDelay: this.getRandomInt(2000, 7000),
             rearingStartTime: 0,
             rearingDuration: 500, // 0.5 second warning
+            // Pacing animation
+            paceDirection: 1, // 1 for right, -1 for left
+            paceSpeed: 50, // pixels per second
+            paceRange: 150, // Total distance to pace (75px each direction)
+            jeerBobSpeed: 2, // Speed of up/down bobbing
             createdAt: Date.now()
         };
         
@@ -426,6 +432,19 @@ class CollectiblesGame {
             
             // Handle attack state machine
             if (enemy.state === 'idle') {
+                // Animate pacing back and forth
+                const deltaTime = 1/60; // Assuming ~60fps
+                enemy.x += enemy.paceDirection * enemy.paceSpeed * deltaTime;
+                
+                // Check if reached edge of pace range
+                const distanceFromCenter = enemy.x - enemy.initialX;
+                if (Math.abs(distanceFromCenter) >= enemy.paceRange / 2) {
+                    // Reverse direction
+                    enemy.paceDirection *= -1;
+                    // Clamp to range
+                    enemy.x = enemy.initialX + (enemy.paceRange / 2) * Math.sign(distanceFromCenter);
+                }
+                
                 // Check if it's time to attack
                 if (now - enemy.lastAttackTime >= enemy.nextAttackDelay) {
                     enemy.state = 'rearing';
@@ -1204,15 +1223,24 @@ class CollectiblesGame {
     drawEnemies() {
         if (!this.ctx || !this.canvas) return;
         
+        const now = Date.now();
+        
         this.enemies.forEach(enemy => {
             // Determine visual state
             let displayEmoji = enemy.emoji;
             let scale = 1;
             let rotation = 0;
+            let yOffset = 0;
             
-            if (enemy.state === 'rearing') {
+            if (enemy.state === 'idle') {
+                // Jeering animation - bob up and down with slight rotation
+                const timeSinceCreated = (now - enemy.createdAt) / 1000;
+                yOffset = Math.sin(timeSinceCreated * enemy.jeerBobSpeed) * 8; // Bob up/down 8px
+                rotation = Math.sin(timeSinceCreated * enemy.jeerBobSpeed * 1.5) * 0.15; // Slight wobble
+                scale = 1 + Math.sin(timeSinceCreated * enemy.jeerBobSpeed * 0.8) * 0.05; // Slight size change
+            } else if (enemy.state === 'rearing') {
                 // Rearing animation - scale up and rotate slightly
-                const rearingProgress = (Date.now() - enemy.rearingStartTime) / enemy.rearingDuration;
+                const rearingProgress = (now - enemy.rearingStartTime) / enemy.rearingDuration;
                 scale = 1 + (rearingProgress * 0.3); // Grow 30% larger
                 rotation = Math.sin(rearingProgress * Math.PI) * 0.2; // Slight tilt
             } else if (enemy.state === 'attacking') {
@@ -1223,7 +1251,7 @@ class CollectiblesGame {
             
             // Draw enemy emoji
             this.ctx.save();
-            this.ctx.translate(enemy.x, enemy.y);
+            this.ctx.translate(enemy.x, enemy.y + yOffset);
             this.ctx.rotate(rotation);
             
             const size = enemy.size * scale;
