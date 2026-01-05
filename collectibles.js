@@ -1640,45 +1640,67 @@ class CollectiblesGame {
      * Update the inventory display with current counts (sorted by quantity)
      */
     updateInventoryDisplay() {
+        // Update collectibles tab (Objects)
         const listContainer = document.getElementById('collectiblesList');
-        if (!listContainer) return;
-        
-        // Create array of items with their counts for sorting
-        // Filter out bolts - they're displayed only in Weapons section
-        const items = this.types
-            .filter(type => type.name !== 'bolt')
-            .map(type => ({
-                type: type,
-                count: this.inventory[type.name] || 0
-            }));
-        
-        // Sort by count (descending) so items with most quantity appear first
-        items.sort((a, b) => b.count - a.count);
-        
-        // Generate HTML for sorted items
-        listContainer.innerHTML = items.map(item => `
-            <div class="inventory-list-item" data-type="${item.type.name}">
-                <div class="inventory-list-emoji">${item.type.emoji}</div>
-                <div class="inventory-list-info">
-                    <div class="inventory-list-name">${item.type.name}</div>
-                    <div class="inventory-list-count" id="inventory-${item.type.name}">
-                        Quantity: <span class="count-value">${item.count}</span>
+        if (listContainer) {
+            // Create array of items with their counts for sorting
+            // Filter out bolts - they're displayed only in Weapons section
+            const items = this.types
+                .filter(type => type.name !== 'bolt')
+                .map(type => ({
+                    type: type,
+                    count: this.inventory[type.name] || 0
+                }));
+            
+            // Sort by count (descending) so items with most quantity appear first
+            items.sort((a, b) => b.count - a.count);
+            
+            // Generate HTML for sorted items
+            listContainer.innerHTML = items.map(item => `
+                <div class="inventory-list-item" data-type="${item.type.name}">
+                    <div class="inventory-list-emoji">${item.type.emoji}</div>
+                    <div class="inventory-list-info">
+                        <div class="inventory-list-name">${item.type.name}</div>
+                        <div class="inventory-list-count" id="inventory-${item.type.name}">
+                            Quantity: <span class="count-value">${item.count}</span>
+                        </div>
                     </div>
+                    <button class="inventory-list-use" data-type="${item.type.name}" ${item.count === 0 ? 'disabled' : ''}>
+                        Use
+                    </button>
                 </div>
-                <button class="inventory-list-use" data-type="${item.type.name}" ${item.count === 0 ? 'disabled' : ''}>
-                    Use
-                </button>
-            </div>
-        `).join('');
-        
-        // Add use button handlers
-        const useButtons = listContainer.querySelectorAll('.inventory-list-use');
-        useButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const itemType = e.target.dataset.type;
-                this.useItem(itemType);
+            `).join('');
+            
+            // Add use button handlers
+            const useButtons = listContainer.querySelectorAll('.inventory-list-use');
+            useButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const itemType = e.target.dataset.type;
+                    this.useItem(itemType);
+                });
             });
-        });
+        }
+        
+        // Update weapons tab (Bolts)
+        const weaponsList = document.getElementById('weaponsList');
+        if (weaponsList) {
+            const boltType = this.types.find(type => type.name === 'bolt');
+            if (boltType && this.boltCount > 0) {
+                weaponsList.innerHTML = `
+                    <div class="inventory-list-item" data-type="bolt">
+                        <div class="inventory-list-emoji">${boltType.emoji}</div>
+                        <div class="inventory-list-info">
+                            <div class="inventory-list-name">Crossbow Bolt</div>
+                            <div class="inventory-list-count" id="inventory-bolt">
+                                Quantity: <span class="count-value">${this.boltCount}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                weaponsList.innerHTML = '<div class="inventory-empty">No weapons yet</div>';
+            }
+        }
     }
 
     /**
