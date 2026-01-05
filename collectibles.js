@@ -160,6 +160,9 @@ class CollectiblesGame {
         // Start game loop
         this.gameLoop();
         
+        // Initialize bolt counter display
+        this.updateBoltCounter();
+        
         console.log('Collectibles game started');
     }
 
@@ -750,6 +753,7 @@ class CollectiblesGame {
         console.log(`📦 Collected ${collectible.type.emoji} ${collectible.type.name}`);
         
         // If it's a bolt, also increment the bolt counter
+        console.log(`🔍 Checking if '${collectible.type.name}' === 'bolt': ${collectible.type.name === 'bolt'}`);
         if (collectible.type.name === 'bolt') {
             this.boltCount++;
             console.log(`🏹 Collected bolt! Total bolts BEFORE update: ${this.boltCount}`);
