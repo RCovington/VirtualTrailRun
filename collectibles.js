@@ -286,6 +286,7 @@ class CollectiblesGame {
             paceSpeed: 50, // pixels per second
             paceRange: 150, // Total distance to pace (75px each direction)
             jeerBobSpeed: 2, // Speed of up/down bobbing
+            lastPinchHitTime: 0, // Track when last pinch hit occurred
             createdAt: Date.now()
         };
         
@@ -367,31 +368,13 @@ class CollectiblesGame {
             bolt.x += bolt.vx * (1/60); // Assuming ~60fps
             bolt.y += bolt.vy * (1/60);
             
-            // Check for collision with enemies
-            let hitEnemy = false;
-            for (let enemy of this.enemies) {
-                const distance = Math.sqrt(
-                    Math.pow(bolt.x - enemy.x, 2) + 
-                    Math.pow(bolt.y - enemy.y, 2)
-                );
-                
-                // Debug logging for collision detection
-                if (Math.random() < 0.1) { // 10% chance
-                    console.log(`🔍 Bolt collision check: bolt(${bolt.x.toFixed(0)}, ${bolt.y.toFixed(0)}) vs rat(${enemy.x.toFixed(0)}, ${enemy.y.toFixed(0)}), distance=${distance.toFixed(1)}, hitRadius=${(enemy.size / 2).toFixed(1)}`);
-                }
-                
-                if (distance < enemy.size / 2) {
-                    // Bolt hit enemy - damage 50% of health
-                    const damage = enemy.maxHealth * 0.5;
-                    enemy.health = Math.max(0, enemy.health - damage);
-                    console.log(`🎯 Bolt hit rat! Damage: ${damage.toFixed(1)}, Remaining health: ${enemy.health.toFixed(1)}`);
-                    hitEnemy = true;
-                    break;
-                }
-            }
-            
-            if (hitEnemy) {
-                return false; // Remove bolt that hit enemy
+            // Auto-hit: every bolt automatically hits the first enemy
+            if (this.enemies.length > 0) {
+                const enemy = this.enemies[0]; // Always hit first enemy
+                const damage = enemy.maxHealth * 0.5;
+                enemy.health = Math.max(0, enemy.health - damage);
+                console.log(`🎯 Bolt auto-hit rat! Damage: ${damage.toFixed(1)}, Remaining health: ${enemy.health.toFixed(1)}`);
+                return false; // Remove bolt after hitting
             }
             
             // Check if bolt is still on screen and within lifetime
@@ -929,6 +912,7 @@ class CollectiblesGame {
      * Returns true if an enemy was hit
      */
     checkEnemyCollision(handX, handY) {
+        const now = Date.now();
         for (let enemy of this.enemies) {
             const distance = Math.sqrt(
                 Math.pow(handX - enemy.x, 2) + 
@@ -937,10 +921,21 @@ class CollectiblesGame {
             
             // Hit detection with enemy size
             if (distance < enemy.size) {
+                // Check cooldown - can only hit once per second
+                if (now - enemy.lastPinchHitTime < 1000) {
+                    console.log(`⏰ Pinch cooldown active! Wait ${((1000 - (now - enemy.lastPinchHitTime)) / 1000).toFixed(1)}s`);
+                    return false; // On cooldown
+                }
+                
                 // Pinch damages enemy by 10% of health
                 const damage = enemy.maxHealth * 0.1;
                 enemy.health = Math.max(0, enemy.health - damage);
+                enemy.lastPinchHitTime = now; // Update cooldown timer
                 console.log(`👊 Pinch hit rat! Damage: ${damage.toFixed(1)}, Remaining health: ${enemy.health.toFixed(1)}`);
+                
+                // Show "POW!" animation
+                this.showPinchHitFeedback(enemy.x, enemy.y);
+                
                 return true; // Hit enemy
             }
         }
@@ -1079,6 +1074,46 @@ class CollectiblesGame {
             setTimeout(() => {
                 feedback.remove();
             }, 1000);
+        }
+    }
+
+    /**
+     * Show visual feedback when pinch hits an enemy
+     */
+    showPinchHitFeedback(x, y) {
+        const canvas = this.canvas;
+        if (!canvas) return;
+        
+        const scaleX = canvas.offsetWidth / canvas.width;
+        const scaleY = canvas.offsetHeight / canvas.height;
+        
+        const displayX = x * scaleX;
+        const displayY = y * scaleY;
+        
+        // Create "POW!" text
+        const feedback = document.createElement('div');
+        feedback.className = 'pinch-hit-feedback';
+        feedback.textContent = '💥 POW!';
+        feedback.style.left = `${displayX}px`;
+        feedback.style.top = `${displayY}px`;
+        feedback.style.position = 'absolute';
+        feedback.style.transform = 'translate(-50%, -50%)';
+        feedback.style.fontSize = '2rem';
+        feedback.style.fontWeight = 'bold';
+        feedback.style.color = '#ff0000';
+        feedback.style.textShadow = '0 0 10px #ffff00, 0 0 20px #ff0000';
+        feedback.style.animation = 'punchImpact 0.5s ease-out forwards';
+        feedback.style.pointerEvents = 'none';
+        feedback.style.zIndex = '1000';
+        
+        const container = document.getElementById('collectiblesContainer');
+        if (container) {
+            container.appendChild(feedback);
+            
+            // Remove after animation
+            setTimeout(() => {
+                feedback.remove();
+            }, 500);
         }
     }
 
