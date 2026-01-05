@@ -33,6 +33,11 @@ class VirtualTrailRunApp {
         this.level = 0; // Current level (0 = no level yet)
         this.xpForNextLevel = 100; // XP needed for level 1
         
+        // Shield system
+        this.shieldActive = false;
+        this.shieldStrength = 0; // Current shield points
+        this.maxShield = 50; // Maximum shield capacity
+        
         // Firebase services (initialized later)
         this.cache = null;
         this.analytics = null;
@@ -55,7 +60,8 @@ class VirtualTrailRunApp {
             healthBar: document.getElementById('healthBar'),
             magicBar: document.getElementById('magicBar'),
             xpBar: document.getElementById('xpBar'),
-            levelDisplay: document.getElementById('levelDisplay')
+            levelDisplay: document.getElementById('levelDisplay'),
+            shieldBar: document.getElementById('shieldBar')
         };
     }
 
@@ -710,18 +716,55 @@ class VirtualTrailRunApp {
         if (this.elements.levelDisplay) {
             this.elements.levelDisplay.textContent = this.level;
         }
+        
+        if (this.elements.shieldBar) {
+            const shieldPercent = (this.shieldStrength / this.maxShield) * 100;
+            this.elements.shieldBar.style.width = `${shieldPercent}%`;
+            this.elements.shieldBar.style.display = this.shieldActive ? 'block' : 'none';
+        }
     }
 
     /**
      * Take damage (reduces health)
      */
     takeDamage(amount) {
-        this.health = Math.max(0, this.health - amount);
+        // Shield absorbs damage first
+        if (this.shieldStrength > 0) {
+            const shieldAbsorbed = Math.min(this.shieldStrength, amount);
+            this.shieldStrength -= shieldAbsorbed;
+            amount -= shieldAbsorbed;
+            console.log(`🛡️ Shield absorbed ${shieldAbsorbed.toFixed(1)} damage! Shield: ${this.shieldStrength.toFixed(1)}/${this.maxShield}`);
+            
+            if (this.shieldStrength <= 0) {
+                this.shieldActive = false;
+                console.log('🛡️ Shield depleted!');
+            }
+        }
+        
+        // Remaining damage goes to health
+        if (amount > 0) {
+            this.health = Math.max(0, this.health - amount);
+        }
+        
         this.updateStatBars();
         
         if (this.health === 0) {
             // Game over logic could go here
             console.log('Health depleted!');
+        }
+    }
+
+    /**
+     * Activate shield (from fist + elbow gesture)
+     */
+    activateShield() {
+        if (!this.shieldActive) {
+            this.shieldActive = true;
+            this.shieldStrength = this.maxShield;
+            console.log(`🛡️ Shield activated! Strength: ${this.shieldStrength}/${this.maxShield}`);
+            this.updateStatBars();
+        } else {
+            console.log('🛡️ Shield already active');
         }
     }
 

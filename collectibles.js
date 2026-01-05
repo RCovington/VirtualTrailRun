@@ -11,6 +11,7 @@ class CollectiblesGame {
         this.spawnInterval = null;
         this.animationFrame = null;
         this.handDetector = null;
+        this.poseDetector = null;
         this.videoElement = null;
         this.canvas = null;
         this.ctx = null;
@@ -106,6 +107,25 @@ class CollectiblesGame {
             }
         } catch (error) {
             console.error('Error loading hand detection:', error);
+        }
+        
+        // Load pose detection model for elbow tracking
+        try {
+            if (typeof poseDetection !== 'undefined') {
+                const model = poseDetection.SupportedModels.MediaPipePose;
+                const detectorConfig = {
+                    runtime: 'mediapipe',
+                    solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose',
+                    modelType: 'lite'
+                };
+                
+                this.poseDetector = await poseDetection.createDetector(model, detectorConfig);
+                console.log('Pose detection model loaded');
+            } else {
+                console.warn('Pose detection not available');
+            }
+        } catch (error) {
+            console.error('Error loading pose detection:', error);
         }
     }
 
@@ -534,6 +554,9 @@ class CollectiblesGame {
                 // Check for closed fist gesture (to close inventory)
                 this.isClosedFist = this.isClosedFistGesture(hand);
                 
+                // Check for shield gesture (closed fist + elbow visible)
+                await this.checkShieldGesture(hand);
+                
                 // Check if hand is making a pinch gesture for grabbing
                 this.isGrabbing = this.isGrabbingGesture(hand);
                 
@@ -918,6 +941,47 @@ class CollectiblesGame {
         if (distance < threshold && !this.inventoryOpen) {
             console.log(`👃 Pinky-to-nose detected! Distance: ${distance.toFixed(1)}px`);
             this.openInventory();
+        }
+    }
+
+    /**
+     * Check for shield gesture (closed fist + elbow visible)
+     */
+    async checkShieldGesture(hand) {
+        if (!this.poseDetector) return;
+        
+        // First check if hand is in a closed fist
+        if (!this.isClosedFistGesture(hand)) return;
+        
+        try {
+            // Detect body pose to find elbow
+            const poses = await this.poseDetector.estimatePoses(this.videoElement, {
+                flipHorizontal: true
+            });
+            
+            if (poses && poses.length > 0) {
+                const pose = poses[0];
+                
+                // Get elbow keypoints (left elbow: 13, right elbow: 14 in MediaPipe Pose)
+                const leftElbow = pose.keypoints[13];
+                const rightElbow = pose.keypoints[14];
+                
+                // Check if either elbow is visible (confidence > 0.5)
+                const leftElbowVisible = leftElbow && leftElbow.score > 0.5;
+                const rightElbowVisible = rightElbow && rightElbow.score > 0.5;
+                
+                if (leftElbowVisible || rightElbowVisible) {
+                    console.log(`🛡️ Shield gesture detected! Fist + elbow visible`);
+                    
+                    // Activate shield
+                    const app = window.app;
+                    if (app && app.activateShield) {
+                        app.activateShield();
+                    }
+                }
+            }
+        } catch (error) {
+            // Silently handle pose detection errors
         }
     }
 
