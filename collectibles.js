@@ -2529,6 +2529,19 @@ class CollectiblesGame {
             </div>
         `;
         
+        const manaRecipe = `
+            <div class="brew-recipe">
+                <h4>🔮 Mana Potion</h4>
+                <p>Refills your magic bar</p>
+                <div class="brew-ingredients">
+                    <span>1 🌰 Acorn</span>
+                    <span>1 🍂 Leaf</span>
+                    <span>50 ✨ Magic</span>
+                </div>
+                <button class="brew-btn" data-recipe="mana">Brew</button>
+            </div>
+        `;
+        
         // Create brew menu modal
         const brewModal = document.createElement('div');
         brewModal.className = 'brew-modal';
