@@ -118,16 +118,23 @@ class CollectiblesGame {
         
         // Set up wink detection callback for crossbow firing
         if (this.headTracker) {
+            console.log('🎯 Setting up wink callback...');
             this.headTracker.onWink((eye) => {
-                console.log(`👁️ Wink detected: ${eye} eye`);
+                console.log(`👁️ Wink detected: ${eye} eye, boltCount=${this.boltCount}`);
                 // Fire bolt on any wink (left or right)
                 if (this.boltCount > 0) {
                     // Use center of screen as firing position
                     const centerX = this.canvas ? this.canvas.width / 2 : 320;
                     const centerY = this.canvas ? this.canvas.height / 2 : 240;
+                    console.log(`🏹 Firing bolt from center (${centerX}, ${centerY})`);
                     this.fireBolt({ x: centerX, y: centerY });
+                } else {
+                    console.log('⚠️ No bolts to fire!');
                 }
             });
+            console.log('✅ Wink callback registered');
+        } else {
+            console.warn('⚠️ No headTracker available for wink detection!');
         }
         
         // Reset canvas sizes to match video (maintain aspect ratio)
@@ -740,11 +747,14 @@ class CollectiblesGame {
         // Add to inventory by type
         this.inventory[collectible.type.name]++;
         
+        console.log(`📦 Collected ${collectible.type.emoji} ${collectible.type.name}`);
+        
         // If it's a bolt, also increment the bolt counter
         if (collectible.type.name === 'bolt') {
             this.boltCount++;
+            console.log(`🏹 Collected bolt! Total bolts BEFORE update: ${this.boltCount}`);
             this.updateBoltCounter();
-            console.log(`🏹 Collected bolt! Total bolts: ${this.boltCount}`);
+            console.log(`🏹 Bolt counter updated. New value: ${this.boltCount}`);
         }
         
         // Don't increment immediately - show pending animation first
@@ -787,14 +797,18 @@ class CollectiblesGame {
      */
     updateBoltCounter() {
         const boltCounter = document.getElementById('boltCount');
+        console.log(`🎯 updateBoltCounter called. boltCount=${this.boltCount}, element found=${!!boltCounter}`);
         if (boltCounter) {
             boltCounter.textContent = this.boltCount;
+            console.log(`✅ Bolt counter UI updated to: ${this.boltCount}`);
             
             // Add bounce animation
             boltCounter.style.animation = 'none';
             setTimeout(() => {
                 boltCounter.style.animation = 'collectBounce 0.5s ease-out';
             }, 10);
+        } else {
+            console.error('❌ Could not find boltCount element in DOM!');
         }
     }
 

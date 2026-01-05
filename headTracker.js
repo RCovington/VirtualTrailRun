@@ -290,6 +290,13 @@ class HeadTracker {
         const leftClosed = this.leftEyeEAR < this.eyeClosedThreshold;
         const rightClosed = this.rightEyeEAR < this.eyeClosedThreshold;
         
+        // Debug logging every 30 frames to avoid spam
+        if (!this.winkDebugCounter) this.winkDebugCounter = 0;
+        this.winkDebugCounter++;
+        if (this.winkDebugCounter % 30 === 0) {
+            console.log(`👁️ EAR - Left: ${this.leftEyeEAR.toFixed(3)} (${leftClosed ? 'CLOSED' : 'open'}), Right: ${this.rightEyeEAR.toFixed(3)} (${rightClosed ? 'CLOSED' : 'open'}), Threshold: ${this.eyeClosedThreshold}`);
+        }
+        
         // Check for cooldown
         const now = Date.now();
         const cooldownPassed = (now - this.lastWinkTime) > this.winkCooldown;
@@ -298,17 +305,23 @@ class HeadTracker {
         if (cooldownPassed) {
             if (leftClosed && !rightClosed && !this.leftEyeClosed) {
                 // Left eye wink detected
+                console.log(`👁️✨ LEFT WINK DETECTED! EAR: ${this.leftEyeEAR.toFixed(3)}`);
                 this.leftEyeClosed = true;
                 this.lastWinkTime = now;
                 if (this.onWinkCallback) {
                     this.onWinkCallback('left');
+                } else {
+                    console.warn('⚠️ No wink callback registered!');
                 }
             } else if (rightClosed && !leftClosed && !this.rightEyeClosed) {
                 // Right eye wink detected
+                console.log(`👁️✨ RIGHT WINK DETECTED! EAR: ${this.rightEyeEAR.toFixed(3)}`);
                 this.rightEyeClosed = true;
                 this.lastWinkTime = now;
                 if (this.onWinkCallback) {
                     this.onWinkCallback('right');
+                } else {
+                    console.warn('⚠️ No wink callback registered!');
                 }
             }
         }
