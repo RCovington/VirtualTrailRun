@@ -709,17 +709,22 @@ class VirtualTrailRunApp {
         this.elements.healthBar.style.width = `${healthPercent}%`;
         this.elements.magicBar.style.width = `${magicPercent}%`;
         
-        if (this.elements.xpBar) {
+        // XP bar and text are in the dynamically created inventory panel
+        // Query them directly instead of using cached references
+        const xpBar = document.getElementById('xpBar');
+        if (xpBar) {
             const xpPercent = (this.xp / this.xpForNextLevel) * 100;
-            this.elements.xpBar.style.width = `${xpPercent}%`;
+            xpBar.style.width = `${xpPercent}%`;
         }
         
-        if (this.elements.levelDisplay) {
-            this.elements.levelDisplay.textContent = this.level;
+        const levelDisplay = document.getElementById('levelDisplay');
+        if (levelDisplay) {
+            levelDisplay.textContent = this.level;
         }
         
-        if (this.elements.xpText) {
-            this.elements.xpText.textContent = `${this.xp}/${this.xpForNextLevel} XP`;
+        const xpText = document.getElementById('xpText');
+        if (xpText) {
+            xpText.textContent = `${this.xp}/${this.xpForNextLevel} XP`;
         }
         
         if (this.elements.shieldBar) {
