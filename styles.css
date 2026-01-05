@@ -1347,6 +1347,109 @@ body {
     font-style: italic;
 }
 
+/* Brew Modal */
+.brew-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    pointer-events: all;
+}
+
+.brew-modal-content {
+    background: linear-gradient(135deg, rgba(45, 80, 22, 0.95) 0%, rgba(35, 60, 18, 0.95) 100%);
+    border: 3px solid var(--orange);
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.brew-modal-content h3 {
+    color: white;
+    margin: 0 0 20px 0;
+    font-size: 1.8rem;
+    text-align: center;
+}
+
+.brew-recipe {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 140, 0, 0.4);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+
+.brew-recipe h4 {
+    margin: 0 0 10px 0;
+    color: #fbbf24;
+    font-size: 1.3rem;
+}
+
+.brew-recipe p {
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 15px 0;
+    font-style: italic;
+}
+
+.brew-ingredients {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.brew-ingredients span {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 140, 0, 0.3);
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.brew-btn {
+    background: rgba(139, 69, 19, 0.8);
+    color: white;
+    border: 2px solid rgba(160, 82, 45, 1);
+    border-radius: 6px;
+    padding: 8px 24px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.brew-btn:hover {
+    background: rgba(139, 69, 19, 1);
+    transform: scale(1.05);
+}
+
+.brew-close-btn {
+    background: rgba(220, 38, 38, 0.8);
+    color: white;
+    border: 2px solid rgba(220, 38, 38, 1);
+    border-radius: 6px;
+    padding: 10px 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.brew-close-btn:hover {
+    background: rgba(220, 38, 38, 1);
+}
+
 /* Legacy grid styles (kept for backward compatibility if needed) */
 .inventory-grid {
     display: grid;

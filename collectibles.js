@@ -32,9 +32,15 @@ class CollectiblesGame {
         this.inventory = {
             'acorn': 0,
             'mushroom': 0,
-            'pinecone': 0,
+            'crystal': 0,
             'leaf': 0,
             'bolt': 0
+        };
+        
+        // Potion inventory
+        this.potions = {
+            'healing': 0,
+            'electricity': 0
         };
         
         // Separate bolt counter for crossbow ammunition
@@ -60,7 +66,7 @@ class CollectiblesGame {
         this.types = [
             { emoji: '🌰', name: 'acorn', size: 40 },
             { emoji: '🍄', name: 'mushroom', size: 45 },
-            { emoji: '🥜', name: 'pinecone', size: 35 },
+            { emoji: '🔹', name: 'crystal', size: 35 },
             { emoji: '🍂', name: 'leaf', size: 38 },
             { emoji: '➳', name: 'bolt', size: 42 }
         ];
@@ -1777,6 +1783,12 @@ class CollectiblesGame {
             });
         });
         
+        // Add potion brewing button handler
+        const brewBtn = panel.querySelector('.potion-brew-btn');
+        if (brewBtn) {
+            brewBtn.addEventListener('click', () => this.showBrewMenu());
+        }
+        
         return panel;
     }
 
@@ -1803,6 +1815,11 @@ class CollectiblesGame {
                 content.classList.remove('active');
             }
         });
+        
+        // Update magic tab with potions when switched to
+        if (tabName === 'magic') {
+            this.updateMagicList();
+        }
     }
 
     /**
@@ -1883,6 +1900,197 @@ class CollectiblesGame {
             this.updateInventoryDisplay();
             console.log(`Used ${itemType}. Remaining: ${this.inventory[itemType]}`);
             // TODO: Add item effect
+        }
+    }
+
+    /**
+     * Update magic tab list with potions
+     */
+    updateMagicList() {
+        const magicList = document.getElementById('magicList');
+        if (!magicList) return;
+        
+        if (this.potions.healing === 0 && this.potions.electricity === 0) {
+            magicList.innerHTML = '<div class="inventory-empty">No magic items yet</div>';
+            return;
+        }
+        
+        let html = '';
+        if (this.potions.healing > 0) {
+            html += `
+                <div class="inventory-list-item" data-type="healing">
+                    <div class="inventory-list-emoji">🧪</div>
+                    <div class="inventory-list-info">
+                        <div class="inventory-list-name">Healing Potion</div>
+                        <div class="inventory-list-count">
+                            Quantity: <span class="count-value">${this.potions.healing}</span>
+                        </div>
+                    </div>
+                    <button class="inventory-list-use" data-potion="healing">Use</button>
+                </div>
+            `;
+        }
+        
+        if (this.potions.electricity > 0) {
+            html += `
+                <div class="inventory-list-item" data-type="electricity">
+                    <div class="inventory-list-emoji">⚡</div>
+                    <div class="inventory-list-info">
+                        <div class="inventory-list-name">Electricity Potion</div>
+                        <div class="inventory-list-count">
+                            Quantity: <span class="count-value">${this.potions.electricity}</span>
+                        </div>
+                    </div>
+                    <button class="inventory-list-use" data-potion="electricity">Use</button>
+                </div>
+            `;
+        }
+        
+        magicList.innerHTML = html;
+        
+        // Add use button handlers
+        const useButtons = magicList.querySelectorAll('.inventory-list-use');
+        useButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const potionType = e.target.dataset.potion;
+                this.usePotion(potionType);
+            });
+        });
+    }
+
+    /**
+     * Show brew potion menu with recipes
+     */
+    showBrewMenu() {
+        const app = window.app;
+        if (!app) return;
+        
+        const healingRecipe = `
+            <div class="brew-recipe">
+                <h4>🧪 Healing Potion</h4>
+                <p>Restores 30 health</p>
+                <div class="brew-ingredients">
+                    <span>1 🌰 Acorn</span>
+                    <span>1 🍄 Mushroom</span>
+                    <span>1 🍂 Leaf</span>
+                    <span>33 ✨ Magic</span>
+                </div>
+                <button class="brew-btn" data-recipe="healing">Brew</button>
+            </div>
+        `;
+        
+        const electricityRecipe = `
+            <div class="brew-recipe">
+                <h4>⚡ Electricity Potion</h4>
+                <p>Damages all enemies on screen</p>
+                <div class="brew-ingredients">
+                    <span>3 🔹 Crystals</span>
+                    <span>33 ✨ Magic</span>
+                </div>
+                <button class="brew-btn" data-recipe="electricity">Brew</button>
+            </div>
+        `;
+        
+        // Create brew menu modal
+        const brewModal = document.createElement('div');
+        brewModal.className = 'brew-modal';
+        brewModal.innerHTML = `
+            <div class="brew-modal-content">
+                <h3>🧪 Brew Potions</h3>
+                ${healingRecipe}
+                ${electricityRecipe}
+                <button class="brew-close-btn">Close</button>
+            </div>
+        `;
+        
+        document.body.appendChild(brewModal);
+        
+        // Add brew button handlers
+        const brewButtons = brewModal.querySelectorAll('.brew-btn');
+        brewButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const recipe = e.target.dataset.recipe;
+                this.brewPotion(recipe);
+            });
+        });
+        
+        // Add close button handler
+        const closeBtn = brewModal.querySelector('.brew-close-btn');
+        closeBtn.addEventListener('click', () => {
+            brewModal.remove();
+        });
+    }
+
+    /**
+     * Brew a potion based on recipe
+     */
+    brewPotion(recipe) {
+        const app = window.app;
+        if (!app) return;
+        
+        if (recipe === 'healing') {
+            // Check ingredients
+            if (this.inventory.acorn >= 1 && this.inventory.mushroom >= 1 && 
+                this.inventory.leaf >= 1 && app.magic >= 33) {
+                // Consume ingredients
+                this.inventory.acorn--;
+                this.inventory.mushroom--;
+                this.inventory.leaf--;
+                app.magic -= 33;
+                
+                // Create potion
+                this.potions.healing++;
+                
+                console.log('🧪 Brewed Healing Potion!');
+                this.updateInventoryDisplay();
+                this.updateMagicList();
+                app.updateStatBars();
+            } else {
+                console.log('❌ Not enough ingredients for Healing Potion');
+                alert('Not enough ingredients! Need: 1 Acorn, 1 Mushroom, 1 Leaf, 33 Magic');
+            }
+        } else if (recipe === 'electricity') {
+            // Check ingredients
+            if (this.inventory.crystal >= 3 && app.magic >= 33) {
+                // Consume ingredients
+                this.inventory.crystal -= 3;
+                app.magic -= 33;
+                
+                // Create potion
+                this.potions.electricity++;
+                
+                console.log('⚡ Brewed Electricity Potion!');
+                this.updateInventoryDisplay();
+                this.updateMagicList();
+                app.updateStatBars();
+            } else {
+                console.log('❌ Not enough ingredients for Electricity Potion');
+                alert('Not enough ingredients! Need: 3 Crystals, 33 Magic');
+            }
+        }
+    }
+
+    /**
+     * Use a potion
+     */
+    usePotion(potionType) {
+        const app = window.app;
+        if (!app) return;
+        
+        if (potionType === 'healing' && this.potions.healing > 0) {
+            this.potions.healing--;
+            app.health = Math.min(app.maxHealth, app.health + 30);
+            app.updateStatBars();
+            console.log('🧪 Used Healing Potion! +30 Health');
+            this.updateMagicList();
+        } else if (potionType === 'electricity' && this.potions.electricity > 0) {
+            this.potions.electricity--;
+            // Damage all enemies
+            this.enemies.forEach(enemy => {
+                enemy.health = Math.max(0, enemy.health - 50);
+            });
+            console.log('⚡ Used Electricity Potion! All enemies damaged!');
+            this.updateMagicList();
         }
     }
 }
