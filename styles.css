@@ -898,7 +898,8 @@ body {
 }
 
 .bolt-icon {
-    font-size: 2rem;
+    font-size: 1rem;
+    line-height: 1;
     animation: collectiblePulse 2s ease-in-out infinite;
 }
 
@@ -910,7 +911,8 @@ body {
 }
 
 .collectibles-icon {
-    font-size: 2rem;
+    font-size: 1rem;
+    line-height: 1;
     animation: collectiblePulse 2s ease-in-out infinite;
 }
 
