@@ -445,6 +445,34 @@ class CollectiblesGame {
     }
 
     /**
+     * Show enemy defeat visual feedback with XP earned
+     */
+    showEnemyDefeatFeedback(xpAmount) {
+        const feedback = document.createElement('div');
+        feedback.className = 'enemy-defeat-feedback';
+        feedback.innerHTML = `💪 NICE! 💪<br>+${xpAmount} XP`;
+        feedback.style.position = 'fixed';
+        feedback.style.top = '50%';
+        feedback.style.left = '50%';
+        feedback.style.transform = 'translate(-50%, -50%)';
+        feedback.style.fontSize = '2.5rem';
+        feedback.style.fontWeight = 'bold';
+        feedback.style.color = '#FFA500';
+        feedback.style.textShadow = '0 0 15px #FFD700, 0 0 30px #FFA500, 0 0 45px #FF8C00, 3px 3px 6px #000000';
+        feedback.style.animation = 'enemyDefeatPulse 1.5s ease-out forwards';
+        feedback.style.pointerEvents = 'none';
+        feedback.style.zIndex = '10000';
+        feedback.style.textAlign = 'center';
+        feedback.style.lineHeight = '1.3';
+        
+        document.body.appendChild(feedback);
+        
+        setTimeout(() => {
+            feedback.remove();
+        }, 1500);
+    }
+
+    /**
      * Spawn a collectible at a specific position (for bolt drops)
      */
     spawnCollectibleAt(x, y, type) {
@@ -629,6 +657,8 @@ class CollectiblesGame {
                     const app = window.app;
                     if (app && app.addXP) {
                         app.addXP(10);
+                        // Show defeat feedback
+                        this.showEnemyDefeatFeedback(10);
                     } else {
                         console.warn('⚠️ Cannot award XP - app not found or addXP undefined');
                     }
