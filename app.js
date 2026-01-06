@@ -38,6 +38,9 @@ class VirtualTrailRunApp {
         this.shieldStrength = 0; // Current shield points
         this.maxShield = 50; // Maximum shield capacity
         
+        // Game mode toggle
+        this.gameModeEnabled = true; // Default to game mode ON
+        
         // Firebase services (initialized later)
         this.cache = null;
         this.analytics = null;
@@ -62,7 +65,10 @@ class VirtualTrailRunApp {
             xpBar: document.getElementById('xpBar'),
             levelDisplay: document.getElementById('levelDisplay'),
             xpText: document.getElementById('xpText'),
-            shieldBar: document.getElementById('shieldBar')
+            shieldBar: document.getElementById('shieldBar'),
+            gameModeCheckbox: document.getElementById('gameModeCheckbox'),
+            statsBars: document.getElementById('statsBars'),
+            collectiblesContainer: document.getElementById('collectiblesContainer')
         };
     }
 
@@ -92,8 +98,8 @@ class VirtualTrailRunApp {
                 if (this.headTracker.isActive()) {
                     this.startWorkoutTimer();
                 }
-                // Restart collectibles game if camera is active
-                if (this.collectiblesGame && this.headTracker.isCameraActive() && !this.collectiblesGame.isActive) {
+                // Restart collectibles game if camera is active and game mode is enabled
+                if (this.gameModeEnabled && this.collectiblesGame && this.headTracker.isCameraActive() && !this.collectiblesGame.isActive) {
                     const cameraFeed = document.getElementById('cameraFeed');
                     if (cameraFeed) {
                         this.collectiblesGame.start(cameraFeed);
@@ -407,6 +413,11 @@ class VirtualTrailRunApp {
                 this.selectVideo(videoId, e.target);
             });
         });
+        
+        // Game mode toggle
+        this.elements.gameModeCheckbox.addEventListener('change', (e) => {
+            this.toggleGameMode(e.target.checked);
+        });
     }
 
     /**
@@ -454,9 +465,9 @@ class VirtualTrailRunApp {
             }
         }
         
-        // Start collectibles game
+        // Start collectibles game if game mode is enabled
         const cameraFeed = document.getElementById('cameraFeed');
-        if (cameraFeed && this.collectiblesGame) {
+        if (this.gameModeEnabled && cameraFeed && this.collectiblesGame) {
             this.collectiblesGame.start(cameraFeed);
         }
         
@@ -542,6 +553,46 @@ class VirtualTrailRunApp {
         
         // Show overlay again
         this.elements.videoOverlay.classList.remove('hidden');
+    }
+
+    /**
+     * Toggle game mode on/off
+     */
+    toggleGameMode(enabled) {
+        this.gameModeEnabled = enabled;
+        console.log(`Game mode ${enabled ? 'enabled' : 'disabled'}`);
+        
+        if (enabled) {
+            // Show game overlays
+            if (this.elements.statsBars) {
+                this.elements.statsBars.style.display = 'flex';
+            }
+            if (this.elements.collectiblesContainer) {
+                this.elements.collectiblesContainer.style.display = 'block';
+            }
+            
+            // Start collectibles game if camera is active and video is playing
+            if (this.collectiblesGame && this.headTracker.isCameraActive() && 
+                this.videoPlayer && !this.videoPlayer.isPaused()) {
+                const cameraFeed = document.getElementById('cameraFeed');
+                if (cameraFeed && !this.collectiblesGame.isActive) {
+                    this.collectiblesGame.start(cameraFeed);
+                }
+            }
+        } else {
+            // Hide game overlays
+            if (this.elements.statsBars) {
+                this.elements.statsBars.style.display = 'none';
+            }
+            if (this.elements.collectiblesContainer) {
+                this.elements.collectiblesContainer.style.display = 'none';
+            }
+            
+            // Stop collectibles game
+            if (this.collectiblesGame && this.collectiblesGame.isActive) {
+                this.collectiblesGame.stop();
+            }
+        }
     }
 
     /**
@@ -806,8 +857,8 @@ class VirtualTrailRunApp {
             this.updateWorkoutTimer();
         }, 1000);
         
-        // Restart collectibles game if not already active
-        if (this.collectiblesGame && !this.collectiblesGame.isActive && this.headTracker.isCameraActive()) {
+        // Restart collectibles game if not already active and game mode is enabled
+        if (this.gameModeEnabled && this.collectiblesGame && !this.collectiblesGame.isActive && this.headTracker.isCameraActive()) {
             const cameraFeed = document.getElementById('cameraFeed');
             if (cameraFeed) {
                 this.collectiblesGame.start(cameraFeed);
