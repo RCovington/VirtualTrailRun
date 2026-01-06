@@ -128,24 +128,9 @@ class CollectiblesGame {
             console.error('Error loading hand detection:', error);
         }
         
-        // Load pose detection model for elbow tracking
-        try {
-            if (typeof poseDetection !== 'undefined') {
-                const model = poseDetection.SupportedModels.MediaPipePose;
-                const detectorConfig = {
-                    runtime: 'mediapipe',
-                    solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose',
-                    modelType: 'lite'
-                };
-                
-                this.poseDetector = await poseDetection.createDetector(model, detectorConfig);
-                console.log('Pose detection model loaded');
-            } else {
-                console.warn('Pose detection not available');
-            }
-        } catch (error) {
-            console.error('Error loading pose detection:', error);
-        }
+        // Pose detection is no longer needed (removed fist+elbow gesture in favor of two-fist gesture)
+        // Keeping poseDetector property as null for backward compatibility
+        this.poseDetector = null;
     }
 
     /**
