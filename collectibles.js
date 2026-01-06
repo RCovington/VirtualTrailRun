@@ -1123,14 +1123,32 @@ class CollectiblesGame {
         const pinkyTip = keypoints[20];
         const palm = keypoints[0];
         
-        // In a fist, all fingertips should be close to the palm
-        const thumbClose = this.distance(thumbTip, palm) < 60;
-        const indexClose = this.distance(indexTip, palm) < 70;
-        const middleClose = this.distance(middleTip, palm) < 70;
-        const ringClose = this.distance(ringTip, palm) < 70;
-        const pinkyClose = this.distance(pinkyTip, palm) < 70;
+        // Calculate distances
+        const thumbDist = this.distance(thumbTip, palm);
+        const indexDist = this.distance(indexTip, palm);
+        const middleDist = this.distance(middleTip, palm);
+        const ringDist = this.distance(ringTip, palm);
+        const pinkyDist = this.distance(pinkyTip, palm);
         
-        return thumbClose && indexClose && middleClose && ringClose && pinkyClose;
+        // In a fist, all fingertips should be close to the palm
+        // Relaxed thresholds for better detection
+        const thumbClose = thumbDist < 80;
+        const indexClose = indexDist < 90;
+        const middleClose = middleDist < 90;
+        const ringClose = ringDist < 90;
+        const pinkyClose = pinkyDist < 90;
+        
+        const isFist = thumbClose && indexClose && middleClose && ringClose && pinkyClose;
+        
+        // Debug logging every 60 frames (about once per second at 60fps)
+        if (!this.fistDebugCounter) this.fistDebugCounter = 0;
+        this.fistDebugCounter++;
+        if (this.fistDebugCounter >= 60) {
+            console.log(`👊 Fist check: thumb=${thumbDist.toFixed(0)} (<80), index=${indexDist.toFixed(0)} (<90), middle=${middleDist.toFixed(0)} (<90), ring=${ringDist.toFixed(0)} (<90), pinky=${pinkyDist.toFixed(0)} (<90) => ${isFist}`);
+            this.fistDebugCounter = 0;
+        }
+        
+        return isFist;
     }
 
     /**
