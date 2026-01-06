@@ -765,6 +765,7 @@ class CollectiblesGame {
             if (hands && hands.length > 0) {
                 // Check for two-fist shield gesture first (requires 2 hands)
                 if (hands.length >= 2) {
+                    console.log(`🖐️ Two hands detected - checking for shield gesture...`);
                     this.checkTwoFistShieldGesture(hands);
                     
                     // When two hands are detected, disable pinch interactions
@@ -1165,6 +1166,8 @@ class CollectiblesGame {
         const hand1IsFist = this.isClosedFistGesture(hands[0]);
         const hand2IsFist = this.isClosedFistGesture(hands[1]);
         
+        console.log(`🛡️ Shield check: hand1 fist=${hand1IsFist}, hand2 fist=${hand2IsFist}`);
+        
         if (hand1IsFist && hand2IsFist) {
             // Get the wrist positions of both hands
             const wrist1 = hands[0].keypoints[0];
@@ -1176,9 +1179,11 @@ class CollectiblesGame {
                 Math.pow(wrist1.y - wrist2.y, 2)
             );
             
+            console.log(`🛡️ Both fists detected! Distance: ${distance.toFixed(0)}px (need < 150)`);
+            
             // Fists should be close together (within 150 pixels)
             if (distance < 150) {
-                console.log(`🛡️ Two-fist shield gesture detected! Distance: ${distance.toFixed(0)}px`);
+                console.log(`🛡️ Two-fist shield gesture ACTIVATED! Distance: ${distance.toFixed(0)}px`);
                 
                 // Activate shield
                 const app = window.app;
