@@ -116,7 +116,7 @@ class CollectiblesGame {
                     runtime: 'mediapipe',
                     solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands',
                     modelType: 'lite', // Use lite model for better performance
-                    maxHands: 1 // Only detect one hand
+                    maxHands: 2 // Detect up to 2 hands for shield gesture
                 };
                 
                 this.handDetector = await handPoseDetection.createDetector(model, detectorConfig);
@@ -763,6 +763,12 @@ class CollectiblesGame {
             });
             
             if (hands && hands.length > 0) {
+                // Check for two-fist shield gesture first (requires 2 hands)
+                if (hands.length >= 2) {
+                    this.checkTwoFistShieldGesture(hands);
+                }
+                
+                // Use the first hand for game interactions
                 const hand = hands[0];
                 
                 // Filter out hands that are likely the face
@@ -777,11 +783,8 @@ class CollectiblesGame {
                 // Store keypoints for drawing on video overlay
                 this.lastHandKeypoints = hand.keypoints;
                 
-                // Draw hand keypoints for debugging
-                this.drawHandDebug(hand);
-                
-                // Check for shield gesture (closed fist + elbow visible)
-                await this.checkShieldGesture(hand);
+                // Draw hand keypoints for debugging (draw all hands)
+                hands.forEach(h => this.drawHandDebug(h));
                 
                 // Check if hand is making a pinch gesture for grabbing
                 this.isGrabbing = this.isGrabbingGesture(hand);
@@ -1147,42 +1150,39 @@ class CollectiblesGame {
     /**
      * Check for shield gesture (closed fist + elbow visible)
      */
-    async checkShieldGesture(hand) {
-        if (!this.poseDetector) return;
+    checkTwoFistShieldGesture(hands) {
+        // Need at least 2 hands detected
+        if (!hands || hands.length < 2) return false;
         
-        // First check if hand is in a closed fist
-        if (!this.isClosedFistGesture(hand)) return;
+        // Check if both hands are making closed fists
+        const hand1IsFist = this.isClosedFistGesture(hands[0]);
+        const hand2IsFist = this.isClosedFistGesture(hands[1]);
         
-        try {
-            // Detect body pose to find elbow
-            const poses = await this.poseDetector.estimatePoses(this.videoElement, {
-                flipHorizontal: true
-            });
+        if (hand1IsFist && hand2IsFist) {
+            // Get the wrist positions of both hands
+            const wrist1 = hands[0].keypoints[0];
+            const wrist2 = hands[1].keypoints[0];
             
-            if (poses && poses.length > 0) {
-                const pose = poses[0];
+            // Calculate distance between the two fists
+            const distance = Math.sqrt(
+                Math.pow(wrist1.x - wrist2.x, 2) + 
+                Math.pow(wrist1.y - wrist2.y, 2)
+            );
+            
+            // Fists should be close together (within 150 pixels)
+            if (distance < 150) {
+                console.log(`🛡️ Two-fist shield gesture detected! Distance: ${distance.toFixed(0)}px`);
                 
-                // Get elbow keypoints (left elbow: 13, right elbow: 14 in MediaPipe Pose)
-                const leftElbow = pose.keypoints[13];
-                const rightElbow = pose.keypoints[14];
-                
-                // Check if either elbow is visible (confidence > 0.5)
-                const leftElbowVisible = leftElbow && leftElbow.score > 0.5;
-                const rightElbowVisible = rightElbow && rightElbow.score > 0.5;
-                
-                if (leftElbowVisible || rightElbowVisible) {
-                    console.log(`🛡️ Shield gesture detected! Fist + elbow visible`);
-                    
-                    // Activate shield
-                    const app = window.app;
-                    if (app && app.activateShield) {
-                        app.activateShield();
-                    }
+                // Activate shield
+                const app = window.app;
+                if (app && app.activateShield) {
+                    app.activateShield();
                 }
+                return true;
             }
-        } catch (error) {
-            // Silently handle pose detection errors
         }
+        
+        return false;
     }
 
     /**
