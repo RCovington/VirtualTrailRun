@@ -68,7 +68,8 @@ class VirtualTrailRunApp {
             shieldBar: document.getElementById('shieldBar'),
             gameModeCheckbox: document.getElementById('gameModeCheckbox'),
             statsBars: document.getElementById('statsBars'),
-            collectiblesContainer: document.getElementById('collectiblesContainer')
+            collectiblesContainer: document.getElementById('collectiblesContainer'),
+            shieldVisual: document.getElementById('shieldVisual')
         };
     }
 
@@ -587,6 +588,9 @@ class VirtualTrailRunApp {
             if (this.elements.collectiblesContainer) {
                 this.elements.collectiblesContainer.style.display = 'none';
             }
+            if (this.elements.shieldVisual) {
+                this.elements.shieldVisual.classList.remove('active');
+            }
             
             // Stop collectibles game
             if (this.collectiblesGame && this.collectiblesGame.isActive) {
@@ -802,6 +806,11 @@ class VirtualTrailRunApp {
             if (this.shieldStrength <= 0) {
                 this.shieldActive = false;
                 console.log('🛡️ Shield depleted!');
+                
+                // Hide shield visual
+                if (this.elements.shieldVisual) {
+                    this.elements.shieldVisual.classList.remove('active');
+                }
             }
         }
         
@@ -827,6 +836,11 @@ class VirtualTrailRunApp {
             this.shieldStrength = this.maxShield;
             console.log(`🛡️ Shield activated! Strength: ${this.shieldStrength}/${this.maxShield}`);
             this.updateStatBars();
+            
+            // Show shield visual
+            if (this.elements.shieldVisual) {
+                this.elements.shieldVisual.classList.add('active');
+            }
         } else {
             console.log('🛡️ Shield already active');
         }
