@@ -847,6 +847,23 @@ class VirtualTrailRunApp {
     }
 
     /**
+     * Deactivate shield (when gesture stops)
+     */
+    deactivateShield() {
+        if (this.shieldActive) {
+            this.shieldActive = false;
+            this.shieldStrength = 0;
+            console.log('🛡️ Shield deactivated');
+            this.updateStatBars();
+            
+            // Hide shield visual
+            if (this.elements.shieldVisual) {
+                this.elements.shieldVisual.classList.remove('active');
+            }
+        }
+    }
+
+    /**
      * Use magic (reduces magic bar)
      */
     useMagic(amount) {

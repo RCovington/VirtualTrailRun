@@ -27,6 +27,11 @@ class CollectiblesGame {
         this.missThrottleDelay = 500; // Only show miss feedback every 500ms
         this.headTracker = headTracker; // Reference to head tracker for face position
         
+        // Shield gesture tracking
+        this.lastShieldGestureTime = 0;
+        this.shieldDeactivateTimer = null;
+        this.shieldDeactivateDelay = 2000; // 2 seconds
+        
         // Electrified pinch tracking
         this.electrifiedPinchesRemaining = 0;
         
@@ -1163,7 +1168,11 @@ class CollectiblesGame {
      */
     checkTwoFistShieldGesture(hands) {
         // Need at least 2 hands detected
-        if (!hands || hands.length < 2) return false;
+        if (!hands || hands.length < 2) {
+            // No two-fist gesture detected
+            this.scheduleShieldDeactivation();
+            return false;
+        }
         
         // Check if both hands are making closed fists
         const hand1IsFist = this.isClosedFistGesture(hands[0]);
@@ -1188,6 +1197,13 @@ class CollectiblesGame {
             if (distance < 150) {
                 console.log(`🛡️ Two-fist shield gesture ACTIVATED! Distance: ${distance.toFixed(0)}px`);
                 
+                // Update last gesture time and cancel any pending deactivation
+                this.lastShieldGestureTime = Date.now();
+                if (this.shieldDeactivateTimer) {
+                    clearTimeout(this.shieldDeactivateTimer);
+                    this.shieldDeactivateTimer = null;
+                }
+                
                 // Activate shield
                 const app = window.app;
                 if (app && app.activateShield) {
@@ -1197,7 +1213,30 @@ class CollectiblesGame {
             }
         }
         
+        // Gesture not detected or fists not close enough
+        this.scheduleShieldDeactivation();
         return false;
+    }
+    
+    /**
+     * Schedule shield deactivation after gesture stops
+     */
+    scheduleShieldDeactivation() {
+        // If shield is not active, nothing to do
+        const app = window.app;
+        if (!app || !app.shieldActive) return;
+        
+        // If timer already scheduled, don't reschedule
+        if (this.shieldDeactivateTimer) return;
+        
+        // Schedule deactivation
+        this.shieldDeactivateTimer = setTimeout(() => {
+            console.log('🛡️ Shield gesture timeout - deactivating shield');
+            if (app && app.deactivateShield) {
+                app.deactivateShield();
+            }
+            this.shieldDeactivateTimer = null;
+        }, this.shieldDeactivateDelay);
     }
 
     /**
