@@ -766,9 +766,16 @@ class CollectiblesGame {
                 // Check for two-fist shield gesture first (requires 2 hands)
                 if (hands.length >= 2) {
                     this.checkTwoFistShieldGesture(hands);
+                    
+                    // When two hands are detected, disable pinch interactions
+                    // Just draw the hands for debugging and skip game interactions
+                    hands.forEach(h => this.drawHandDebug(h));
+                    this.isGrabbing = false;
+                    this.lastHandPosition = null;
+                    return;
                 }
                 
-                // Use the first hand for game interactions
+                // Use the first hand for game interactions (only when single hand detected)
                 const hand = hands[0];
                 
                 // Filter out hands that are likely the face
