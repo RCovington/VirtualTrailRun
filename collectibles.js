@@ -809,14 +809,37 @@ class CollectiblesGame {
                     this.lastHandPosition = { x: handX, y: handY };
                     
                     // Determine which hand (Left or Right)
-                    // MediaPipe returns 'Left' or 'Right' in hand.handedness
-                    const handedness = hand.handedness || 'Right'; // Default to right if not available
+                    // MediaPipe returns handedness in hand.handedness as an array with score
+                    // hand.handedness is typically "Left" or "Right" string
+                    let handedness = 'Right'; // Default to right
+                    
+                    // Debug: log the full hand object structure (only once per session)
+                    if (!this.handStructureLogged) {
+                        console.log('🔍 Hand object structure:', hand);
+                        console.log('🔍 Hand.handedness:', hand.handedness);
+                        this.handStructureLogged = true;
+                    }
+                    
+                    // Try different ways to access handedness
+                    if (hand.handedness) {
+                        if (typeof hand.handedness === 'string') {
+                            handedness = hand.handedness;
+                        } else if (Array.isArray(hand.handedness) && hand.handedness.length > 0) {
+                            handedness = hand.handedness[0].categoryName || hand.handedness[0].displayName || 'Right';
+                        } else if (hand.handedness.categoryName) {
+                            handedness = hand.handedness.categoryName;
+                        } else if (hand.handedness.displayName) {
+                            handedness = hand.handedness.displayName;
+                        }
+                    }
+                    
                     const isLeftHand = handedness === 'Left';
                     
-                    console.log(`👋 Hand detected: ${handedness}`);
+                    console.log(`👋 Hand pinch detected: ${handedness} (isLeftHand=${isLeftHand})`);
                     
                     if (isLeftHand) {
                         // Left hand pinch = dagger stab
+                        console.log('🔪 Left hand - showing dagger!');
                         const app = window.app;
                         if (app && app.showDaggerStab) {
                             app.showDaggerStab();
@@ -826,6 +849,7 @@ class CollectiblesGame {
                         this.checkEnemyCollision(handX, handY);
                     } else {
                         // Right hand pinch = grab collectibles (existing behavior)
+                        console.log('✋ Right hand - grabbing collectibles');
                         // Check for collision with enemies first
                         const hitEnemy = this.checkEnemyCollision(handX, handY);
                         
