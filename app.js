@@ -69,7 +69,8 @@ class VirtualTrailRunApp {
             gameModeCheckbox: document.getElementById('gameModeCheckbox'),
             statsBars: document.getElementById('statsBars'),
             collectiblesContainer: document.getElementById('collectiblesContainer'),
-            shieldVisual: document.getElementById('shieldVisual')
+            shieldVisual: document.getElementById('shieldVisual'),
+            swordVisual: document.getElementById('swordVisual')
         };
     }
 
@@ -863,6 +864,34 @@ class VirtualTrailRunApp {
             if (this.elements.shieldVisual) {
                 this.elements.shieldVisual.classList.remove('active');
             }
+        }
+    }
+
+    /**
+     * Activate sword (from palms pressed together gesture)
+     */
+    activateSword() {
+        console.log(`⚔️ activateSword() called. element exists=${!!this.elements.swordVisual}`);
+        
+        // Show sword visual
+        if (this.elements.swordVisual) {
+            console.log('⚔️ Adding active class to sword visual');
+            this.elements.swordVisual.classList.add('active');
+            console.log('⚔️ Sword visual classes:', this.elements.swordVisual.className);
+        } else {
+            console.error('⚔️ ERROR: swordVisual element not found!');
+        }
+    }
+
+    /**
+     * Deactivate sword (when gesture stops)
+     */
+    deactivateSword() {
+        console.log('⚔️ Sword deactivated');
+        
+        // Hide sword visual
+        if (this.elements.swordVisual) {
+            this.elements.swordVisual.classList.remove('active');
         }
     }
 
