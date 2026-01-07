@@ -1301,20 +1301,21 @@ class CollectiblesGame {
         const palmDist = this.distance(palm1, palm2);
         
         // For palms pressed together, all fingertips should be close to each other
-        // and palms should be close together
-        const threshold = 100; // Generous threshold
-        const thumbClose = thumbDist < threshold;
-        const indexClose = indexDist < threshold;
-        const middleClose = middleDist < threshold;
-        const ringClose = ringDist < threshold;
-        const pinkyClose = pinkyDist < threshold;
-        const palmsClose = palmDist < threshold;
+        // and palms should be close together - much stricter than shield
+        const fingerThreshold = 70; // Stricter threshold for fingertips
+        const palmThreshold = 60; // Very strict for palm distance
+        const thumbClose = thumbDist < fingerThreshold;
+        const indexClose = indexDist < fingerThreshold;
+        const middleClose = middleDist < fingerThreshold;
+        const ringClose = ringDist < fingerThreshold;
+        const pinkyClose = pinkyDist < fingerThreshold;
+        const palmsClose = palmDist < palmThreshold;
         
         // Count how many fingers are close
         const closeCount = [thumbClose, indexClose, middleClose, ringClose, pinkyClose].filter(x => x).length;
         
-        // Need at least 3 fingertips close AND palms close
-        const isPalmsTogether = closeCount >= 3 && palmsClose;
+        // Need ALL 5 fingertips close AND palms very close (stricter than shield)
+        const isPalmsTogether = closeCount >= 5 && palmsClose;
         
         if (forceDebug) {
             const resultStyle = isPalmsTogether ? 'color: #ff5050; font-weight: bold; font-size: 16px' : 'color: #ff9900';
