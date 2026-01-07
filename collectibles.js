@@ -30,12 +30,7 @@ class CollectiblesGame {
         // Shield gesture tracking
         this.lastShieldGestureTime = 0;
         this.shieldDeactivateTimer = null;
-        this.shieldDeactivateDelay = 2000; // 2 seconds
-        
-        // Sword gesture tracking
-        this.lastSwordGestureTime = 0;
-        this.swordDeactivateTimer = null;
-        this.swordDeactivateDelay = 2000; // 2 seconds
+        this.shieldDeactivateDelay = 1000; // 1 second
         
         // Electrified pinch tracking
         this.electrifiedPinchesRemaining = 0;
@@ -769,19 +764,14 @@ class CollectiblesGame {
                 // Check for two-hand gestures first (requires 2 hands)
                 if (hands.length >= 2) {
                     // Always force debug for two-hand mode
-                    console.log(`🖐️ Two hands detected - checking for gestures...`);
+                    console.log(`🖐️ Two hands detected - checking for shield gesture...`);
                     
                     // Disable pinch interactions when two hands detected
                     this.isGrabbing = false;
                     this.lastHandPosition = null;
                     
-                    // Check for palm-pressed-together gesture first (takes priority)
-                    const palmsTogether = this.checkPalmsPressedTogetherGesture(hands, true);
-                    
-                    // If not palms together, check for shield gesture
-                    if (!palmsTogether) {
-                        this.checkTwoFistShieldGesture(hands, true);
-                    }
+                    // Check for shield gesture
+                    this.checkTwoFistShieldGesture(hands, true);
                     
                     // Draw the hands for debugging - explicitly pass false for isGrabbing
                     hands.forEach(h => this.drawHandDebug(h, false));
@@ -838,6 +828,9 @@ class CollectiblesGame {
                 this.lastHandPosition = null;
                 this.lastHandKeypoints = null;
                 this.isGrabbing = false;
+                
+                // Deactivate shield when hands disappear
+                this.scheduleShieldDeactivation();
             }
         } catch (error) {
             // Silently handle detection errors
@@ -1258,116 +1251,6 @@ class CollectiblesGame {
                 app.deactivateShield();
             }
             this.shieldDeactivateTimer = null;
-        }, this.shieldDeactivateDelay);
-    }
-
-    /**
-     * Check for palms pressed together gesture (prayer/namaste gesture)
-     */
-    checkPalmsPressedTogetherGesture(hands, forceDebug = false) {
-        // Need at least 2 hands detected
-        if (!hands || hands.length < 2) {
-            // No palms-together gesture detected
-            this.scheduleSwordDeactivation();
-            return false;
-        }
-        
-        const hand1 = hands[0];
-        const hand2 = hands[1];
-        
-        // Get palm centers (wrist keypoint)
-        const palm1 = hand1.keypoints[0];
-        const palm2 = hand2.keypoints[0];
-        
-        // Get all fingertips from both hands
-        const hand1Thumb = hand1.keypoints[4];
-        const hand1Index = hand1.keypoints[8];
-        const hand1Middle = hand1.keypoints[12];
-        const hand1Ring = hand1.keypoints[16];
-        const hand1Pinky = hand1.keypoints[20];
-        
-        const hand2Thumb = hand2.keypoints[4];
-        const hand2Index = hand2.keypoints[8];
-        const hand2Middle = hand2.keypoints[12];
-        const hand2Ring = hand2.keypoints[16];
-        const hand2Pinky = hand2.keypoints[20];
-        
-        // Calculate distances between corresponding fingertips
-        const thumbDist = this.distance(hand1Thumb, hand2Thumb);
-        const indexDist = this.distance(hand1Index, hand2Index);
-        const middleDist = this.distance(hand1Middle, hand2Middle);
-        const ringDist = this.distance(hand1Ring, hand2Ring);
-        const pinkyDist = this.distance(hand1Pinky, hand2Pinky);
-        const palmDist = this.distance(palm1, palm2);
-        
-        // For palms pressed together, all fingertips should be close to each other
-        // and palms should be close together - much stricter than shield
-        const fingerThreshold = 70; // Stricter threshold for fingertips
-        const palmThreshold = 60; // Very strict for palm distance
-        const thumbClose = thumbDist < fingerThreshold;
-        const indexClose = indexDist < fingerThreshold;
-        const middleClose = middleDist < fingerThreshold;
-        const ringClose = ringDist < fingerThreshold;
-        const pinkyClose = pinkyDist < fingerThreshold;
-        const palmsClose = palmDist < palmThreshold;
-        
-        // Count how many fingers are close
-        const closeCount = [thumbClose, indexClose, middleClose, ringClose, pinkyClose].filter(x => x).length;
-        
-        // Need ALL 5 fingertips close AND palms very close (stricter than shield)
-        const isPalmsTogether = closeCount >= 5 && palmsClose;
-        
-        if (forceDebug) {
-            const resultStyle = isPalmsTogether ? 'color: #ff5050; font-weight: bold; font-size: 16px' : 'color: #ff9900';
-            console.log(`%c⚔️ Palms check: thumb=${thumbDist.toFixed(0)} (${thumbClose ? '✓' : '✗'}), index=${indexDist.toFixed(0)} (${indexClose ? '✓' : '✗'}), middle=${middleDist.toFixed(0)} (${middleClose ? '✓' : '✗'}), ring=${ringDist.toFixed(0)} (${ringClose ? '✓' : '✗'}), pinky=${pinkyDist.toFixed(0)} (${pinkyClose ? '✓' : '✗'}), palms=${palmDist.toFixed(0)} (${palmsClose ? '✓' : '✗'}) => ${closeCount}/5 fingers + palms => ${isPalmsTogether}`, resultStyle);
-        }
-        
-        if (isPalmsTogether) {
-            if (forceDebug) {
-                console.log(`%c⚔️ Palms pressed together - ACTIVATING SWORD!`, 'color: #ff5050; font-weight: bold; font-size: 18px; background: #440000; padding: 4px');
-            }
-            
-            // Update last gesture time and cancel any pending deactivation
-            this.lastSwordGestureTime = Date.now();
-            if (this.swordDeactivateTimer) {
-                clearTimeout(this.swordDeactivateTimer);
-                this.swordDeactivateTimer = null;
-            }
-            
-            // Activate sword
-            const app = window.app;
-            if (app && app.activateSword) {
-                app.activateSword();
-            }
-            
-            // Also deactivate shield if active (can't have both)
-            if (app && app.shieldActive && app.deactivateShield) {
-                app.deactivateShield();
-            }
-            
-            return true;
-        }
-        
-        // Gesture not detected
-        this.scheduleSwordDeactivation();
-        return false;
-    }
-
-    /**
-     * Schedule sword deactivation after gesture stops
-     */
-    scheduleSwordDeactivation() {
-        // If timer already scheduled, don't reschedule
-        if (this.swordDeactivateTimer) return;
-        
-        // Schedule deactivation
-        this.swordDeactivateTimer = setTimeout(() => {
-            console.log('⚔️ Sword gesture timeout - deactivating sword');
-            const app = window.app;
-            if (app && app.deactivateSword) {
-                app.deactivateSword();
-            }
-            this.swordDeactivateTimer = null;
         }, this.shieldDeactivateDelay);
     }
 

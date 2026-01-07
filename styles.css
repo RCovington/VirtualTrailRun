@@ -1092,45 +1092,6 @@ body {
     }
 }
 
-/* ===== Sword Visual ===== */
-.sword-visual {
-    position: absolute;
-    bottom: -75%; /* Hide 75% of the sword below the bottom */
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 20rem; /* Very large sword */
-    line-height: 1;
-    z-index: 500;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out, bottom 0.3s ease-in-out;
-    pointer-events: none;
-    text-shadow: 0 0 30px rgba(255, 50, 50, 0.8),
-                 0 0 60px rgba(255, 50, 50, 0.6),
-                 0 -5px 15px rgba(255, 255, 255, 0.8);
-    filter: drop-shadow(0 -10px 20px rgba(255, 50, 50, 0.4));
-}
-
-.sword-visual.active {
-    opacity: 1;
-    bottom: -73%; /* Slight upward animation */
-    animation: swordPulse 2s ease-in-out infinite;
-}
-
-@keyframes swordPulse {
-    0%, 100% {
-        transform: translateX(-50%) scale(1);
-        text-shadow: 0 0 30px rgba(255, 50, 50, 0.8),
-                     0 0 60px rgba(255, 50, 50, 0.6),
-                     0 -5px 15px rgba(255, 255, 255, 0.8);
-    }
-    50% {
-        transform: translateX(-50%) scale(1.05);
-        text-shadow: 0 0 40px rgba(255, 50, 50, 1),
-                     0 0 80px rgba(255, 50, 50, 0.8),
-                     0 -5px 20px rgba(255, 255, 255, 1);
-    }
-}
-
 #collectiblesCount {
     font-family: 'Courier New', monospace;
     font-size: 1rem;
