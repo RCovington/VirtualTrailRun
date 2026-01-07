@@ -880,12 +880,12 @@ class VirtualTrailRunApp {
             void this.elements.daggerVisual.offsetWidth;
             this.elements.daggerVisual.classList.add('active');
             
-            // Remove after animation completes
+            // Remove after animation completes (0.6s)
             setTimeout(() => {
                 if (this.elements.daggerVisual) {
                     this.elements.daggerVisual.classList.remove('active');
                 }
-            }, 400);
+            }, 600);
         }
     }
 
