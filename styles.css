@@ -1092,6 +1092,40 @@ body {
     }
 }
 
+/* ===== Dagger Visual ===== */
+.dagger-visual {
+    position: absolute;
+    bottom: 20%;
+    left: 10%;
+    font-size: 8rem;
+    line-height: 1;
+    z-index: 500;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out, transform 0.3s ease-out;
+    pointer-events: none;
+    text-shadow: 0 0 20px rgba(150, 150, 255, 0.8),
+                 0 0 40px rgba(150, 150, 255, 0.6),
+                 0 -5px 10px rgba(255, 255, 255, 0.8);
+    filter: drop-shadow(0 0 15px rgba(150, 150, 255, 0.6));
+}
+
+.dagger-visual.active {
+    opacity: 1;
+    animation: daggerStab 0.4s ease-out;
+}
+
+@keyframes daggerStab {
+    0% {
+        transform: translateX(0) rotate(-45deg) scale(0.8);
+    }
+    50% {
+        transform: translateX(100px) rotate(0deg) scale(1.2);
+    }
+    100% {
+        transform: translateX(50px) rotate(0deg) scale(1);
+    }
+}
+
 #collectiblesCount {
     font-family: 'Courier New', monospace;
     font-size: 1rem;

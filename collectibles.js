@@ -796,7 +796,7 @@ class CollectiblesGame {
                 // Draw hand keypoints for debugging (draw all hands)
                 hands.forEach(h => this.drawHandDebug(h));
                 
-                // Check if hand is making a pinch gesture for grabbing
+                // Check if hand is making a pinch gesture
                 this.isGrabbing = this.isGrabbingGesture(hand);
                 
                 if (this.isGrabbing) {
@@ -808,15 +808,34 @@ class CollectiblesGame {
                     
                     this.lastHandPosition = { x: handX, y: handY };
                     
-                    // Check for collision with enemies first
-                    const hitEnemy = this.checkEnemyCollision(handX, handY);
+                    // Determine which hand (Left or Right)
+                    // MediaPipe returns 'Left' or 'Right' in hand.handedness
+                    const handedness = hand.handedness || 'Right'; // Default to right if not available
+                    const isLeftHand = handedness === 'Left';
                     
-                    // Then check for collision with any collectible
-                    const grabbed = this.checkCollision(handX, handY);
+                    console.log(`👋 Hand detected: ${handedness}`);
                     
-                    // Only show miss feedback if nothing was grabbed/hit AND there are collectibles on screen
-                    if (!grabbed && !hitEnemy && this.collectibles.length > 0) {
-                        this.showMissFeedback(handX, handY);
+                    if (isLeftHand) {
+                        // Left hand pinch = dagger stab
+                        const app = window.app;
+                        if (app && app.showDaggerStab) {
+                            app.showDaggerStab();
+                        }
+                        
+                        // Also check for enemy collision with dagger
+                        this.checkEnemyCollision(handX, handY);
+                    } else {
+                        // Right hand pinch = grab collectibles (existing behavior)
+                        // Check for collision with enemies first
+                        const hitEnemy = this.checkEnemyCollision(handX, handY);
+                        
+                        // Then check for collision with any collectible
+                        const grabbed = this.checkCollision(handX, handY);
+                        
+                        // Only show miss feedback if nothing was grabbed/hit AND there are collectibles on screen
+                        if (!grabbed && !hitEnemy && this.collectibles.length > 0) {
+                            this.showMissFeedback(handX, handY);
+                        }
                     }
                 } else {
                     // Still track hand position even when not grabbing

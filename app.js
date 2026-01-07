@@ -69,7 +69,8 @@ class VirtualTrailRunApp {
             gameModeCheckbox: document.getElementById('gameModeCheckbox'),
             statsBars: document.getElementById('statsBars'),
             collectiblesContainer: document.getElementById('collectiblesContainer'),
-            shieldVisual: document.getElementById('shieldVisual')
+            shieldVisual: document.getElementById('shieldVisual'),
+            daggerVisual: document.getElementById('daggerVisual')
         };
     }
 
@@ -863,6 +864,28 @@ class VirtualTrailRunApp {
             if (this.elements.shieldVisual) {
                 this.elements.shieldVisual.classList.remove('active');
             }
+        }
+    }
+
+    /**
+     * Show dagger stab animation (from left hand pinch)
+     */
+    showDaggerStab() {
+        console.log('🗡️ Dagger stab!');
+        
+        if (this.elements.daggerVisual) {
+            // Remove and re-add class to restart animation
+            this.elements.daggerVisual.classList.remove('active');
+            // Force reflow to restart animation
+            void this.elements.daggerVisual.offsetWidth;
+            this.elements.daggerVisual.classList.add('active');
+            
+            // Remove after animation completes
+            setTimeout(() => {
+                if (this.elements.daggerVisual) {
+                    this.elements.daggerVisual.classList.remove('active');
+                }
+            }, 400);
         }
     }
 
