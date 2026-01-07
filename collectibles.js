@@ -32,6 +32,10 @@ class CollectiblesGame {
         this.shieldDeactivateTimer = null;
         this.shieldDeactivateDelay = 1000; // 1 second
         
+        // Dagger stab tracking
+        this.lastDaggerStabTime = 0;
+        this.daggerCooldown = 1500; // 1.5 seconds between stabs
+        
         // Electrified pinch tracking
         this.electrifiedPinchesRemaining = 0;
         
@@ -838,15 +842,25 @@ class CollectiblesGame {
                     console.log(`👋 Hand pinch detected: ${handedness} (isLeftHand=${isLeftHand})`);
                     
                     if (isLeftHand) {
-                        // Left hand pinch = dagger stab (2x damage)
-                        console.log('🔪 Left hand - showing dagger!');
-                        const app = window.app;
-                        if (app && app.showDaggerStab) {
-                            app.showDaggerStab();
-                        }
+                        // Left hand pinch = dagger stab (2x damage) with 1.5s cooldown
+                        const now = Date.now();
+                        const timeSinceLastStab = now - this.lastDaggerStabTime;
                         
-                        // Check for enemy collision with dagger - does 2x damage
-                        this.checkEnemyCollision(handX, handY, 2.0); // 2x damage multiplier
+                        if (timeSinceLastStab >= this.daggerCooldown) {
+                            console.log('🔪 Left hand - showing dagger!');
+                            this.lastDaggerStabTime = now;
+                            
+                            const app = window.app;
+                            if (app && app.showDaggerStab) {
+                                app.showDaggerStab();
+                            }
+                            
+                            // Check for enemy collision with dagger - does 2x damage
+                            this.checkEnemyCollision(handX, handY, 2.0); // 2x damage multiplier
+                        } else {
+                            const remainingCooldown = (this.daggerCooldown - timeSinceLastStab) / 1000;
+                            console.log(`⏰ Dagger cooldown: ${remainingCooldown.toFixed(1)}s remaining`);
+                        }
                     } else {
                         // Right hand pinch = grab collectibles (existing behavior)
                         console.log('✋ Right hand - grabbing collectibles');
