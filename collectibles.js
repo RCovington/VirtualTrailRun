@@ -1159,13 +1159,15 @@ class CollectiblesGame {
         
         // Debug logging - either forced or throttled
         if (forceDebug) {
-            console.log(`👊 ${handLabel}: thumb=${thumbDist.toFixed(0)} (${thumbClose ? '✓' : '✗'}), index=${indexDist.toFixed(0)} (${indexClose ? '✓' : '✗'}), middle=${middleDist.toFixed(0)} (${middleClose ? '✓' : '✗'}), ring=${ringDist.toFixed(0)} (${ringClose ? '✓' : '✗'}), pinky=${pinkyDist.toFixed(0)} (${pinkyClose ? '✓' : '✗'}) => ${isFist}`);
+            const resultStyle = isFist ? 'color: #00ff00; font-weight: bold; font-size: 14px' : 'color: #ff6666';
+            console.log(`👊 ${handLabel}: thumb=${thumbDist.toFixed(0)} (${thumbClose ? '✓' : '✗'}), index=${indexDist.toFixed(0)} (${indexClose ? '✓' : '✗'}), middle=${middleDist.toFixed(0)} (${middleClose ? '✓' : '✗'}), ring=${ringDist.toFixed(0)} (${ringClose ? '✓' : '✗'}), pinky=${pinkyDist.toFixed(0)} (${pinkyClose ? '✓' : '✗'}) => %c${isFist}`, resultStyle);
         } else {
             // Throttled debug logging every 60 frames (about once per second at 60fps)
             if (!this.fistDebugCounter) this.fistDebugCounter = 0;
             this.fistDebugCounter++;
             if (this.fistDebugCounter >= 60) {
-                console.log(`👊 Fist check: thumb=${thumbDist.toFixed(0)} (<80), index=${indexDist.toFixed(0)} (<90), middle=${middleDist.toFixed(0)} (<90), ring=${ringDist.toFixed(0)} (<90), pinky=${pinkyDist.toFixed(0)} (<90) => ${isFist}`);
+                const resultStyle = isFist ? 'color: #00ff00; font-weight: bold; font-size: 14px' : 'color: #ff6666';
+                console.log(`👊 Fist check: thumb=${thumbDist.toFixed(0)} (<80), index=${indexDist.toFixed(0)} (<90), middle=${middleDist.toFixed(0)} (<90), ring=${ringDist.toFixed(0)} (<90), pinky=${pinkyDist.toFixed(0)} (<90) => %c${isFist}`, resultStyle);
                 this.fistDebugCounter = 0;
             }
         }
@@ -1196,7 +1198,9 @@ class CollectiblesGame {
         const hand2IsFist = this.isClosedFistGesture(hands[1], forceDebug || true, "Hand 2");
         
         if (forceDebug) {
-            console.log(`🛡️ Shield check: hand1 fist=${hand1IsFist}, hand2 fist=${hand2IsFist}`);
+            const bothFists = hand1IsFist && hand2IsFist;
+            const summaryStyle = bothFists ? 'color: #00ff00; font-weight: bold; font-size: 16px' : 'color: #ff9900';
+            console.log(`%c🛡️ Shield check: hand1 fist=${hand1IsFist}, hand2 fist=${hand2IsFist}`, summaryStyle);
         }
         
         if (hand1IsFist && hand2IsFist) {
