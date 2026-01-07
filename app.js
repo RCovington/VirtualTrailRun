@@ -41,6 +41,9 @@ class VirtualTrailRunApp {
         // Game mode toggle
         this.gameModeEnabled = true; // Default to game mode ON
         
+        // Debug mode toggle
+        this.debugModeEnabled = false; // Default to debug mode OFF (hides camera/stats)
+        
         // Firebase services (initialized later)
         this.cache = null;
         this.analytics = null;
@@ -70,7 +73,8 @@ class VirtualTrailRunApp {
             statsBars: document.getElementById('statsBars'),
             collectiblesContainer: document.getElementById('collectiblesContainer'),
             shieldVisual: document.getElementById('shieldVisual'),
-            daggerVisual: document.getElementById('daggerVisual')
+            daggerVisual: document.getElementById('daggerVisual'),
+            trackingPanel: document.querySelector('.tracking-panel')
         };
     }
 
@@ -126,7 +130,19 @@ class VirtualTrailRunApp {
                 this.updateBobStats(totalBobs);
             });
             
+            // Set up debug mode toggle (Shift+Q)
+            document.addEventListener('keydown', (e) => {
+                if (e.shiftKey && e.key.toLowerCase() === 'q') {
+                    e.preventDefault();
+                    this.toggleDebugMode();
+                }
+            });
+            
+            // Initialize debug mode state (start with it hidden)
+            this.toggleDebugMode(false);
+            
             console.log('App initialized successfully!');
+            console.log('Press Shift+Q to toggle debug mode (camera/stats panel)');
             
         } catch (error) {
             console.error('Error initializing app:', error);
@@ -555,6 +571,48 @@ class VirtualTrailRunApp {
         
         // Show overlay again
         this.elements.videoOverlay.classList.remove('hidden');
+    }
+
+    /**
+     * Toggle debug mode (show/hide camera and stats)
+     */
+    toggleDebugMode(enabled = null) {
+        // If enabled is null, toggle current state
+        if (enabled === null) {
+            this.debugModeEnabled = !this.debugModeEnabled;
+        } else {
+            this.debugModeEnabled = enabled;
+        }
+        
+        // Toggle debug mode class on body
+        if (this.debugModeEnabled) {
+            document.body.classList.add('debug-mode');
+            console.log('🔍 Debug mode: ON (camera and stats visible)');
+        } else {
+            document.body.classList.remove('debug-mode');
+            console.log('🔍 Debug mode: OFF (camera and stats hidden)');
+        }
+    }
+
+    /**
+     * Toggle debug mode (show/hide camera and stats)
+     */
+    toggleDebugMode(enabled = null) {
+        // If enabled is null, toggle current state
+        if (enabled === null) {
+            this.debugModeEnabled = !this.debugModeEnabled;
+        } else {
+            this.debugModeEnabled = enabled;
+        }
+        
+        // Toggle debug mode class on body
+        if (this.debugModeEnabled) {
+            document.body.classList.add('debug-mode');
+            console.log('🔍 Debug mode: ON (camera and stats visible)');
+        } else {
+            document.body.classList.remove('debug-mode');
+            console.log('🔍 Debug mode: OFF (camera and stats hidden)');
+        }
     }
 
     /**
