@@ -831,6 +831,8 @@ class VirtualTrailRunApp {
      * Activate shield (from fist + elbow gesture)
      */
     activateShield() {
+        console.log(`🛡️ activateShield() called. shieldActive=${this.shieldActive}, element exists=${!!this.elements.shieldVisual}`);
+        
         if (!this.shieldActive) {
             this.shieldActive = true;
             this.shieldStrength = this.maxShield;
@@ -839,7 +841,11 @@ class VirtualTrailRunApp {
             
             // Show shield visual
             if (this.elements.shieldVisual) {
+                console.log('🛡️ Adding active class to shield visual');
                 this.elements.shieldVisual.classList.add('active');
+                console.log('🛡️ Shield visual classes:', this.elements.shieldVisual.className);
+            } else {
+                console.error('🛡️ ERROR: shieldVisual element not found!');
             }
         } else {
             console.log('🛡️ Shield already active');
