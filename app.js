@@ -833,22 +833,19 @@ class VirtualTrailRunApp {
     activateShield() {
         console.log(`🛡️ activateShield() called. shieldActive=${this.shieldActive}, element exists=${!!this.elements.shieldVisual}`);
         
-        if (!this.shieldActive) {
-            this.shieldActive = true;
-            this.shieldStrength = this.maxShield;
-            console.log(`🛡️ Shield activated! Strength: ${this.shieldStrength}/${this.maxShield}`);
-            this.updateStatBars();
-            
-            // Show shield visual
-            if (this.elements.shieldVisual) {
-                console.log('🛡️ Adding active class to shield visual');
-                this.elements.shieldVisual.classList.add('active');
-                console.log('🛡️ Shield visual classes:', this.elements.shieldVisual.className);
-            } else {
-                console.error('🛡️ ERROR: shieldVisual element not found!');
-            }
+        // Always set shield active and show visual, even if already active
+        this.shieldActive = true;
+        this.shieldStrength = this.maxShield;
+        console.log(`🛡️ Shield activated! Strength: ${this.shieldStrength}/${this.maxShield}`);
+        this.updateStatBars();
+        
+        // Show shield visual - always ensure it's visible
+        if (this.elements.shieldVisual) {
+            console.log('🛡️ Adding active class to shield visual');
+            this.elements.shieldVisual.classList.add('active');
+            console.log('🛡️ Shield visual classes:', this.elements.shieldVisual.className);
         } else {
-            console.log('🛡️ Shield already active');
+            console.error('🛡️ ERROR: shieldVisual element not found!');
         }
     }
 
