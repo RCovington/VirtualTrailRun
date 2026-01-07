@@ -752,6 +752,14 @@ class CollectiblesGame {
                 flipHorizontal: true
             });
             
+            // Debug: log hand count every 30 frames
+            if (!this.handCountDebugCounter) this.handCountDebugCounter = 0;
+            this.handCountDebugCounter++;
+            if (this.handCountDebugCounter >= 30) {
+                console.log(`👋 Detected ${hands ? hands.length : 0} hand(s)`);
+                this.handCountDebugCounter = 0;
+            }
+            
             if (hands && hands.length > 0) {
                 // Check for two-fist shield gesture first (requires 2 hands)
                 if (hands.length >= 2) {
@@ -1199,10 +1207,10 @@ class CollectiblesGame {
                 Math.pow(wrist1.y - wrist2.y, 2)
             );
             
-            console.log(`🛡️ Both fists detected! Distance: ${distance.toFixed(0)}px (need < 150)`);
+            console.log(`🛡️ Both fists detected! Distance: ${distance.toFixed(0)}px (need < 200)`);
             
-            // Fists should be close together (within 150 pixels)
-            if (distance < 150) {
+            // Fists should be close together (relaxed to 200 pixels)
+            if (distance < 200) {
                 console.log(`🛡️ Two-fist shield gesture ACTIVATED! Distance: ${distance.toFixed(0)}px`);
                 
                 // Update last gesture time and cancel any pending deactivation
