@@ -838,15 +838,15 @@ class CollectiblesGame {
                     console.log(`👋 Hand pinch detected: ${handedness} (isLeftHand=${isLeftHand})`);
                     
                     if (isLeftHand) {
-                        // Left hand pinch = dagger stab
+                        // Left hand pinch = dagger stab (2x damage)
                         console.log('🔪 Left hand - showing dagger!');
                         const app = window.app;
                         if (app && app.showDaggerStab) {
                             app.showDaggerStab();
                         }
                         
-                        // Also check for enemy collision with dagger
-                        this.checkEnemyCollision(handX, handY);
+                        // Check for enemy collision with dagger - does 2x damage
+                        this.checkEnemyCollision(handX, handY, 2.0); // 2x damage multiplier
                     } else {
                         // Right hand pinch = grab collectibles (existing behavior)
                         console.log('✋ Right hand - grabbing collectibles');
@@ -1325,7 +1325,7 @@ class CollectiblesGame {
      * Check for collision between pinch and enemies
      * Returns true if an enemy was hit
      */
-    checkEnemyCollision(handX, handY) {
+    checkEnemyCollision(handX, handY, additionalMultiplier = 1.0) {
         const now = Date.now();
         for (let enemy of this.enemies) {
             const distance = Math.sqrt(
@@ -1342,22 +1342,22 @@ class CollectiblesGame {
                 }
                 
                 // Check if electrified and apply 4x damage
-                let damageMultiplier = 1;
-                let damageType = '👊';
+                let damageMultiplier = 1 * additionalMultiplier; // Apply additional multiplier (e.g., 2x for dagger)
+                let damageType = additionalMultiplier > 1 ? '🗡️' : '👊';
                 
                 if (this.electrifiedPinchesRemaining > 0) {
-                    damageMultiplier = 4;
-                    damageType = '⚡👊';
+                    damageMultiplier = 4 * additionalMultiplier; // Combine electrified and dagger multipliers
+                    damageType = additionalMultiplier > 1 ? '⚡🗡️' : '⚡👊';
                     this.electrifiedPinchesRemaining--;
-                    console.log(`⚡ ELECTRIFIED PINCH! ${this.electrifiedPinchesRemaining} remaining`);
+                    console.log(`⚡ ELECTRIFIED ${additionalMultiplier > 1 ? 'DAGGER' : 'PINCH'}! ${this.electrifiedPinchesRemaining} remaining`);
                 }
                 
-                // Pinch damages enemy by 10% of health (40% if electrified)
+                // Pinch damages enemy by 10% of health (with multipliers)
                 const baseDamage = enemy.maxHealth * 0.1;
                 const damage = baseDamage * damageMultiplier;
                 enemy.health = Math.max(0, enemy.health - damage);
                 enemy.lastPinchHitTime = now; // Update cooldown timer
-                console.log(`${damageType} Pinch hit rat! Damage: ${damage.toFixed(1)}, Remaining health: ${enemy.health.toFixed(1)}`);
+                console.log(`${damageType} ${additionalMultiplier > 1 ? 'Dagger' : 'Pinch'} hit rat! Damage: ${damage.toFixed(1)} (${damageMultiplier}x), Remaining health: ${enemy.health.toFixed(1)}`);
                 
                 // Show appropriate animation
                 if (damageMultiplier > 1) {

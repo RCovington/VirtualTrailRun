@@ -1095,7 +1095,7 @@ body {
 /* ===== Dagger Visual ===== */
 .dagger-visual {
     position: absolute;
-    bottom: 5%;
+    bottom: -10%; /* Start below screen */
     left: 40%;
     font-size: 6rem;
     line-height: 1;
@@ -1116,17 +1116,23 @@ body {
 
 @keyframes daggerStab {
     0% {
-        transform: translateY(0) translateX(0) rotate(135deg) scale(0.8);
+        bottom: -10%;
+        left: 40%;
+        transform: rotate(135deg) scale(0.8);
         opacity: 0;
     }
     20% {
         opacity: 1;
     }
     50% {
-        transform: translateY(-150px) translateX(50px) rotate(150deg) scale(1.3);
+        bottom: 28%;
+        left: 48%;
+        transform: rotate(150deg) scale(1.3);
     }
     100% {
-        transform: translateY(-120px) translateX(40px) rotate(145deg) scale(1.1);
+        bottom: 25%;
+        left: 47%;
+        transform: rotate(145deg) scale(1.1);
         opacity: 0;
     }
 }
