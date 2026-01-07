@@ -1095,23 +1095,24 @@ body {
 /* ===== Dagger Visual ===== */
 .dagger-visual {
     position: absolute;
-    bottom: -10%; /* Start below screen */
+    bottom: -20%; /* Further offscreen */
     left: 40%;
     font-size: 6rem;
     line-height: 1;
     z-index: 500;
-    opacity: 0;
-    transition: opacity 0.1s ease-in-out;
+    opacity: 0 !important; /* Force hidden when not active */
+    transition: none; /* Remove transition to prevent flicker */
     pointer-events: none;
     text-shadow: 0 0 20px rgba(200, 200, 255, 0.8),
                  0 0 40px rgba(200, 200, 255, 0.6);
     filter: drop-shadow(0 0 10px rgba(200, 200, 255, 0.5));
-    transform: rotate(180deg); /* Flip to point upward */
+    transform: rotate(180deg) scale(0); /* Hidden and scaled down */
 }
 
 .dagger-visual.active {
-    opacity: 1;
+    opacity: 1 !important; /* Override to show */
     animation: daggerStab 0.6s ease-out;
+    animation-fill-mode: forwards; /* Keep final state */
 }
 
 @keyframes daggerStab {
