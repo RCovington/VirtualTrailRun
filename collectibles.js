@@ -773,8 +773,8 @@ class CollectiblesGame {
                     // Check for shield gesture (with forced debug logging)
                     this.checkTwoFistShieldGesture(hands, true);
                     
-                    // Draw the hands for debugging (isGrabbing is already false)
-                    hands.forEach(h => this.drawHandDebug(h));
+                    // Draw the hands for debugging - explicitly pass false for isGrabbing
+                    hands.forEach(h => this.drawHandDebug(h, false));
                     return;
                 }
                 
@@ -841,7 +841,7 @@ class CollectiblesGame {
     /**
      * Draw hand keypoints for debugging
      */
-    drawHandDebug(hand) {
+    drawHandDebug(hand, isGrabbingOverride = null) {
         if (!this.debugCtx || !this.debugCanvas) return;
         
         const keypoints = hand.keypoints;
@@ -856,8 +856,8 @@ class CollectiblesGame {
             [5, 9], [9, 13], [13, 17]              // Palm
         ];
         
-        // Determine if currently grabbing for color
-        const isGrabbing = this.isGrabbingGesture(hand);
+        // Determine if currently grabbing for color - use override if provided
+        const isGrabbing = isGrabbingOverride !== null ? isGrabbingOverride : this.isGrabbingGesture(hand);
         const lineColor = isGrabbing ? '#00FF00' : '#00BFFF';
         const pointColor = isGrabbing ? '#00FF00' : '#FFFFFF';
         
@@ -1147,15 +1147,16 @@ class CollectiblesGame {
         const ringDist = this.distance(ringTip, palm);
         const pinkyDist = this.distance(pinkyTip, palm);
         
-        // In a fist, all fingertips should be close to the palm
-        // Relaxed thresholds for better detection
-        const thumbClose = thumbDist < 80;
-        const indexClose = indexDist < 90;
-        const middleClose = middleDist < 90;
-        const ringClose = ringDist < 90;
-        const pinkyClose = pinkyDist < 90;
+        // VERY relaxed detection - if at least 3 out of 5 fingers are somewhat close, call it a fist
+        // Much more generous thresholds
+        const thumbClose = thumbDist < 120;
+        const indexClose = indexDist < 130;
+        const middleClose = middleDist < 130;
+        const ringClose = ringDist < 130;
+        const pinkyClose = pinkyDist < 130;
         
-        const isFist = thumbClose && indexClose && middleClose && ringClose && pinkyClose;
+        const closeCount = [thumbClose, indexClose, middleClose, ringClose, pinkyClose].filter(x => x).length;
+        const isFist = closeCount >= 3; // At least 3 fingers close = fist
         
         // Debug logging - either forced or throttled
         if (forceDebug) {
@@ -1167,7 +1168,7 @@ class CollectiblesGame {
             this.fistDebugCounter++;
             if (this.fistDebugCounter >= 60) {
                 const resultStyle = isFist ? 'color: #00ff00; font-weight: bold; font-size: 14px' : 'color: #ff6666';
-                console.log(`👊 Fist check: thumb=${thumbDist.toFixed(0)} (<80), index=${indexDist.toFixed(0)} (<90), middle=${middleDist.toFixed(0)} (<90), ring=${ringDist.toFixed(0)} (<90), pinky=${pinkyDist.toFixed(0)} (<90) => %c${isFist}`, resultStyle);
+                console.log(`👊 Fist check: thumb=${thumbDist.toFixed(0)} (<120), index=${indexDist.toFixed(0)} (<130), middle=${middleDist.toFixed(0)} (<130), ring=${ringDist.toFixed(0)} (<130), pinky=${pinkyDist.toFixed(0)} (<130) => ${closeCount}/5 close => %c${isFist}`, resultStyle);
                 this.fistDebugCounter = 0;
             }
         }
@@ -1204,38 +1205,24 @@ class CollectiblesGame {
         }
         
         if (hand1IsFist && hand2IsFist) {
-            // Get the wrist positions of both hands
-            const wrist1 = hands[0].keypoints[0];
-            const wrist2 = hands[1].keypoints[0];
-            
-            // Calculate distance between the two fists
-            const distance = Math.sqrt(
-                Math.pow(wrist1.x - wrist2.x, 2) + 
-                Math.pow(wrist1.y - wrist2.y, 2)
-            );
-            
+            // Both hands are fist-like - activate shield immediately!
             if (forceDebug) {
-                console.log(`🛡️ Both fists detected! Distance: ${distance.toFixed(0)}px (need < 200)`);
+                console.log(`%c🛡️ Both hands are fist-like - ACTIVATING SHIELD!`, 'color: #00ff00; font-weight: bold; font-size: 18px; background: #004400; padding: 4px');
             }
             
-            // Fists should be close together (relaxed to 200 pixels)
-            if (distance < 200) {
-                console.log(`🛡️ Two-fist shield gesture ACTIVATED! Distance: ${distance.toFixed(0)}px`);
-                
-                // Update last gesture time and cancel any pending deactivation
-                this.lastShieldGestureTime = Date.now();
-                if (this.shieldDeactivateTimer) {
-                    clearTimeout(this.shieldDeactivateTimer);
-                    this.shieldDeactivateTimer = null;
-                }
-                
-                // Activate shield
-                const app = window.app;
-                if (app && app.activateShield) {
-                    app.activateShield();
-                }
-                return true;
+            // Update last gesture time and cancel any pending deactivation
+            this.lastShieldGestureTime = Date.now();
+            if (this.shieldDeactivateTimer) {
+                clearTimeout(this.shieldDeactivateTimer);
+                this.shieldDeactivateTimer = null;
             }
+            
+            // Activate shield
+            const app = window.app;
+            if (app && app.activateShield) {
+                app.activateShield();
+            }
+            return true;
         }
         
         // Gesture not detected or fists not close enough
