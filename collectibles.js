@@ -1117,7 +1117,7 @@ class CollectiblesGame {
     /**
      * Detect closed fist gesture
      */
-    isClosedFistGesture(hand) {
+    isClosedFistGesture(hand, forceDebug = false, handLabel = "Hand") {
         const keypoints = hand.keypoints;
         
         // Get all fingertips and palm
@@ -1145,12 +1145,17 @@ class CollectiblesGame {
         
         const isFist = thumbClose && indexClose && middleClose && ringClose && pinkyClose;
         
-        // Debug logging every 60 frames (about once per second at 60fps)
-        if (!this.fistDebugCounter) this.fistDebugCounter = 0;
-        this.fistDebugCounter++;
-        if (this.fistDebugCounter >= 60) {
-            console.log(`👊 Fist check: thumb=${thumbDist.toFixed(0)} (<80), index=${indexDist.toFixed(0)} (<90), middle=${middleDist.toFixed(0)} (<90), ring=${ringDist.toFixed(0)} (<90), pinky=${pinkyDist.toFixed(0)} (<90) => ${isFist}`);
-            this.fistDebugCounter = 0;
+        // Debug logging - either forced or throttled
+        if (forceDebug) {
+            console.log(`👊 ${handLabel}: thumb=${thumbDist.toFixed(0)} (${thumbClose ? '✓' : '✗'}), index=${indexDist.toFixed(0)} (${indexClose ? '✓' : '✗'}), middle=${middleDist.toFixed(0)} (${middleClose ? '✓' : '✗'}), ring=${ringDist.toFixed(0)} (${ringClose ? '✓' : '✗'}), pinky=${pinkyDist.toFixed(0)} (${pinkyClose ? '✓' : '✗'}) => ${isFist}`);
+        } else {
+            // Throttled debug logging every 60 frames (about once per second at 60fps)
+            if (!this.fistDebugCounter) this.fistDebugCounter = 0;
+            this.fistDebugCounter++;
+            if (this.fistDebugCounter >= 60) {
+                console.log(`👊 Fist check: thumb=${thumbDist.toFixed(0)} (<80), index=${indexDist.toFixed(0)} (<90), middle=${middleDist.toFixed(0)} (<90), ring=${ringDist.toFixed(0)} (<90), pinky=${pinkyDist.toFixed(0)} (<90) => ${isFist}`);
+                this.fistDebugCounter = 0;
+            }
         }
         
         return isFist;
@@ -1174,9 +1179,9 @@ class CollectiblesGame {
             return false;
         }
         
-        // Check if both hands are making closed fists
-        const hand1IsFist = this.isClosedFistGesture(hands[0]);
-        const hand2IsFist = this.isClosedFistGesture(hands[1]);
+        // Check if both hands are making closed fists with detailed debug
+        const hand1IsFist = this.isClosedFistGesture(hands[0], true, "Hand 1");
+        const hand2IsFist = this.isClosedFistGesture(hands[1], true, "Hand 2");
         
         console.log(`🛡️ Shield check: hand1 fist=${hand1IsFist}, hand2 fist=${hand2IsFist}`);
         
