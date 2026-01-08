@@ -883,7 +883,7 @@ class CollectiblesGame {
                             }
                             
                             // Check for enemy collision with dagger - does 2x damage
-                            this.checkEnemyCollision(handX, handY, 2.0); // 2x damage multiplier
+                            this.checkEnemyCollision(handX, handY, 2.0, 'dagger'); // 2x damage multiplier
                         } else {
                             const remainingCooldown = (this.daggerCooldown - timeSinceLastStab) / 1000;
                             console.log(`⏰ Dagger cooldown: ${remainingCooldown.toFixed(1)}s remaining`);
@@ -892,7 +892,7 @@ class CollectiblesGame {
                         // Right hand pinch = grab collectibles (existing behavior)
                         console.log('✋ Right hand - grabbing collectibles');
                         // Check for collision with enemies first
-                        const hitEnemy = this.checkEnemyCollision(handX, handY);
+                        const hitEnemy = this.checkEnemyCollision(handX, handY, 1.0, 'punch');
                         
                         // Then check for collision with any collectible
                         const grabbed = this.checkCollision(handX, handY);
@@ -1569,7 +1569,7 @@ class CollectiblesGame {
     /**
      * Show visual feedback when pinch hits an enemy
      */
-    showPinchHitFeedback(x, y) {
+    showPinchHitFeedback(x, y, damage = 0, attackType = 'punch') {
         const canvas = this.canvas;
         if (!canvas) return;
         
@@ -1579,10 +1579,12 @@ class CollectiblesGame {
         const displayX = x * scaleX;
         const displayY = y * scaleY;
         
-        // Create "POW!" text
+        // Create attack feedback text
         const feedback = document.createElement('div');
         feedback.className = 'pinch-hit-feedback';
-        feedback.textContent = '💥 POW!';
+        const attackText = attackType === 'dagger' ? 'STAB!' : 'PUNCH!';
+        const damageText = Math.round(damage);
+        feedback.textContent = `💥${damageText}💥 ${attackText}`;
         feedback.style.left = `${displayX}px`;
         feedback.style.top = `${displayY}px`;
         feedback.style.position = 'absolute';
@@ -1649,7 +1651,7 @@ class CollectiblesGame {
     /**
      * Show visual feedback when electrified pinch hits an enemy
      */
-    showElectricPinchHitFeedback(x, y) {
+    showElectricPinchHitFeedback(x, y, damage = 0, attackType = 'punch') {
         const canvas = this.canvas;
         if (!canvas) return;
         
@@ -1659,10 +1661,12 @@ class CollectiblesGame {
         const displayX = x * scaleX;
         const displayY = y * scaleY;
         
-        // Create "⚡ZAP!⚡" text
+        // Create electrified attack feedback with damage
         const feedback = document.createElement('div');
         feedback.className = 'electric-pinch-feedback';
-        feedback.textContent = '⚡ ZAP! ⚡';
+        const attackText = attackType === 'dagger' ? 'STAB!' : 'PUNCH!';
+        const damageText = Math.round(damage);
+        feedback.textContent = `⚡${damageText}⚡ ${attackText}`;
         feedback.style.left = `${displayX}px`;
         feedback.style.top = `${displayY}px`;
         feedback.style.position = 'absolute';
