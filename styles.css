@@ -140,16 +140,32 @@ body:not(.debug-mode) .tracking-panel {
 
 body:not(.debug-mode) .main-content {
     justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 10px;
 }
 
 body:not(.debug-mode) .video-panel {
     max-width: 100%;
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body:not(.debug-mode) .video-container {
+    /* Scale to fit viewport - whichever dimension is limiting */
+    max-width: min(100vw - 20px, calc((100vh - 20px) * 16 / 9));
+    max-height: calc(100vh - 20px);
+    width: 100%;
 }
 
 body:not(.debug-mode) .container {
     max-width: none;
-    padding: 10px;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 body:not(.debug-mode) .header {
