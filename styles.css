@@ -147,6 +147,16 @@ body:not(.debug-mode) .video-panel {
     width: 100%;
 }
 
+body:not(.debug-mode) .container {
+    max-width: 100%;
+    padding: 20px 40px;
+}
+
+body:not(.debug-mode) .video-container {
+    max-width: calc(100vh * 16 / 9); /* Match video aspect ratio to viewport height */
+    margin: 0 auto;
+}
+
 /* ===== Header ===== */
 .header {
     text-align: center;
