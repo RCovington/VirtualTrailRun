@@ -127,11 +127,15 @@ body {
 body.debug-mode .tracking-panel {
     display: flex !important;
     flex-direction: column;
+    position: relative !important;
+    visibility: visible !important;
 }
 
-/* Default mode - hide tracking panel and expand video */
+/* Default mode - hide tracking panel visually but keep it rendered */
 body:not(.debug-mode) .tracking-panel {
-    display: none !important;
+    position: absolute !important;
+    left: -9999px !important;
+    visibility: hidden !important;
 }
 
 body:not(.debug-mode) .main-content {
