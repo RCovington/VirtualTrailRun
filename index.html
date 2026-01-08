@@ -87,15 +87,17 @@
             </div>
             </div>
 
-            <!-- Hidden camera feed for tracking (always rendered but invisible) -->
+            <!-- Hidden camera feed and canvases for tracking (always rendered but invisible) -->
             <video id="cameraFeed" autoplay playsinline muted style="position: absolute; left: -9999px; width: 640px; height: 480px;"></video>
+            <canvas id="trackingCanvas" width="640" height="480" style="position: absolute; left: -9999px;"></canvas>
+            <canvas id="handDebugCanvas" width="640" height="480" style="position: absolute; left: -9999px;"></canvas>
 
             <!-- Camera Feed & Head Tracking Stats -->
             <div class="tracking-panel">
                 <div class="camera-container">
                     <video id="cameraFeedDisplay" autoplay playsinline muted></video>
-                    <canvas id="trackingCanvas"></canvas>
-                    <canvas id="handDebugCanvas"></canvas>
+                    <canvas id="trackingCanvasDisplay"></canvas>
+                    <canvas id="handDebugCanvasDisplay"></canvas>
                     <div class="camera-status" id="cameraStatus">
                         Camera Off
                     </div>

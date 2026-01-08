@@ -63,6 +63,12 @@ class HeadTracker {
             this.canvas = document.getElementById('trackingCanvas');
             this.ctx = this.canvas.getContext('2d');
             
+            // Get display canvas for debug mode visualization
+            this.displayCanvas = document.getElementById('trackingCanvasDisplay');
+            if (this.displayCanvas) {
+                this.displayCtx = this.displayCanvas.getContext('2d');
+            }
+            
             // Request camera access
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
@@ -92,6 +98,14 @@ class HeadTracker {
             // Set canvas size to match video
             this.canvas.width = this.video.videoWidth;
             this.canvas.height = this.video.videoHeight;
+            
+            // Also set display canvas size if it exists
+            if (this.displayCanvas) {
+                this.displayCanvas.width = this.video.videoWidth;
+                this.displayCanvas.height = this.video.videoHeight;
+            }
+            
+            console.log(`Canvas dimensions set to: ${this.video.videoWidth}x${this.video.videoHeight}`);
             
             // Load face detection model
             await this.loadModel();
@@ -423,50 +437,64 @@ class HeadTracker {
     drawFaceKeypoints(face) {
         const keypoints = face.keypoints;
         
-        // Save the current context state
-        this.ctx.save();
+        // Clear both canvases
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        if (this.displayCtx && this.displayCanvas) {
+            this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
+        }
         
-        // Mirror the canvas horizontally to match the mirrored video feed
-        this.ctx.translate(this.canvas.width, 0);
-        this.ctx.scale(-1, 1);
+        // Draw to both canvases
+        const contexts = [{ ctx: this.ctx, canvas: this.canvas }];
+        if (this.displayCtx && this.displayCanvas) {
+            contexts.push({ ctx: this.displayCtx, canvas: this.displayCanvas });
+        }
         
-        // Draw face mesh (simplified - just key points)
-        this.ctx.fillStyle = '#00ff00';
-        this.ctx.strokeStyle = '#00ff00';
-        
-        // Draw nose tip (most important for tracking)
-        const noseTip = keypoints[1];
-        this.ctx.beginPath();
-        this.ctx.arc(noseTip.x, noseTip.y, 8, 0, 2 * Math.PI);
-        this.ctx.fill();
-        
-        // Draw face outline points
-        const outlinePoints = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
-        
-        this.ctx.beginPath();
-        for (let i = 0; i < outlinePoints.length; i++) {
-            const point = keypoints[outlinePoints[i]];
-            if (i === 0) {
-                this.ctx.moveTo(point.x, point.y);
-            } else {
-                this.ctx.lineTo(point.x, point.y);
+        for (const { ctx, canvas } of contexts) {
+            // Save the current context state
+            ctx.save();
+            
+            // Mirror the canvas horizontally to match the mirrored video feed
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            
+            // Draw face mesh (simplified - just key points)
+            ctx.fillStyle = '#00ff00';
+            ctx.strokeStyle = '#00ff00';
+            
+            // Draw nose tip (most important for tracking)
+            const noseTip = keypoints[1];
+            ctx.beginPath();
+            ctx.arc(noseTip.x, noseTip.y, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw face outline points
+            const outlinePoints = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
+            
+            ctx.beginPath();
+            for (let i = 0; i < outlinePoints.length; i++) {
+                const point = keypoints[outlinePoints[i]];
+                if (i === 0) {
+                    ctx.moveTo(point.x, point.y);
+                } else {
+                    ctx.lineTo(point.x, point.y);
+                }
             }
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw movement indicator line
+            if (this.previousNoseY !== null && this.currentNoseY !== null) {
+                ctx.strokeStyle = this.verticalMovement > this.bobThreshold ? '#ff0000' : '#00ff00';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(noseTip.x, this.previousNoseY);
+                ctx.lineTo(noseTip.x, this.currentNoseY);
+                ctx.stroke();
+            }
+            
+            // Restore the context state
+            ctx.restore();
         }
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-        
-        // Draw movement indicator line
-        if (this.previousNoseY !== null && this.currentNoseY !== null) {
-            this.ctx.strokeStyle = this.verticalMovement > this.bobThreshold ? '#ff0000' : '#00ff00';
-            this.ctx.lineWidth = 3;
-            this.ctx.beginPath();
-            this.ctx.moveTo(noseTip.x, this.previousNoseY);
-            this.ctx.lineTo(noseTip.x, this.currentNoseY);
-            this.ctx.stroke();
-        }
-        
-        // Restore the context state
-        this.ctx.restore();
     }
 
     /**

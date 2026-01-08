@@ -114,6 +114,12 @@ class CollectiblesGame {
             this.debugCtx = this.debugCanvas.getContext('2d');
         }
         
+        // Get display debug canvas for debug mode
+        this.debugCanvasDisplay = document.getElementById('handDebugCanvasDisplay');
+        if (this.debugCanvasDisplay) {
+            this.debugCtxDisplay = this.debugCanvasDisplay.getContext('2d');
+        }
+        
         // Set up inventory panel click handlers
         this.setupInventoryPanel();
         
@@ -184,6 +190,12 @@ class CollectiblesGame {
             if (this.debugCanvas) {
                 this.debugCanvas.width = videoWidth;
                 this.debugCanvas.height = videoHeight;
+            }
+            
+            // Also set display debug canvas
+            if (this.debugCanvasDisplay) {
+                this.debugCanvasDisplay.width = videoWidth;
+                this.debugCanvasDisplay.height = videoHeight;
             }
             
             console.log(`Canvas size set to ${videoWidth}x${videoHeight}`);
@@ -751,6 +763,11 @@ class CollectiblesGame {
             this.debugCtx.clearRect(0, 0, this.debugCanvas.width, this.debugCanvas.height);
         }
         
+        // Clear display debug canvas
+        if (this.debugCtxDisplay && this.debugCanvasDisplay) {
+            this.debugCtxDisplay.clearRect(0, 0, this.debugCanvasDisplay.width, this.debugCanvasDisplay.height);
+        }
+        
         try {
             const hands = await this.handDetector.estimateHands(this.videoElement, {
                 flipHorizontal: true
@@ -902,8 +919,26 @@ class CollectiblesGame {
      * Draw hand keypoints for debugging
      */
     drawHandDebug(hand, isGrabbingOverride = null) {
-        if (!this.debugCtx || !this.debugCanvas) return;
+        // Draw to both canvases
+        const canvases = [];
+        if (this.debugCtx && this.debugCanvas) {
+            canvases.push({ ctx: this.debugCtx, canvas: this.debugCanvas });
+        }
+        if (this.debugCtxDisplay && this.debugCanvasDisplay) {
+            canvases.push({ ctx: this.debugCtxDisplay, canvas: this.debugCanvasDisplay });
+        }
         
+        if (canvases.length === 0) return;
+        
+        for (const { ctx } of canvases) {
+            this.drawHandOnCanvas(hand, ctx, isGrabbingOverride);
+        }
+    }
+    
+    /**
+     * Draw hand keypoints on a specific canvas
+     */
+    drawHandOnCanvas(hand, ctx, isGrabbingOverride = null) {
         const keypoints = hand.keypoints;
         
         // Draw connections between keypoints
@@ -922,16 +957,16 @@ class CollectiblesGame {
         const pointColor = isGrabbing ? '#00FF00' : '#FFFFFF';
         
         // Draw lines (no manual mirroring - CSS handles it)
-        this.debugCtx.strokeStyle = lineColor;
-        this.debugCtx.lineWidth = 2;
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = 2;
         connections.forEach(([start, end]) => {
             const startPoint = keypoints[start];
             const endPoint = keypoints[end];
             
-            this.debugCtx.beginPath();
-            this.debugCtx.moveTo(startPoint.x, startPoint.y);
-            this.debugCtx.lineTo(endPoint.x, endPoint.y);
-            this.debugCtx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(startPoint.x, startPoint.y);
+            ctx.lineTo(endPoint.x, endPoint.y);
+            ctx.stroke();
         });
         
         // Draw keypoints (no manual mirroring - CSS handles it)
@@ -945,22 +980,22 @@ class CollectiblesGame {
             const isPinchPoint = isThumbTip || isIndexTip;
             const radius = isPinchPoint ? 8 : (index === 0 ? 8 : 4);
             
-            this.debugCtx.beginPath();
-            this.debugCtx.arc(x, y, radius, 0, 2 * Math.PI);
-            this.debugCtx.fillStyle = pointColor;
-            this.debugCtx.fill();
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = pointColor;
+            ctx.fill();
             
             // Special styling for pinch points
             if (isPinchPoint) {
-                this.debugCtx.strokeStyle = isGrabbing ? '#00FF00' : '#FFD700'; // Gold when not pinching
-                this.debugCtx.lineWidth = 3;
-                this.debugCtx.stroke();
+                ctx.strokeStyle = isGrabbing ? '#00FF00' : '#FFD700'; // Gold when not pinching
+                ctx.lineWidth = 3;
+                ctx.stroke();
             }
             // Draw palm center larger
             else if (index === 0) {
-                this.debugCtx.strokeStyle = isGrabbing ? '#00FF00' : '#FF6B35';
-                this.debugCtx.lineWidth = 3;
-                this.debugCtx.stroke();
+                ctx.strokeStyle = isGrabbing ? '#00FF00' : '#FF6B35';
+                ctx.lineWidth = 3;
+                ctx.stroke();
             }
         });
         
@@ -969,12 +1004,12 @@ class CollectiblesGame {
             const thumbTip = keypoints[4];
             const indexTip = keypoints[8];
             
-            this.debugCtx.beginPath();
-            this.debugCtx.moveTo(thumbTip.x, thumbTip.y);
-            this.debugCtx.lineTo(indexTip.x, indexTip.y);
-            this.debugCtx.strokeStyle = '#00FF00';
-            this.debugCtx.lineWidth = 4;
-            this.debugCtx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(thumbTip.x, thumbTip.y);
+            ctx.lineTo(indexTip.x, indexTip.y);
+            ctx.strokeStyle = '#00FF00';
+            ctx.lineWidth = 4;
+            ctx.stroke();
         }
         
         // Draw pinching indicator
@@ -985,12 +1020,12 @@ class CollectiblesGame {
             const x = (thumbTip.x + indexTip.x) / 2;
             const y = (thumbTip.y + indexTip.y) / 2;
             
-            this.debugCtx.font = 'bold 24px Arial';
-            this.debugCtx.fillStyle = '#00FF00';
-            this.debugCtx.strokeStyle = '#000000';
-            this.debugCtx.lineWidth = 3;
-            this.debugCtx.strokeText('PINCHING! 🤏', x + 20, y - 20);
-            this.debugCtx.fillText('PINCHING! 🤏', x + 20, y - 20);
+            ctx.font = 'bold 24px Arial';
+            ctx.fillStyle = '#00FF00';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.strokeText('PINCHING! 🤏', x + 20, y - 20);
+            ctx.fillText('PINCHING! 🤏', x + 20, y - 20);
         }
     }
 
