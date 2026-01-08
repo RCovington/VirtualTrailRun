@@ -777,7 +777,7 @@ class CollectiblesGame {
             if (!this.handCountDebugCounter) this.handCountDebugCounter = 0;
             this.handCountDebugCounter++;
             if (this.handCountDebugCounter >= 30) {
-                console.log(`👋 Detected ${hands ? hands.length : 0} hand(s) from detector`);
+                console.log(`👋 Hand detection loop - Video ready: ${this.videoElement ? this.videoElement.readyState === 4 : 'no video'}, Hands detected: ${hands ? hands.length : 0}, Canvas size: ${this.debugCanvas ? this.debugCanvas.width + 'x' + this.debugCanvas.height : 'no canvas'}`);
                 this.handCountDebugCounter = 0;
             }
             

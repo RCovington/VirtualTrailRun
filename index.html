@@ -88,9 +88,11 @@
             </div>
 
             <!-- Hidden camera feed and canvases for tracking (always rendered but invisible) -->
-            <video id="cameraFeed" autoplay playsinline muted style="position: absolute; left: -9999px; width: 640px; height: 480px;"></video>
-            <canvas id="trackingCanvas" width="640" height="480" style="position: absolute; left: -9999px;"></canvas>
-            <canvas id="handDebugCanvas" width="640" height="480" style="position: absolute; left: -9999px;"></canvas>
+            <div style="position: fixed; bottom: 0; right: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; z-index: -1;">
+                <video id="cameraFeed" autoplay playsinline muted style="width: 640px; height: 480px;"></video>
+                <canvas id="trackingCanvas" width="640" height="480"></canvas>
+                <canvas id="handDebugCanvas" width="640" height="480"></canvas>
+            </div>
 
             <!-- Camera Feed & Head Tracking Stats -->
             <div class="tracking-panel">

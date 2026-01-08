@@ -173,9 +173,18 @@ class HeadTracker {
     async track() {
         if (!this.isTracking) return;
         
+        // Debug counter for periodic logging
+        if (!this.trackLoopCounter) this.trackLoopCounter = 0;
+        this.trackLoopCounter++;
+        
         try {
             // Detect faces
             const faces = await this.detector.estimateFaces(this.video);
+            
+            // Log every 30 frames to verify tracking is running
+            if (this.trackLoopCounter % 30 === 0) {
+                console.log(`🎯 Head tracking loop running - Video ready: ${this.video.readyState === 4}, Faces detected: ${faces.length}, Canvas size: ${this.canvas.width}x${this.canvas.height}`);
+            }
             
             // Clear canvas
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
