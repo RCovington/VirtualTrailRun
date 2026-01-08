@@ -99,13 +99,23 @@ class HeadTracker {
             this.canvas.width = this.video.videoWidth;
             this.canvas.height = this.video.videoHeight;
             
-            // Also set display canvas size if it exists
-            if (this.displayCanvas) {
-                this.displayCanvas.width = this.video.videoWidth;
-                this.displayCanvas.height = this.video.videoHeight;
-            }
-            
             console.log(`Canvas dimensions set to: ${this.video.videoWidth}x${this.video.videoHeight}`);
+            
+            // Size display canvas to match display video when it loads
+            if (this.displayCanvas) {
+                const displayVideo = document.getElementById('cameraFeedDisplay');
+                if (displayVideo) {
+                    const updateDisplayCanvasSize = () => {
+                        if (displayVideo.videoWidth > 0) {
+                            this.displayCanvas.width = displayVideo.videoWidth;
+                            this.displayCanvas.height = displayVideo.videoHeight;
+                            console.log(`Display canvas sized to: ${displayVideo.videoWidth}x${displayVideo.videoHeight}`);
+                        }
+                    };
+                    displayVideo.addEventListener('loadedmetadata', updateDisplayCanvasSize);
+                    updateDisplayCanvasSize(); // Try immediately in case already loaded
+                }
+            }
             
             // Load face detection model
             await this.loadModel();

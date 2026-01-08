@@ -192,13 +192,23 @@ class CollectiblesGame {
                 this.debugCanvas.height = videoHeight;
             }
             
-            // Also set display debug canvas
-            if (this.debugCanvasDisplay) {
-                this.debugCanvasDisplay.width = videoWidth;
-                this.debugCanvasDisplay.height = videoHeight;
-            }
-            
             console.log(`Canvas size set to ${videoWidth}x${videoHeight}`);
+            
+            // Size display debug canvas to match display video
+            if (this.debugCanvasDisplay) {
+                const displayVideo = document.getElementById('cameraFeedDisplay');
+                if (displayVideo) {
+                    const updateDisplayCanvasSize = () => {
+                        if (displayVideo.videoWidth > 0) {
+                            this.debugCanvasDisplay.width = displayVideo.videoWidth;
+                            this.debugCanvasDisplay.height = displayVideo.videoHeight;
+                            console.log(`Display debug canvas sized to: ${displayVideo.videoWidth}x${displayVideo.videoHeight}`);
+                        }
+                    };
+                    displayVideo.addEventListener('loadedmetadata', updateDisplayCanvasSize);
+                    updateDisplayCanvasSize();
+                }
+            }
         }
         
         // Start spawning collectibles

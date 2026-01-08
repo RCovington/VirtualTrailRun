@@ -1101,7 +1101,7 @@ body:not(.debug-mode) .video-panel {
 /* ===== Shield Visual ===== */
 .shield-visual {
     position: absolute;
-    bottom: -75%; /* Hide 75% of the shield below the bottom */
+    bottom: -50%; /* Hide 50% of the shield below the bottom */
     left: 50%;
     transform: translateX(-50%);
     font-size: 20rem; /* Very large shield */
@@ -1118,7 +1118,7 @@ body:not(.debug-mode) .video-panel {
 
 .shield-visual.active {
     opacity: 1;
-    bottom: -73%; /* Slight upward animation */
+    bottom: -45%; /* Slight upward animation - shows more of shield */
     animation: shieldPulse 2s ease-in-out infinite;
 }
 

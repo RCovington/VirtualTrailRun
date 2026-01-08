@@ -588,6 +588,25 @@ class VirtualTrailRunApp {
         if (this.debugModeEnabled) {
             document.body.classList.add('debug-mode');
             console.log('🔍 Debug mode: ON (camera and stats visible)');
+            
+            // Resize display canvases after a short delay to match display video
+            setTimeout(() => {
+                const displayVideo = document.getElementById('cameraFeedDisplay');
+                const trackingCanvasDisplay = document.getElementById('trackingCanvasDisplay');
+                const handDebugCanvasDisplay = document.getElementById('handDebugCanvasDisplay');
+                
+                if (displayVideo && displayVideo.videoWidth > 0) {
+                    if (trackingCanvasDisplay) {
+                        trackingCanvasDisplay.width = displayVideo.videoWidth;
+                        trackingCanvasDisplay.height = displayVideo.videoHeight;
+                    }
+                    if (handDebugCanvasDisplay) {
+                        handDebugCanvasDisplay.width = displayVideo.videoWidth;
+                        handDebugCanvasDisplay.height = displayVideo.videoHeight;
+                    }
+                    console.log(`Display canvases resized to ${displayVideo.videoWidth}x${displayVideo.videoHeight}`);
+                }
+            }, 100);
         } else {
             document.body.classList.remove('debug-mode');
             console.log('🔍 Debug mode: OFF (camera and stats hidden)');
