@@ -36,6 +36,12 @@ class CollectiblesGame {
         this.lastDaggerStabTime = 0;
         this.daggerCooldown = 1500; // 1.5 seconds between stabs
         
+        // Fireball spell tracking
+        this.lastFireballCastTime = 0;
+        this.fireballCooldown = 1000; // 1 second between casts
+        this.fireballCost = 10; // Magic points cost
+        this.fireballProjectiles = []; // Track active fireballs
+        
         // Electrified pinch tracking
         this.electrifiedPinchesRemaining = 0;
         
@@ -633,6 +639,42 @@ class CollectiblesGame {
             return true; // Keep bolt
         });
         
+        // Update fireball projectiles
+        this.fireballProjectiles = this.fireballProjectiles.filter(fireball => {
+            // Move fireball
+            fireball.x += fireball.vx * (1/60); // Assuming ~60fps
+            fireball.y += fireball.vy * (1/60);
+            
+            // Check collision with enemies
+            for (let i = 0; i < this.enemies.length; i++) {
+                const enemy = this.enemies[i];
+                
+                // Calculate distance to enemy
+                const distance = Math.sqrt(
+                    Math.pow(fireball.x - enemy.x, 2) + 
+                    Math.pow(fireball.y - enemy.y, 2)
+                );
+                
+                // Hit if within 50 pixels of enemy
+                if (distance < 50) {
+                    enemy.health = Math.max(0, enemy.health - fireball.damage);
+                    console.log(`🔥 Fireball hit rat! Damage: ${fireball.damage.toFixed(1)}, Remaining health: ${enemy.health.toFixed(1)}`);
+                    
+                    // Show impact animation
+                    this.showFireballImpactFeedback(enemy.x, enemy.y, fireball.damage);
+                    
+                    return false; // Remove fireball after hitting
+                }
+            }
+            
+            // Check if fireball is still on screen and within lifetime
+            const onScreen = fireball.x < this.canvas.width + 50 && fireball.x > -50 &&
+                           fireball.y < this.canvas.height + 50 && fireball.y > -50;
+            const withinLifetime = (now - fireball.createdAt) < fireball.lifetime;
+            
+            return onScreen && withinLifetime; // Keep fireball
+        });
+        
         // Update enemies
         this.updateEnemies();
     }
@@ -827,10 +869,19 @@ class CollectiblesGame {
                 // Draw hand keypoints for debugging (draw all hands)
                 hands.forEach(h => this.drawHandDebug(h));
                 
+                // Check for splayed hand gesture (fireball casting) first
+                const isSplayed = this.isSplayedHandGesture(hand);
+                
                 // Check if hand is making a pinch gesture
                 this.isGrabbing = this.isGrabbingGesture(hand);
                 
-                if (this.isGrabbing) {
+                if (isSplayed && !this.isGrabbing) {
+                    // Splayed hand = cast fireball
+                    const palmX = hand.keypoints[0].x;
+                    const palmY = hand.keypoints[0].y;
+                    
+                    this.castFireball(palmX, palmY);
+                } else if (this.isGrabbing) {
                     // Get hand position (use pinch point - midpoint between thumb and index)
                     const thumbTip = hand.keypoints[4];
                     const indexTip = hand.keypoints[8];
@@ -1286,6 +1337,46 @@ class CollectiblesGame {
      */
     distance(p1, p2) {
         return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+    }
+
+    /**
+     * Detect splayed hand gesture (all fingers extended and spread apart)
+     */
+    isSplayedHandGesture(hand) {
+        const keypoints = hand.keypoints;
+        
+        // Get fingertips and palm
+        const thumbTip = keypoints[4];
+        const indexTip = keypoints[8];
+        const middleTip = keypoints[12];
+        const ringTip = keypoints[16];
+        const pinkyTip = keypoints[20];
+        const palm = keypoints[0];
+        
+        // Check if all fingers are extended (far from palm)
+        const thumbDist = this.distance(thumbTip, palm);
+        const indexDist = this.distance(indexTip, palm);
+        const middleDist = this.distance(middleTip, palm);
+        const ringDist = this.distance(ringTip, palm);
+        const pinkyDist = this.distance(pinkyTip, palm);
+        
+        // All fingers should be extended (far from palm)
+        const thumbExtended = thumbDist > 80;
+        const indexExtended = indexDist > 120;
+        const middleExtended = middleDist > 130;
+        const ringExtended = ringDist > 120;
+        const pinkyExtended = pinkyDist > 100;
+        
+        const extendedCount = [thumbExtended, indexExtended, middleExtended, ringExtended, pinkyExtended].filter(x => x).length;
+        
+        // Also check that fingers are spread apart (not just extended)
+        const indexMiddleDist = this.distance(indexTip, middleTip);
+        const middleRingDist = this.distance(middleTip, ringTip);
+        const ringPinkyDist = this.distance(ringTip, pinkyTip);
+        
+        const fingersSpread = indexMiddleDist > 40 && middleRingDist > 30 && ringPinkyDist > 30;
+        
+        return extendedCount >= 4 && fingersSpread; // At least 4 fingers extended and spread
     }
 
     /**
@@ -1800,6 +1891,40 @@ class CollectiblesGame {
     }
 
     /**
+     * Cast a fireball spell
+     */
+    castFireball(startX, startY) {
+        const now = Date.now();
+        const app = window.app;
+        
+        // Check cooldown
+        if (now - this.lastFireballCastTime < this.fireballCooldown) {
+            const remainingCooldown = (this.fireballCooldown - (now - this.lastFireballCastTime)) / 1000;
+            console.log(`⏰ Fireball cooldown: ${remainingCooldown.toFixed(1)}s remaining`);
+            return;
+        }
+        
+        // Check if player has enough magic
+        if (!app || app.magic < this.fireballCost) {
+            console.log(`❌ Not enough magic! Need ${this.fireballCost}, have ${app ? app.magic : 0}`);
+            this.showInsufficientMagicFeedback(startX, startY);
+            return;
+        }
+        
+        // Check if there are enemies to target
+        if (this.enemies.length === 0) {
+            console.log('❌ No enemies to target!');
+            return;
+        }
+        
+        // Consume magic
+        app.magic = Math.max(0, app.magic - this.fireballCost);
+        app.updateStatBars();
+        this.lastFireballCastTime = now;
+        
+        console.log(`🔥 Casting fireball! Magic: ${app.magic}/${app.maxMagic}`);\n        \n        // Calculate trajectory towards first enemy\n        const enemy = this.enemies[0];\n        const dx = enemy.x - startX;\n        const dy = enemy.y - startY;\n        const distance = Math.sqrt(dx * dx + dy * dy);\n        \n        // Normalize and scale to speed\n        const speed = 500;\n        const vx = (dx / distance) * speed;\n        const vy = (dy / distance) * speed;\n        \n        // Create fireball projectile\n        const fireball = {\n            x: startX,\n            y: startY,\n            vx: vx,\n            vy: vy,\n            size: 40,\n            createdAt: now,\n            lifetime: 2000, // 2 seconds\n            damage: enemy.maxHealth * 0.4 // 40% damage (4x of 10%)\n        };\n        \n        this.fireballProjectiles.push(fireball);\n        this.showFireballCastFeedback(startX, startY);\n        console.log(`🔥 Fireball created! Target: (${enemy.x.toFixed(0)}, ${enemy.y.toFixed(0)})`);\n    }\n\n    /**\n     * Show visual feedback when casting fireball\n     */\n    showFireballCastFeedback(x, y) {\n        const canvas = this.canvas;\n        if (!canvas) return;\n        \n        const scaleX = canvas.offsetWidth / canvas.width;\n        const scaleY = canvas.offsetHeight / canvas.height;\n        \n        const displayX = x * scaleX;\n        const displayY = y * scaleY;\n        \n        const feedback = document.createElement('div');\n        feedback.className = 'fireball-cast-feedback';\n        feedback.textContent = '🔥 FIREBALL! 🔥';\n        feedback.style.left = `${displayX}px`;\n        feedback.style.top = `${displayY}px`;\n        feedback.style.position = 'absolute';\n        feedback.style.transform = 'translate(-50%, -50%)';\n        feedback.style.fontSize = '2rem';\n        feedback.style.fontWeight = 'bold';\n        feedback.style.color = '#FF4500';\n        feedback.style.textShadow = '0 0 10px #FFD700, 0 0 20px #FF4500, 0 0 30px #FF0000';\n        feedback.style.animation = 'fireballCast 0.6s ease-out forwards';\n        feedback.style.pointerEvents = 'none';\n        feedback.style.zIndex = '1000';\n        \n        const container = document.getElementById('collectiblesContainer');\n        if (container) {\n            container.appendChild(feedback);\n            setTimeout(() => feedback.remove(), 600);\n        }\n    }\n\n    /**\n     * Show insufficient magic feedback\n     */\n    showInsufficientMagicFeedback(x, y) {\n        const canvas = this.canvas;\n        if (!canvas) return;\n        \n        const scaleX = canvas.offsetWidth / canvas.width;\n        const scaleY = canvas.offsetHeight / canvas.height;\n        \n        const displayX = x * scaleX;\n        const displayY = y * scaleY;\n        \n        const feedback = document.createElement('div');\n        feedback.textContent = '✨ No Magic! ✨';\n        feedback.style.left = `${displayX}px`;\n        feedback.style.top = `${displayY}px`;\n        feedback.style.position = 'absolute';\n        feedback.style.transform = 'translate(-50%, -50%)';\n        feedback.style.fontSize = '1.5rem';\n        feedback.style.fontWeight = 'bold';\n        feedback.style.color = '#00BFFF';\n        feedback.style.textShadow = '0 0 10px #FFFFFF';\n        feedback.style.animation = 'fadeOut 0.5s ease-out forwards';\n        feedback.style.pointerEvents = 'none';\n        feedback.style.zIndex = '1000';\n        \n        const container = document.getElementById('collectiblesContainer');\n        if (container) {\n            container.appendChild(feedback);\n            setTimeout(() => feedback.remove(), 500);\n        }\n    }
+
+    /**
      * Create slash animation
      */
     /**
@@ -1865,6 +1990,9 @@ class CollectiblesGame {
         // Draw bolt projectiles
         this.drawBoltProjectiles();
         
+        // Draw fireball projectiles
+        this.drawFireballProjectiles();
+        
         // Draw enemies
         this.drawEnemies();
         
@@ -1923,6 +2051,24 @@ class CollectiblesGame {
             this.ctx.restore();
         });
     }
+
+    /**
+     * Draw fireball projectiles
+     */
+    drawFireballProjectiles() {
+        if (!this.ctx || !this.canvas) return;
+        
+        // Draw each fireball
+        this.fireballProjectiles.forEach(fireball => {
+            this.ctx.save();
+            this.ctx.translate(fireball.x, fireball.y);
+            
+            this.ctx.font = `${fireball.size}px Arial`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            
+            // Add glow effect
+            this.ctx.shadowColor = 'rgba(255, 69, 0, 0.8)';\n            this.ctx.shadowBlur = 20;\n            \n            this.ctx.fillText('🔥', 0, 0);\n            \n            this.ctx.restore();\n        });\n    }
 
     /**
      * Draw enemies on screen
