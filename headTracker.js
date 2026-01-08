@@ -73,6 +73,13 @@ class HeadTracker {
             });
             
             this.video.srcObject = stream;
+            
+            // Also set stream on display video for debug mode
+            const displayVideo = document.getElementById('cameraFeedDisplay');
+            if (displayVideo) {
+                displayVideo.srcObject = stream;
+            }
+            
             this.cameraActive = true;
             
             // Wait for video to load
