@@ -115,14 +115,18 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
+}
+
+.main-content {
     display: flex;
     gap: 2rem;
-    transition: max-width 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 /* Debug mode - show tracking panel */
 body.debug-mode .tracking-panel {
     display: flex !important;
+    flex-direction: column;
 }
 
 /* Default mode - hide tracking panel and expand video */
@@ -130,8 +134,7 @@ body:not(.debug-mode) .tracking-panel {
     display: none !important;
 }
 
-body:not(.debug-mode) .container {
-    max-width: 100%;
+body:not(.debug-mode) .main-content {
     justify-content: center;
 }
 
