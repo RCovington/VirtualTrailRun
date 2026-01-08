@@ -148,13 +148,12 @@ body:not(.debug-mode) .video-panel {
 }
 
 body:not(.debug-mode) .container {
-    max-width: 100%;
-    padding: 20px 40px;
+    max-width: none;
+    padding: 10px;
 }
 
-body:not(.debug-mode) .video-container {
-    max-width: calc(100vh * 16 / 9); /* Match video aspect ratio to viewport height */
-    margin: 0 auto;
+body:not(.debug-mode) .header {
+    display: none; /* Hide header in non-debug mode for more screen space */
 }
 
 /* ===== Header ===== */
@@ -188,11 +187,12 @@ body:not(.debug-mode) .video-container {
 }
 
 /* ===== Main Content Layout ===== */
-.main-content {
-    display: grid;
-    grid-template-columns: 1fr 400px;
-    gap: 20px;
-    margin-bottom: 30px;
+/* (Layout is defined earlier with debug mode handling) */
+
+/* ===== Video Panel ===== */
+.video-panel {
+    flex: 1;
+    min-width: 0; /* Allow flex item to shrink below content size */
 }
 
 /* ===== Video Container ===== */
@@ -203,6 +203,7 @@ body:not(.debug-mode) .video-container {
     overflow: hidden;
     box-shadow: var(--shadow-lg);
     aspect-ratio: 16 / 9;
+    width: 100%;
 }
 
 #player {
