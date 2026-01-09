@@ -3276,12 +3276,14 @@ class CollectiblesGame {
             app.updateStatBars();
             console.log(`🧪 Used Healing Potion! Health: ${oldHealth.toFixed(1)} → ${app.health.toFixed(1)} (+${actualHealing.toFixed(1)})`);
             this.updateMagicList();
+            this.updatePotionDisplay();
         } else if (potionType === 'electricity' && this.potions.electricity > 0) {
             this.potions.electricity--;
             // Activate electrified pinches
             this.electrifiedPinchesRemaining = 5;
             console.log('⚡ Used Electricity Potion! Next 5 pinches will be ELECTRIFIED (4x damage)!');
             this.updateMagicList();
+            this.updatePotionDisplay();
             this.showElectrifiedBuffFeedback();
         } else if (potionType === 'mana' && this.potions.mana > 0) {
             this.potions.mana--;
@@ -3291,6 +3293,7 @@ class CollectiblesGame {
             app.updateStatBars();
             console.log(`🔮 Used Mana Potion! Magic: ${oldMagic.toFixed(1)} → ${app.magic.toFixed(1)} (+${magicRestored.toFixed(1)})`);
             this.updateMagicList();
+            this.updatePotionDisplay();
         }
     }
 }
