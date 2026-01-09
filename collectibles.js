@@ -2071,6 +2071,41 @@ class CollectiblesGame {
     }
 
     /**
+     * Show visual feedback when fireball hits an enemy
+     */
+    showFireballImpactFeedback(x, y, damage) {
+        const canvas = this.canvas;
+        if (!canvas) return;
+        
+        const scaleX = canvas.offsetWidth / canvas.width;
+        const scaleY = canvas.offsetHeight / canvas.height;
+        
+        const displayX = x * scaleX;
+        const displayY = y * scaleY;
+        
+        const feedback = document.createElement('div');
+        const damageText = Math.round(damage);
+        feedback.textContent = `🔥${damageText}🔥 BURN!`;
+        feedback.style.left = `${displayX}px`;
+        feedback.style.top = `${displayY}px`;
+        feedback.style.position = 'absolute';
+        feedback.style.transform = 'translate(-50%, -50%)';
+        feedback.style.fontSize = '2rem';
+        feedback.style.fontWeight = 'bold';
+        feedback.style.color = '#FF4500';
+        feedback.style.textShadow = '0 0 10px #FFD700, 0 0 20px #FF4500, 0 0 30px #FF0000';
+        feedback.style.animation = 'punchImpact 0.5s ease-out forwards';
+        feedback.style.pointerEvents = 'none';
+        feedback.style.zIndex = '1000';
+        
+        const container = document.getElementById('collectiblesContainer');
+        if (container) {
+            container.appendChild(feedback);
+            setTimeout(() => feedback.remove(), 500);
+        }
+    }
+
+    /**
      * Create slash animation
      */
     /**
