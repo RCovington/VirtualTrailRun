@@ -1549,11 +1549,14 @@ class CollectiblesGame {
                 enemy.lastPinchHitTime = now; // Update cooldown timer
                 console.log(`${damageType} ${additionalMultiplier > 1 ? 'Dagger' : 'Pinch'} hit rat! Damage: ${damage.toFixed(1)} (${damageMultiplier}x), Remaining health: ${enemy.health.toFixed(1)}`);
                 
+                // Determine attack type for display
+                const attackType = additionalMultiplier > 1 ? 'dagger' : 'pinch';
+                
                 // Show appropriate animation
                 if (damageMultiplier > 1) {
-                    this.showElectricPinchHitFeedback(enemy.x, enemy.y);
+                    this.showElectricPinchHitFeedback(enemy.x, enemy.y, damage, attackType);
                 } else {
-                    this.showPinchHitFeedback(enemy.x, enemy.y);
+                    this.showPinchHitFeedback(enemy.x, enemy.y, damage, attackType);
                 }
                 
                 return true; // Hit enemy
