@@ -432,6 +432,13 @@ body:not(.debug-mode) .header {
     transform: scaleX(-1); /* Mirror the camera feed */
 }
 
+#cameraFeedDisplay {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* Mirror the display camera feed */
+}
+
 #trackingCanvas {
     position: absolute;
     top: 0;
