@@ -1770,8 +1770,8 @@ body:not(.debug-mode) .header {
     background: rgba(45, 80, 22, 0.6);
     border: 2px solid rgba(255, 140, 0, 0.5);
     border-radius: 8px;
-    padding: 8px 12px;
-    margin-bottom: 8px;
+    padding: 6px 12px;
+    margin-bottom: 6px;
     transition: all 0.3s;
 }
 
@@ -1783,9 +1783,9 @@ body:not(.debug-mode) .header {
 }
 
 .inventory-list-emoji {
-    font-size: 1.8rem;
-    margin-right: 12px;
-    min-width: 35px;
+    font-size: 1.5rem;
+    margin-right: 10px;
+    min-width: 30px;
     text-align: center;
 }
 
@@ -1795,10 +1795,12 @@ body:not(.debug-mode) .header {
 
 .inventory-list-name {
     color: white;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: bold;
     text-transform: capitalize;
-    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .inventory-list-description {
@@ -1809,14 +1811,9 @@ body:not(.debug-mode) .header {
 }
 
 .inventory-list-count {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.85rem;
-}
-
-.inventory-list-count .count-value {
     color: #FFD700;
+    font-size: 0.85rem;
     font-weight: bold;
-    font-size: 0.95rem;
     font-family: 'Courier New', monospace;
 }
 
@@ -1923,14 +1920,22 @@ body:not(.debug-mode) .header {
     background: rgba(0, 0, 0, 0.3);
     border: 2px solid rgba(255, 140, 0, 0.4);
     border-radius: 8px;
-    padding: 12px 15px;
-    margin-bottom: 12px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+}
+
+.brew-recipe-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .brew-recipe-compact h4 {
-    margin: 0 0 6px 0;
+    margin: 0;
     color: #fbbf24;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    min-width: 90px;
 }
 
 .brew-recipe-compact p {
@@ -1942,18 +1947,19 @@ body:not(.debug-mode) .header {
 
 .brew-ingredients-compact {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 10px;
+    flex-wrap: nowrap;
+    gap: 4px;
+    flex: 1;
 }
 
 .brew-ingredients-compact span {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 140, 0, 0.3);
     border-radius: 5px;
-    padding: 4px 8px;
+    padding: 3px 6px;
     color: white;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
 }
 
 .brew-ingredients-compact .ingredient-available {
@@ -1973,12 +1979,13 @@ body:not(.debug-mode) .header {
     color: white;
     border: 2px solid rgba(160, 82, 45, 1);
     border-radius: 6px;
-    padding: 6px 20px;
-    font-size: 0.9rem;
+    padding: 5px 16px;
+    font-size: 0.85rem;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s;
-    width: 100%;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .brew-btn-compact:hover:not(:disabled) {

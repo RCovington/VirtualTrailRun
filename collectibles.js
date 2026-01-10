@@ -2798,34 +2798,37 @@ class CollectiblesGame {
         
         brewPanelContent.innerHTML = `
             <div class="brew-recipe-compact">
-                <h4>🧪 Healing Potion</h4>
-                <p>Restores 30 health</p>
-                <div class="brew-ingredients-compact">
-                    <span class="${hasAcornHealing ? 'ingredient-available' : 'ingredient-missing'}">1 🌰</span>
-                    <span class="${hasMushroom ? 'ingredient-available' : 'ingredient-missing'}">1 🍄</span>
-                    <span class="${hasLeafHealing ? 'ingredient-available' : 'ingredient-missing'}">1 🍂</span>
-                    <span class="${hasMagicHealing ? 'ingredient-available' : 'ingredient-missing'}">33 ✨</span>
+                <div class="brew-recipe-line">
+                    <h4>🧪 Healing</h4>
+                    <div class="brew-ingredients-compact">
+                        <span class="${hasAcornHealing ? 'ingredient-available' : 'ingredient-missing'}">1 🌰</span>
+                        <span class="${hasMushroom ? 'ingredient-available' : 'ingredient-missing'}">1 🍄</span>
+                        <span class="${hasLeafHealing ? 'ingredient-available' : 'ingredient-missing'}">1 🍂</span>
+                        <span class="${hasMagicHealing ? 'ingredient-available' : 'ingredient-missing'}">33 ✨</span>
+                    </div>
+                    <button class="brew-btn-compact" data-recipe="healing" ${canBrewHealing ? '' : 'disabled'}>Brew</button>
                 </div>
-                <button class="brew-btn-compact" data-recipe="healing" ${canBrewHealing ? '' : 'disabled'}>Brew</button>
             </div>
             <div class="brew-recipe-compact">
-                <h4>⚡ Electricity Potion</h4>
-                <p>Electrifies 5 hits</p>
-                <div class="brew-ingredients-compact">
-                    <span class="${hasCrystals ? 'ingredient-available' : 'ingredient-missing'}">3 🔶</span>
-                    <span class="${hasMagicElectricity ? 'ingredient-available' : 'ingredient-missing'}">33 ✨</span>
+                <div class="brew-recipe-line">
+                    <h4>⚡ Electricity</h4>
+                    <div class="brew-ingredients-compact">
+                        <span class="${hasCrystals ? 'ingredient-available' : 'ingredient-missing'}">3 🔶</span>
+                        <span class="${hasMagicElectricity ? 'ingredient-available' : 'ingredient-missing'}">33 ✨</span>
+                    </div>
+                    <button class="brew-btn-compact" data-recipe="electricity" ${canBrewElectricity ? '' : 'disabled'}>Brew</button>
                 </div>
-                <button class="brew-btn-compact" data-recipe="electricity" ${canBrewElectricity ? '' : 'disabled'}>Brew</button>
             </div>
             <div class="brew-recipe-compact">
-                <h4>🔮 Mana Potion</h4>
-                <p>Refills magic bar</p>
-                <div class="brew-ingredients-compact">
-                    <span class="${hasAcornMana ? 'ingredient-available' : 'ingredient-missing'}">1 🌰</span>
-                    <span class="${hasLeafMana ? 'ingredient-available' : 'ingredient-missing'}">1 🍂</span>
-                    <span class="${hasMagicMana ? 'ingredient-available' : 'ingredient-missing'}">50 ✨</span>
+                <div class="brew-recipe-line">
+                    <h4>🔮 Mana</h4>
+                    <div class="brew-ingredients-compact">
+                        <span class="${hasAcornMana ? 'ingredient-available' : 'ingredient-missing'}">1 🌰</span>
+                        <span class="${hasLeafMana ? 'ingredient-available' : 'ingredient-missing'}">1 🍂</span>
+                        <span class="${hasMagicMana ? 'ingredient-available' : 'ingredient-missing'}">50 ✨</span>
+                    </div>
+                    <button class="brew-btn-compact" data-recipe="mana" ${canBrewMana ? '' : 'disabled'}>Brew</button>
                 </div>
-                <button class="brew-btn-compact" data-recipe="mana" ${canBrewMana ? '' : 'disabled'}>Brew</button>
             </div>
         `;
         
@@ -2930,10 +2933,7 @@ class CollectiblesGame {
                 <div class="inventory-list-item" data-type="${item.type.name}">
                     <div class="inventory-list-emoji">${item.type.emoji}</div>
                     <div class="inventory-list-info">
-                        <div class="inventory-list-name">${item.type.name}</div>
-                        <div class="inventory-list-count" id="inventory-${item.type.name}">
-                            Quantity: <span class="count-value">${item.count}</span>
-                        </div>
+                        <div class="inventory-list-name">${item.type.name} <span class="inventory-list-count" id="inventory-${item.type.name}">(${item.count})</span></div>
                     </div>
                     <button class="inventory-list-use" data-type="${item.type.name}" ${item.count === 0 ? 'disabled' : ''}>
                         Use
