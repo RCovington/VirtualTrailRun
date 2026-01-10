@@ -228,14 +228,22 @@ body:not(.debug-mode) .header {
     pointer-events: auto; /* Allow interaction with player controls */
 }
 
-/* Hide YouTube end screen and related videos overlay */
-.ytp-endscreen-content,
-.ytp-ce-element,
-.ytp-cards-teaser,
-.ytp-pause-overlay {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
+/* Transparent overlay to block clicks to YouTube's "more videos" overlay */
+.youtube-click-blocker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5; /* Above player (z-index 0), below game canvas (z-index 100) */
+    pointer-events: none; /* Allow clicks to pass through by default */
+    background: transparent;
+}
+
+/* When video is paused, block clicks to prevent interaction with YouTube overlay */
+.video-container.paused .youtube-click-blocker {
+    pointer-events: auto; /* Block clicks when paused */
+    cursor: default;
 }
 
 .video-overlay {
