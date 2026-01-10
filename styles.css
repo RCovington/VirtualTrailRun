@@ -1410,6 +1410,21 @@ body:not(.debug-mode) .header {
     }
 }
 
+@keyframes tongueStrikeFloat {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -70%) scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -100%) scale(0.8);
+    }
+}
+
 @keyframes electrifiedBuffPulse {
     0% {
         opacity: 0;

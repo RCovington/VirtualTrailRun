@@ -45,6 +45,11 @@ class CollectiblesGame {
         // Electrified pinch tracking
         this.electrifiedPinchesRemaining = 0;
         
+        // Toad tongue tracking
+        this.tongueStrikesRemaining = 0;
+        this.lastTongueStrikeTime = 0;
+        this.tongueStrikeCooldown = 800; // 800ms between tongue strikes
+        
         // Inventory tracking by type
         this.inventory = {
             'acorn': 0,
@@ -63,7 +68,8 @@ class CollectiblesGame {
         this.potions = {
             'healing': 0,
             'electricity': 0,
-            'mana': 1  // DEBUG: Start with 1 mana potion
+            'mana': 1,  // DEBUG: Start with 1 mana potion
+            'toadtongue': 0
         };
         
         // Separate bolt counter for crossbow ammunition
@@ -163,20 +169,35 @@ class CollectiblesGame {
         this.isActive = true;
         this.videoElement = videoElement;
         
-        // Set up tongue detection callback for crossbow firing
+        // Set up tongue detection callback for crossbow firing / tongue strike
         if (this.headTracker) {
             console.log('🎯 Setting up tongue callback...');
             this.headTracker.onTongue(() => {
-                console.log(`👅 Tongue out detected, boltCount=${this.boltCount}`);
-                // Fire bolt on tongue out
-                if (this.boltCount > 0) {
+                console.log(`👅 Tongue out detected, tongueStrikes=${this.tongueStrikesRemaining}, boltCount=${this.boltCount}`);
+                
+                // Check if toad tongue is active first
+                if (this.tongueStrikesRemaining > 0) {
+                    const now = Date.now();
+                    if (now - this.lastTongueStrikeTime < this.tongueStrikeCooldown) {
+                        console.log('⏱️ Tongue strike on cooldown');
+                        return;
+                    }
+                    
+                    // Use center of screen as striking position
+                    const centerX = this.canvas ? this.canvas.width / 2 : 320;
+                    const centerY = this.canvas ? this.canvas.height / 2 : 240;
+                    console.log(`👅 Firing tongue strike from center (${centerX}, ${centerY})`);
+                    this.performTongueStrike({ x: centerX, y: centerY });
+                }
+                // Fall back to crossbow if no tongue strikes
+                else if (this.boltCount > 0) {
                     // Use center of screen as firing position
                     const centerX = this.canvas ? this.canvas.width / 2 : 320;
                     const centerY = this.canvas ? this.canvas.height / 2 : 240;
                     console.log(`🏹 Firing bolt from center (${centerX}, ${centerY})`);
                     this.fireBolt({ x: centerX, y: centerY });
                 } else {
-                    console.log('⚠️ No bolts to fire!');
+                    console.log('⚠️ No tongue strikes or bolts available!');
                 }
             });
             console.log('✅ Tongue callback registered');
@@ -1853,6 +1874,34 @@ class CollectiblesGame {
     }
 
     /**
+     * Show visual feedback when toad tongue buff is activated
+     */
+    showToadTongueBuffFeedback() {
+        // Create buff notification
+        const feedback = document.createElement('div');
+        feedback.className = 'toadtongue-buff-feedback';
+        feedback.textContent = '👅 TOAD TONGUE! 20 Strikes 👅';
+        feedback.style.position = 'fixed';
+        feedback.style.top = '50%';
+        feedback.style.left = '50%';
+        feedback.style.transform = 'translate(-50%, -50%)';
+        feedback.style.fontSize = '3rem';
+        feedback.style.fontWeight = 'bold';
+        feedback.style.color = '#10B981';
+        feedback.style.textShadow = '0 0 20px #34D399, 0 0 40px #10B981, 0 0 60px #6EE7B7, 3px 3px 6px #000000';
+        feedback.style.animation = 'electrifiedBuffPulse 1.5s ease-out forwards';
+        feedback.style.pointerEvents = 'none';
+        feedback.style.zIndex = '10000';
+        
+        document.body.appendChild(feedback);
+        
+        // Remove after animation
+        setTimeout(() => {
+            feedback.remove();
+        }, 1500);
+    }
+
+    /**
      * Show visual feedback when a potion is successfully brewed
      */
     showBrewSuccessFeedback(potionType) {
@@ -1871,6 +1920,10 @@ class CollectiblesGame {
             feedback.innerHTML = '✨ SUCCESS! ✨<br>🔮 Mana Potion';
             feedback.style.color = '#3B82F6';
             feedback.style.textShadow = '0 0 20px #60A5FA, 0 0 40px #3B82F6, 0 0 60px #93C5FD, 3px 3px 6px #000000';
+        } else if (potionType === 'toadtongue') {
+            feedback.innerHTML = '✨ SUCCESS! ✨<br>👅 Toad Tongue Potion';
+            feedback.style.color = '#10B981';
+            feedback.style.textShadow = '0 0 20px #34D399, 0 0 40px #10B981, 0 0 60px #6EE7B7, 3px 3px 6px #000000';
         }
         
         feedback.style.position = 'fixed';
@@ -2157,6 +2210,123 @@ class CollectiblesGame {
         
         this.boltProjectiles.push(bolt);
         console.log(`✅ Bolt projectile created! Position: (${startPosition.x.toFixed(0)}, ${startPosition.y.toFixed(0)})`);
+    }
+
+    /**
+     * Perform a tongue strike (collects items OR damages enemies)
+     */
+    performTongueStrike(position) {
+        const now = Date.now();
+        this.lastTongueStrikeTime = now;
+        
+        console.log(`👅 Tongue strike at (${position.x.toFixed(0)}, ${position.y.toFixed(0)})`);
+        
+        // Check for collectibles first (within generous grab distance)
+        const grabDistance = 120;
+        let itemCollected = false;
+        
+        for (let i = this.collectibles.length - 1; i >= 0; i--) {
+            const item = this.collectibles[i];
+            const dist = this.calculateDistance(position, item);
+            
+            if (dist < grabDistance) {
+                // Collect the item
+                this.collectItem(item);
+                this.collectibles.splice(i, 1);
+                itemCollected = true;
+                console.log(`👅✨ Tongue grabbed ${item.type.name}!`);
+                
+                // Show tongue strike feedback
+                this.showTongueStrikeFeedback(position, true);
+                break; // Only collect one item per strike
+            }
+        }
+        
+        // If no item was collected, check for enemies
+        if (!itemCollected && this.enemies.length > 0) {
+            const hitDistance = 100;
+            
+            for (let i = this.enemies.length - 1; i >= 0; i--) {
+                const enemy = this.enemies[i];
+                const dist = this.calculateDistance(position, enemy);
+                
+                if (dist < hitDistance) {
+                    // Calculate damage (works like an electrified pinch if shock touch is active)
+                    const isElectrified = this.electrifiedPinchesRemaining > 0;
+                    let damage = 5; // Base tongue strike damage
+                    let multiplier = 1;
+                    
+                    if (isElectrified) {
+                        multiplier = 4; // Electrified multiplier
+                        damage *= multiplier;
+                        this.electrifiedPinchesRemaining--;
+                        console.log(`⚡👅 ELECTRIFIED TONGUE STRIKE! ${this.electrifiedPinchesRemaining} remaining`);
+                    }
+                    
+                    // Apply damage
+                    enemy.health -= damage;
+                    console.log(`👅 Tongue strike hit ${enemy.type}! Damage: ${damage} (${isElectrified ? 'ELECTRIFIED x4' : 'normal'}), HP: ${enemy.health}/${enemy.maxHealth}`);
+                    
+                    // Show damage feedback
+                    this.showDamageFeedback(enemy, damage, isElectrified);
+                    
+                    // Remove enemy if dead
+                    if (enemy.health <= 0) {
+                        console.log(`💀 ${enemy.type} defeated by tongue strike!`);
+                        this.enemies.splice(i, 1);
+                        this.showDefeatFeedback(enemy);
+                    }
+                    
+                    // Show tongue strike feedback
+                    this.showTongueStrikeFeedback(position, false, isElectrified);
+                    break; // Only hit one enemy per strike
+                }
+            }
+        }
+        
+        // Consume one tongue strike
+        this.tongueStrikesRemaining--;
+        console.log(`👅 Tongue strikes remaining: ${this.tongueStrikesRemaining}`);
+        
+        // If no electrified strikes left, hide any visual indicators
+        if (this.electrifiedPinchesRemaining === 0) {
+            // Could add visual feedback here
+        }
+    }
+
+    /**
+     * Show visual feedback for tongue strike
+     */
+    showTongueStrikeFeedback(position, isCollect, isElectrified = false) {
+        const feedback = document.createElement('div');
+        feedback.className = 'tongue-strike-feedback';
+        
+        if (isCollect) {
+            feedback.textContent = '👅✨';
+            feedback.style.color = '#10B981';
+        } else if (isElectrified) {
+            feedback.textContent = '⚡👅⚡';
+            feedback.style.color = '#FFFF00';
+            feedback.style.textShadow = '0 0 20px #00FFFF, 0 0 40px #FFFF00';
+        } else {
+            feedback.textContent = '👅💥';
+            feedback.style.color = '#EF4444';
+        }
+        
+        feedback.style.position = 'fixed';
+        feedback.style.left = `${position.x}px`;
+        feedback.style.top = `${position.y}px`;
+        feedback.style.fontSize = '3rem';
+        feedback.style.fontWeight = 'bold';
+        feedback.style.pointerEvents = 'none';
+        feedback.style.zIndex = '9999';
+        feedback.style.animation = 'tongueStrikeFloat 1s ease-out forwards';
+        
+        document.body.appendChild(feedback);
+        
+        setTimeout(() => {
+            feedback.remove();
+        }, 1000);
     }
 
     /**
@@ -2796,6 +2966,12 @@ class CollectiblesGame {
         const hasMagicMana = app.magic >= 50;
         const canBrewMana = hasAcornMana && hasLeafMana && hasMagicMana;
         
+        // Check toad tongue potion ingredients
+        const hasMushrooms = this.inventory.mushroom >= 2;
+        const hasAcornToad = this.inventory.acorn >= 1;
+        const hasMagicToad = app.magic >= 33;
+        const canBrewToadTongue = hasMushrooms && hasAcornToad && hasMagicToad;
+        
         brewPanelContent.innerHTML = `
             <div class="brew-recipe-compact">
                 <div class="brew-recipe-line">
@@ -2828,6 +3004,17 @@ class CollectiblesGame {
                         <span class="${hasMagicMana ? 'ingredient-available' : 'ingredient-missing'}">50 ✨</span>
                     </div>
                     <button class="brew-btn-compact" data-recipe="mana" ${canBrewMana ? '' : 'disabled'}>Brew</button>
+                </div>
+            </div>
+            <div class="brew-recipe-compact">
+                <div class="brew-recipe-line">
+                    <h4>👅 Toad Tongue</h4>
+                    <div class="brew-ingredients-compact">
+                        <span class="${hasMushrooms ? 'ingredient-available' : 'ingredient-missing'}">2 🍄</span>
+                        <span class="${hasAcornToad ? 'ingredient-available' : 'ingredient-missing'}">1 🌰</span>
+                        <span class="${hasMagicToad ? 'ingredient-available' : 'ingredient-missing'}">33 ✨</span>
+                    </div>
+                    <button class="brew-btn-compact" data-recipe="toadtongue" ${canBrewToadTongue ? '' : 'disabled'}>Brew</button>
                 </div>
             </div>
         `;
@@ -3142,6 +3329,16 @@ class CollectiblesGame {
             `;
         }
         
+        // Toad Tongue potion (green)
+        if (this.potions.toadtongue > 0) {
+            html += `
+                <div class="potion-display-item" data-potion="toadtongue">
+                    <span class="potion-display-icon">👅</span>
+                    <span class="potion-display-count">${this.potions.toadtongue}</span>
+                </div>
+            `;
+        }
+        
         // Future: Freeze potion (white/light blue)
         // if (this.potions.freeze > 0) { ... }
         
@@ -3447,6 +3644,31 @@ class CollectiblesGame {
                 console.log('❌ Not enough ingredients for Mana Potion');
                 alert('Not enough ingredients! Need: 1 Acorn, 1 Leaf, 50 Magic');
             }
+        } else if (recipe === 'toadtongue') {
+            // Check ingredients
+            if (this.inventory.mushroom >= 2 && this.inventory.acorn >= 1 && app.magic >= 33) {
+                // Consume ingredients
+                this.inventory.mushroom -= 2;
+                this.inventory.acorn--;
+                app.magic -= 33;
+                
+                // Reduce total collected count
+                this.collectedCount -= 3; // 2 mushrooms + 1 acorn
+                this.updateCounter();
+                
+                // Create potion
+                this.potions.toadtongue++;
+                
+                console.log('👅 Brewed Toad Tongue Potion!');
+                this.showBrewSuccessFeedback('toadtongue');
+                this.updateInventoryDisplay();
+                this.updateMagicList();
+                app.updateStatBars();
+                this.refreshBrewMenu();
+            } else {
+                console.log('❌ Not enough ingredients for Toad Tongue Potion');
+                alert('Not enough ingredients! Need: 2 Mushrooms, 1 Acorn, 33 Magic');
+            }
         }
     }
 
@@ -3483,6 +3705,14 @@ class CollectiblesGame {
             console.log(`🔮 Used Mana Potion! Magic: ${oldMagic.toFixed(1)} → ${app.magic.toFixed(1)} (+${magicRestored.toFixed(1)})`);
             this.updateMagicList();
             this.updatePotionDisplay();
+        } else if (potionType === 'toadtongue' && this.potions.toadtongue > 0) {
+            this.potions.toadtongue--;
+            // Activate tongue strikes
+            this.tongueStrikesRemaining = 20;
+            console.log('👅 Used Toad Tongue Potion! 20 tongue strikes available!');
+            this.updateMagicList();
+            this.updatePotionDisplay();
+            this.showToadTongueBuffFeedback();
         }
     }
 }
