@@ -291,7 +291,10 @@ class CollectiblesGame {
         const delay = Math.random() * (this.maxSpawnTime - this.minSpawnTime) + this.minSpawnTime;
         
         this.spawnInterval = setTimeout(() => {
-            this.spawnCollectible();
+            // Don't spawn new collectibles if there are enemies on screen
+            if (this.enemies.length === 0) {
+                this.spawnCollectible();
+            }
             this.scheduleNextSpawn();
         }, delay);
     }
