@@ -241,6 +241,9 @@ class CollectiblesGame {
         // Start spawning collectibles
         this.scheduleNextSpawn();
         
+        // Add click/touch event listeners to canvas for collecting items
+        this.setupClickToCollect();
+        
         // Start game loop
         this.gameLoop();
         
@@ -2373,6 +2376,36 @@ class CollectiblesGame {
             this.ctx.shadowBlur = 0;
             this.ctx.shadowOffsetY = 0;
         });
+        
+        // Draw collect feedback circles
+        this.drawCollectFeedback();
+    }
+
+    /**
+     * Draw visual feedback for click/tap collection
+     */
+    drawCollectFeedback() {
+        if (!this.collectFeedbacks || this.collectFeedbacks.length === 0) return;
+        
+        const now = Date.now();
+        
+        // Remove expired feedbacks and draw active ones
+        this.collectFeedbacks = this.collectFeedbacks.filter(feedback => {
+            if (now >= feedback.endTime) {
+                return false; // Remove expired feedback
+            }
+            
+            // Draw expanding circle with fading opacity
+            this.ctx.save();
+            this.ctx.strokeStyle = `rgba(50, 205, 50, ${feedback.alpha})`;
+            this.ctx.lineWidth = 3;
+            this.ctx.beginPath();
+            this.ctx.arc(feedback.x, feedback.y, feedback.radius, 0, Math.PI * 2);
+            this.ctx.stroke();
+            this.ctx.restore();
+            
+            return true; // Keep active feedback
+        });
     }
 
     /**
@@ -2774,6 +2807,102 @@ class CollectiblesGame {
             counter.style.cursor = 'pointer';
             counter.addEventListener('click', () => this.openInventory());
         }
+    }
+
+    /**
+     * Set up click/tap to collect items without pausing video
+     */
+    setupClickToCollect() {
+        const collectRadius = 60; // pixels within which items can be collected
+
+        const handleCollectClick = (event) => {
+            // Prevent video from pausing
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Get click/touch position relative to canvas
+            const rect = this.canvas.getBoundingClientRect();
+            let clientX, clientY;
+
+            if (event.type === 'touchstart' || event.type === 'touchend') {
+                if (event.touches.length > 0) {
+                    clientX = event.touches[0].clientX;
+                    clientY = event.touches[0].clientY;
+                } else if (event.changedTouches.length > 0) {
+                    clientX = event.changedTouches[0].clientX;
+                    clientY = event.changedTouches[0].clientY;
+                } else {
+                    return;
+                }
+            } else {
+                clientX = event.clientX;
+                clientY = event.clientY;
+            }
+
+            const clickX = clientX - rect.left;
+            const clickY = clientY - rect.top;
+
+            // Check all collectibles
+            let collected = false;
+            for (let i = this.collectibles.length - 1; i >= 0; i--) {
+                const item = this.collectibles[i];
+                const dx = item.x - clickX;
+                const dy = item.y - clickY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance <= collectRadius) {
+                    // Collect the item
+                    this.collectItem(item);
+                    collected = true;
+                    break; // Only collect one item per click
+                }
+            }
+
+            // Show visual feedback if something was collected
+            if (collected) {
+                this.showCollectFeedback(clickX, clickY);
+            }
+        };
+
+        // Add both mouse and touch event listeners
+        this.canvas.addEventListener('click', handleCollectClick);
+        this.canvas.addEventListener('touchstart', handleCollectClick, { passive: false });
+        
+        // Make canvas cursor pointer to indicate clickability
+        this.canvas.style.cursor = 'pointer';
+    }
+
+    /**
+     * Show visual feedback when an item is collected via click
+     */
+    showCollectFeedback(x, y) {
+        const ctx = this.ctx;
+        
+        // Draw a brief flash circle
+        const startTime = Date.now();
+        const duration = 300; // ms
+        
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            if (elapsed >= duration) return;
+            
+            const progress = elapsed / duration;
+            const alpha = 1 - progress;
+            const radius = 20 + (progress * 20);
+            
+            // This will be drawn on next frame in drawCollectibles
+            // Store feedback in a temporary array
+            if (!this.collectFeedbacks) {
+                this.collectFeedbacks = [];
+            }
+            
+            this.collectFeedbacks.push({
+                x, y, alpha, radius,
+                endTime: Date.now() + (duration - elapsed)
+            });
+        };
+        
+        animate();
     }
 
     /**
