@@ -49,6 +49,20 @@ class VirtualTrailRunApp {
         this.analytics = null;
         this.auth = null;
         
+        // Start button text options
+        this.startButtonTexts = [
+            "Start Workout",
+            "Take A Hike",
+            "Adventure On",
+            "Hit The Trail",
+            "Let's Go!",
+            "Start Journey",
+            "Begin Quest",
+            "Get Moving",
+            "Trail Awaits",
+            "Go Explore"
+        ];
+        
         // DOM elements
         this.elements = {
             startButton: document.getElementById('startButton'),
@@ -87,6 +101,9 @@ class VirtualTrailRunApp {
         try {
             // Initialize Firebase and services
             this.initializeFirebaseServices();
+            
+            // Set random start button text
+            this.setRandomStartButtonText();
             
             // Initialize video player
             await this.videoPlayer.init();
@@ -179,6 +196,16 @@ class VirtualTrailRunApp {
             // Set up auth UI event listeners
             this.setupAuthUI();
         }
+    }
+
+    /**
+     * Set random start button text from available options
+     */
+    setRandomStartButtonText() {
+        const randomIndex = Math.floor(Math.random() * this.startButtonTexts.length);
+        const randomText = this.startButtonTexts[randomIndex];
+        this.elements.startButton.innerHTML = `🎥 ${randomText}`;
+        console.log(`Start button text set to: "${randomText}"`);
     }
 
     /**

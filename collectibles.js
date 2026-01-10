@@ -1831,7 +1831,7 @@ class CollectiblesGame {
         // Create buff notification
         const feedback = document.createElement('div');
         feedback.className = 'electrified-buff-feedback';
-        feedback.textContent = '⚡ ELECTRIFIED! 5 Pinches ⚡';
+        feedback.textContent = '⚡ ELECTRIFIED! 5 Hits ⚡';
         feedback.style.position = 'fixed';
         feedback.style.top = '50%';
         feedback.style.left = '50%';
@@ -2666,37 +2666,47 @@ class CollectiblesGame {
                     </div>
                 </div>
             </div>
-            <div class="inventory-tabs">
-                <button class="inventory-tab active" data-tab="collectibles">🌰 Objects</button>
-                <button class="inventory-tab" data-tab="weapons">⚔️ Weapons</button>
-                <button class="inventory-tab" data-tab="armor">🛡️ Armor</button>
-                <button class="inventory-tab" data-tab="magic">✨ Magic</button>
-            </div>
-            <div class="inventory-content">
-                <div class="inventory-tab-content active" id="collectibles-tab">
-                    <div class="inventory-list" id="collectiblesList"></div>
-                </div>
-                <div class="inventory-tab-content" id="weapons-tab">
-                    <div class="inventory-list" id="weaponsList">
-                        <div class="inventory-empty">No weapons yet</div>
+            <div class="inventory-body">
+                <div class="inventory-left-panel">
+                    <div class="inventory-tabs">
+                        <button class="inventory-tab active" data-tab="collectibles">🌰 Objects</button>
+                        <button class="inventory-tab" data-tab="weapons">⚔️ Weapons</button>
+                        <button class="inventory-tab" data-tab="armor">🛡️ Armor</button>
+                        <button class="inventory-tab" data-tab="magic">✨ Magic</button>
+                    </div>
+                    <div class="inventory-content">
+                        <div class="inventory-tab-content active" id="collectibles-tab">
+                            <div class="inventory-list" id="collectiblesList"></div>
+                        </div>
+                        <div class="inventory-tab-content" id="weapons-tab">
+                            <div class="inventory-list" id="weaponsList">
+                                <div class="inventory-empty">No weapons yet</div>
+                            </div>
+                        </div>
+                        <div class="inventory-tab-content" id="armor-tab">
+                            <div class="inventory-list" id="armorList">
+                                <div class="inventory-empty">No armor yet</div>
+                            </div>
+                        </div>
+                        <div class="inventory-tab-content" id="magic-tab">
+                            <div class="inventory-list" id="magicList">
+                                <div class="inventory-empty">No magic items yet</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inventory-equip-section">
+                        <button class="inventory-equip-btn" id="inventoryEquipBtn">
+                            ⚔️ Equip Items
+                        </button>
                     </div>
                 </div>
-                <div class="inventory-tab-content" id="armor-tab">
-                    <div class="inventory-list" id="armorList">
-                        <div class="inventory-empty">No armor yet</div>
+                <div class="inventory-right-panel">
+                    <div class="brew-panel-header">
+                        <h3>🧪 Brew Potions</h3>
                     </div>
-                </div>
-                <div class="inventory-tab-content" id="magic-tab">
-                    <div class="inventory-list" id="magicList">
-                        <div class="inventory-empty">No magic items yet</div>
+                    <div class="brew-panel-content" id="brewPanelContent">
+                        <!-- Brew recipes will be populated here -->
                     </div>
-                </div>
-            </div>
-            <div class="inventory-footer">
-                <div class="potion-area">
-                    <h3>🧪 Mix Potion</h3>
-                    <p>Select items to combine into potions</p>
-                    <button class="potion-brew-btn">Brew Potion</button>
                 </div>
             </div>
         `;
@@ -2716,11 +2726,14 @@ class CollectiblesGame {
             });
         });
         
-        // Add potion brewing button handler
-        const brewBtn = panel.querySelector('.potion-brew-btn');
-        if (brewBtn) {
-            brewBtn.addEventListener('click', () => this.showBrewMenu());
+        // Add equip button handler
+        const equipBtn = panel.querySelector('#inventoryEquipBtn');
+        if (equipBtn) {
+            equipBtn.addEventListener('click', () => this.showEquipMenu());
         }
+        
+        // Populate brew panel
+        this.updateBrewPanel();
         
         return panel;
     }
@@ -2753,6 +2766,144 @@ class CollectiblesGame {
         if (tabName === 'magic') {
             this.updateMagicList();
         }
+    }
+
+    /**
+     * Update the brew panel in the inventory with current recipes
+     */
+    updateBrewPanel() {
+        const brewPanelContent = document.getElementById('brewPanelContent');
+        if (!brewPanelContent) return;
+        
+        const app = window.app;
+        if (!app) return;
+        
+        // Check healing potion ingredients
+        const hasAcornHealing = this.inventory.acorn >= 1;
+        const hasMushroom = this.inventory.mushroom >= 1;
+        const hasLeafHealing = this.inventory.leaf >= 1;
+        const hasMagicHealing = app.magic >= 33;
+        const canBrewHealing = hasAcornHealing && hasMushroom && hasLeafHealing && hasMagicHealing;
+        
+        // Check electricity potion ingredients
+        const hasCrystals = this.inventory.crystal >= 3;
+        const hasMagicElectricity = app.magic >= 33;
+        const canBrewElectricity = hasCrystals && hasMagicElectricity;
+        
+        // Check mana potion ingredients
+        const hasAcornMana = this.inventory.acorn >= 1;
+        const hasLeafMana = this.inventory.leaf >= 1;
+        const hasMagicMana = app.magic >= 50;
+        const canBrewMana = hasAcornMana && hasLeafMana && hasMagicMana;
+        
+        brewPanelContent.innerHTML = `
+            <div class="brew-recipe-compact">
+                <h4>🧪 Healing Potion</h4>
+                <p>Restores 30 health</p>
+                <div class="brew-ingredients-compact">
+                    <span class="${hasAcornHealing ? 'ingredient-available' : 'ingredient-missing'}">1 🌰</span>
+                    <span class="${hasMushroom ? 'ingredient-available' : 'ingredient-missing'}">1 🍄</span>
+                    <span class="${hasLeafHealing ? 'ingredient-available' : 'ingredient-missing'}">1 🍂</span>
+                    <span class="${hasMagicHealing ? 'ingredient-available' : 'ingredient-missing'}">33 ✨</span>
+                </div>
+                <button class="brew-btn-compact" data-recipe="healing" ${canBrewHealing ? '' : 'disabled'}>Brew</button>
+            </div>
+            <div class="brew-recipe-compact">
+                <h4>⚡ Electricity Potion</h4>
+                <p>Electrifies 5 hits</p>
+                <div class="brew-ingredients-compact">
+                    <span class="${hasCrystals ? 'ingredient-available' : 'ingredient-missing'}">3 🔶</span>
+                    <span class="${hasMagicElectricity ? 'ingredient-available' : 'ingredient-missing'}">33 ✨</span>
+                </div>
+                <button class="brew-btn-compact" data-recipe="electricity" ${canBrewElectricity ? '' : 'disabled'}>Brew</button>
+            </div>
+            <div class="brew-recipe-compact">
+                <h4>🔮 Mana Potion</h4>
+                <p>Refills magic bar</p>
+                <div class="brew-ingredients-compact">
+                    <span class="${hasAcornMana ? 'ingredient-available' : 'ingredient-missing'}">1 🌰</span>
+                    <span class="${hasLeafMana ? 'ingredient-available' : 'ingredient-missing'}">1 🍂</span>
+                    <span class="${hasMagicMana ? 'ingredient-available' : 'ingredient-missing'}">50 ✨</span>
+                </div>
+                <button class="brew-btn-compact" data-recipe="mana" ${canBrewMana ? '' : 'disabled'}>Brew</button>
+            </div>
+        `;
+        
+        // Add brew button handlers
+        const brewButtons = brewPanelContent.querySelectorAll('.brew-btn-compact');
+        brewButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const recipe = e.target.dataset.recipe;
+                this.brewPotion(recipe);
+            });
+        });
+    }
+
+    /**
+     * Show equipment management menu
+     */
+    showEquipMenu() {
+        // Create equipment modal
+        const equipModal = document.createElement('div');
+        equipModal.className = 'equip-modal';
+        equipModal.innerHTML = `
+            <div class="equip-modal-content">
+                <button class="equip-close-x" aria-label="Close">&times;</button>
+                <h2>⚔️ Equipment Manager</h2>
+                <p class="equip-subtitle">Equip weapons, armor, and magic items</p>
+                
+                <div class="equip-section">
+                    <h3>🗡️ Main Hand</h3>
+                    <div class="equip-slot" id="mainHandSlot">
+                        <div class="equip-slot-empty">No weapon equipped</div>
+                    </div>
+                </div>
+                
+                <div class="equip-section">
+                    <h3>🛡️ Off Hand</h3>
+                    <div class="equip-slot" id="offHandSlot">
+                        <div class="equip-slot-empty">No shield/weapon equipped</div>
+                    </div>
+                </div>
+                
+                <div class="equip-section">
+                    <h3>🎽 Armor</h3>
+                    <div class="equip-slot" id="armorSlot">
+                        <div class="equip-slot-empty">No armor equipped</div>
+                    </div>
+                </div>
+                
+                <div class="equip-section">
+                    <h3>💍 Accessories</h3>
+                    <div class="equip-accessories">
+                        <div class="equip-slot equip-slot-small" id="accessory1Slot">
+                            <div class="equip-slot-empty">Empty</div>
+                        </div>
+                        <div class="equip-slot equip-slot-small" id="accessory2Slot">
+                            <div class="equip-slot-empty">Empty</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="equip-close-btn">Close</button>
+            </div>
+        `;
+        
+        document.body.appendChild(equipModal);
+        
+        // Add close button handlers
+        const closeBtn = equipModal.querySelector('.equip-close-btn');
+        closeBtn.addEventListener('click', () => {
+            equipModal.remove();
+        });
+        
+        const closeX = equipModal.querySelector('.equip-close-x');
+        closeX.addEventListener('click', () => {
+            equipModal.remove();
+        });
+        
+        // TODO: Populate equipped items and add equip/unequip handlers
+        console.log('Equipment menu opened - equipment management system coming soon!');
     }
 
     /**
@@ -2823,6 +2974,9 @@ class CollectiblesGame {
         
         // Update armor tab
         this.updateArmorList();
+        
+        // Update brew panel
+        this.updateBrewPanel();
     }
 
     /**
@@ -3046,8 +3200,8 @@ class CollectiblesGame {
                 <h4>⚡ Electricity Potion</h4>
                 <p>Damages all enemies on screen</p>
                 <div class="brew-ingredients">
-                    <span>3 � Crystals</span>
-                    <span>33 ✨ Magic</span>
+                    <span class="${hasCrystals ? 'ingredient-available' : 'ingredient-missing'}" >3  Crystals</span>
+                    <span class="${hasMagicElectricity ? 'ingredient-available' : 'ingredient-missing'}" >33  Magic</span>
                 </div>
                 <button class="brew-btn" data-recipe="electricity" ${canBrewElectricity ? '' : 'disabled'}>Brew</button>
             </div>

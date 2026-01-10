@@ -1575,9 +1575,9 @@ body:not(.debug-mode) .header {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 700px;
-    max-height: 80vh;
+    width: 95%;
+    max-width: 1200px;
+    max-height: 85vh;
     background: rgba(30, 50, 20, 0.98);
     border: 4px solid var(--orange);
     border-radius: 20px;
@@ -1634,6 +1634,7 @@ body:not(.debug-mode) .header {
     display: flex;
     align-items: center;
     gap: 10px;
+    max-width: 400px;
 }
 
 .inventory-xp-section .stat-label {
@@ -1658,6 +1659,29 @@ body:not(.debug-mode) .header {
     height: 20px;
 }
 
+/* Inventory Body - Two Column Layout */
+.inventory-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.inventory-left-panel {
+    flex: 0 0 50%;
+    display: flex;
+    flex-direction: column;
+    border-right: 3px solid rgba(255, 140, 0, 0.3);
+    overflow: hidden;
+}
+
+.inventory-right-panel {
+    flex: 0 0 50%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 /* Inventory Tabs */
 .inventory-tabs {
     display: flex;
@@ -1665,7 +1689,7 @@ body:not(.debug-mode) .header {
     border-bottom: 2px solid rgba(255, 140, 0, 0.3);
     overflow-x: auto;
     flex-shrink: 0;
-    min-height: 50px;
+    min-height: 45px;
 }
 
 .inventory-tab {
@@ -1674,8 +1698,8 @@ body:not(.debug-mode) .header {
     color: rgba(255, 255, 255, 0.7);
     border: none;
     border-bottom: 3px solid transparent;
-    padding: 15px 20px;
-    font-size: 1rem;
+    padding: 12px 10px;
+    font-size: 0.85rem;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s;
@@ -1700,6 +1724,7 @@ body:not(.debug-mode) .header {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 .inventory-tab-content {
@@ -1716,11 +1741,11 @@ body:not(.debug-mode) .header {
 .inventory-list {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
+    padding: 15px;
 }
 
 .inventory-list::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
 }
 
 .inventory-list::-webkit-scrollbar-track {
@@ -1743,7 +1768,7 @@ body:not(.debug-mode) .header {
     background: rgba(45, 80, 22, 0.6);
     border: 2px solid rgba(255, 140, 0, 0.5);
     border-radius: 8px;
-    padding: 8px 15px;
+    padding: 8px 12px;
     margin-bottom: 8px;
     transition: all 0.3s;
 }
@@ -1756,9 +1781,9 @@ body:not(.debug-mode) .header {
 }
 
 .inventory-list-emoji {
-    font-size: 2rem;
-    margin-right: 15px;
-    min-width: 40px;
+    font-size: 1.8rem;
+    margin-right: 12px;
+    min-width: 35px;
     text-align: center;
 }
 
@@ -1823,6 +1848,278 @@ body:not(.debug-mode) .header {
     padding: 60px 20px;
     font-style: italic;
 }
+
+/* Inventory Equip Section */
+.inventory-equip-section {
+    padding: 15px;
+    background: rgba(35, 60, 18, 0.9);
+    border-top: 2px solid rgba(255, 140, 0, 0.3);
+}
+
+.inventory-equip-btn {
+    width: 100%;
+    background: rgba(139, 69, 19, 0.8);
+    color: white;
+    border: 2px solid rgba(160, 82, 45, 1);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.inventory-equip-btn:hover {
+    background: rgba(139, 69, 19, 1);
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(139, 69, 19, 0.4);
+}
+
+/* Brew Panel in Inventory */
+.brew-panel-header {
+    padding: 15px 20px;
+    background: rgba(35, 60, 18, 0.9);
+    border-bottom: 2px solid rgba(255, 140, 0, 0.3);
+}
+
+.brew-panel-header h3 {
+    margin: 0;
+    color: white;
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+.brew-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+.brew-panel-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.brew-panel-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+}
+
+.brew-panel-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 140, 0, 0.6);
+    border-radius: 5px;
+}
+
+.brew-panel-content::-webkit-scrollbar-thumb:hover {
+    background: var(--orange);
+}
+
+.brew-recipe-compact {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 140, 0, 0.4);
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 12px;
+}
+
+.brew-recipe-compact h4 {
+    margin: 0 0 6px 0;
+    color: #fbbf24;
+    font-size: 1.1rem;
+}
+
+.brew-recipe-compact p {
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 10px 0;
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+.brew-ingredients-compact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.brew-ingredients-compact span {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 140, 0, 0.3);
+    border-radius: 5px;
+    padding: 4px 8px;
+    color: white;
+    font-size: 0.85rem;
+}
+
+.brew-ingredients-compact .ingredient-available {
+    color: #22C55E;
+    border-color: rgba(34, 197, 94, 0.5);
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.brew-ingredients-compact .ingredient-missing {
+    color: #EF4444;
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.brew-btn-compact {
+    background: rgba(139, 69, 19, 0.8);
+    color: white;
+    border: 2px solid rgba(160, 82, 45, 1);
+    border-radius: 6px;
+    padding: 6px 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.brew-btn-compact:hover:not(:disabled) {
+    background: rgba(139, 69, 19, 1);
+    transform: scale(1.02);
+}
+
+.brew-btn-compact:disabled {
+    background: rgba(80, 80, 80, 0.5);
+    border-color: rgba(100, 100, 100, 0.5);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.brew-btn-compact:disabled:hover {
+    transform: none;
+    background: rgba(80, 80, 80, 0.5);
+}
+
+/* Equipment Modal */
+.equip-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    pointer-events: all;
+}
+
+.equip-modal-content {
+    background: linear-gradient(135deg, rgba(45, 80, 22, 0.95) 0%, rgba(35, 60, 18, 0.95) 100%);
+    border: 3px solid var(--orange);
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    width: 90%;
+}
+
+.equip-close-x {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(220, 38, 38, 0.8);
+    color: white;
+    border: 2px solid #DC2626;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.equip-close-x:hover {
+    background: rgba(220, 38, 38, 1);
+    transform: scale(1.1);
+}
+
+.equip-modal-content h2 {
+    color: white;
+    margin: 0 0 10px 0;
+    font-size: 1.8rem;
+    text-align: center;
+}
+
+.equip-subtitle {
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 25px 0;
+    text-align: center;
+    font-style: italic;
+}
+
+.equip-section {
+    margin-bottom: 20px;
+}
+
+.equip-section h3 {
+    color: #fbbf24;
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+}
+
+.equip-slot {
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 140, 0, 0.4);
+    border-radius: 8px;
+    padding: 15px;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.equip-slot-small {
+    min-height: 50px;
+    padding: 10px;
+}
+
+.equip-slot-empty {
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.equip-accessories {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.equip-close-btn {
+    background: rgba(220, 38, 38, 0.8);
+    color: white;
+    border: 2px solid rgba(220, 38, 38, 1);
+    border-radius: 6px;
+    padding: 10px 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.equip-close-btn:hover {
+    background: rgba(220, 38, 38, 1);
+}
+
 
 /* Brew Modal */
 .brew-modal {
@@ -2141,7 +2438,24 @@ body:not(.debug-mode) .header {
     
     .inventory-panel {
         width: 95%;
+        max-width: 100%;
         max-height: 90vh;
+    }
+    
+    .inventory-body {
+        flex-direction: column;
+    }
+    
+    .inventory-left-panel {
+        flex: 0 0 auto;
+        max-height: 50vh;
+        border-right: none;
+        border-bottom: 3px solid rgba(255, 140, 0, 0.3);
+    }
+    
+    .inventory-right-panel {
+        flex: 0 0 auto;
+        max-height: 40vh;
     }
     
     .inventory-tabs {
@@ -2149,16 +2463,25 @@ body:not(.debug-mode) .header {
     }
     
     .inventory-tab {
-        font-size: 0.85rem;
-        padding: 12px 15px;
+        font-size: 0.75rem;
+        padding: 10px 8px;
     }
     
     .inventory-list {
-        padding: 15px;
+        padding: 10px;
     }
     
     .inventory-list-item {
-        padding: 12px 15px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+    }
+    
+    .brew-panel-content {
+        padding: 10px;
+    }
+    
+    .brew-recipe-compact {
+        padding: 10px 12px;
         margin-bottom: 10px;
     }
     
