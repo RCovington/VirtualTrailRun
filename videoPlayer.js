@@ -42,11 +42,14 @@ class VideoPlayer {
             playerVars: {
                 'playsinline': 1,
                 'controls': 1,
-                'rel': 0,
-                'modestbranding': 1,
-                'iv_load_policy': 3,
+                'rel': 0, // Show related videos from same channel only
+                'modestbranding': 1, // Hide YouTube logo
+                'iv_load_policy': 3, // Hide annotations
                 'fs': 0, // Disable YouTube's fullscreen button (we have our own)
-                'autoplay': 0
+                'autoplay': 0,
+                'disablekb': 0, // Keep keyboard controls enabled
+                'cc_load_policy': 0, // Don't show captions by default
+                'enablejsapi': 1 // Enable JS API for better control
             },
             events: {
                 'onReady': this.onPlayerReady.bind(this),
