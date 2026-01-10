@@ -82,24 +82,13 @@ class VideoPlayer {
         const state = states[event.data];
         console.log('Player state:', state);
 
-        // Get video container to toggle click blocker
-        const videoContainer = document.querySelector('.video-container');
-
         if (event.data === YT.PlayerState.PLAYING) {
             this.isPlaying = true;
-            // Remove paused class to allow clicks through to player controls
-            if (videoContainer) {
-                videoContainer.classList.remove('paused');
-            }
             if (this.onPlayCallback) {
                 this.onPlayCallback();
             }
         } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
             this.isPlaying = false;
-            // Add paused class to block clicks to YouTube's "more videos" overlay
-            if (videoContainer) {
-                videoContainer.classList.add('paused');
-            }
             if (this.onPauseCallback) {
                 this.onPauseCallback();
             }
