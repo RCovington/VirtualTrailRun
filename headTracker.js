@@ -42,7 +42,7 @@ class HeadTracker {
         this.tongueOut = false;
         this.lastTongueTime = 0;
         this.tongueCooldown = 1000; // Minimum milliseconds between tongue detections
-        this.mouthOpenThreshold = 0.4; // Mouth Aspect Ratio threshold for open mouth
+        this.mouthOpenThreshold = 0.3; // Mouth Aspect Ratio threshold for open mouth (lowered for easier detection)
         
         // Callbacks
         this.onBobDetectedCallback = null;
