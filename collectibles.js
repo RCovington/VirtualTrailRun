@@ -173,36 +173,28 @@ class CollectiblesGame {
         if (this.headTracker) {
             console.log('🎯 Setting up tongue callback...');
             this.headTracker.onTongue(() => {
-                console.log(`👅 Tongue out detected, tongueStrikes=${this.tongueStrikesRemaining}, boltCount=${this.boltCount}`);
+                console.log(`👅 Tongue out detected, boltCount=${this.boltCount}`);
                 
-                // Check if toad tongue is active first
-                if (this.tongueStrikesRemaining > 0) {
-                    const now = Date.now();
-                    if (now - this.lastTongueStrikeTime < this.tongueStrikeCooldown) {
-                        console.log('⏱️ Tongue strike on cooldown');
-                        return;
-                    }
-                    
-                    // Use center of screen as striking position
-                    const centerX = this.canvas ? this.canvas.width / 2 : 320;
-                    const centerY = this.canvas ? this.canvas.height / 2 : 240;
-                    console.log(`👅 Firing tongue strike from center (${centerX}, ${centerY})`);
-                    this.performTongueStrike({ x: centerX, y: centerY });
+                const now = Date.now();
+                if (now - this.lastTongueStrikeTime < this.tongueStrikeCooldown) {
+                    console.log('⏱️ Tongue strike on cooldown');
+                    return;
                 }
-                // Fall back to crossbow if no tongue strikes
-                else if (this.boltCount > 0) {
-                    // Use center of screen as firing position
-                    const centerX = this.canvas ? this.canvas.width / 2 : 320;
-                    const centerY = this.canvas ? this.canvas.height / 2 : 240;
-                    console.log(`🏹 Firing bolt from center (${centerX}, ${centerY})`);
-                    this.fireBolt({ x: centerX, y: centerY });
-                } else {
-                    console.log('⚠️ No tongue strikes or bolts available!');
-                }
+                
+                // Use center of screen as striking position
+                const centerX = this.canvas ? this.canvas.width / 2 : 320;
+                const centerY = this.canvas ? this.canvas.height / 2 : 240;
+                console.log(`👅 Firing tongue strike from center (${centerX}, ${centerY})`);
+                this.performTongueStrike({ x: centerX, y: centerY });
             });
             console.log('✅ Tongue callback registered');
         } else {
             console.warn('⚠️ No headTracker available for tongue detection!');
+        }
+        
+        // Fallback: Set up tongue detection for crossbow if available
+        if (this.headTracker && this.boltCount > 0) {
+            // Crossbow firing is handled separately if needed
         }
         
         // Reset canvas sizes to match video (maintain aspect ratio)
@@ -2286,15 +2278,6 @@ class CollectiblesGame {
                 }
             }
         }
-        
-        // Consume one tongue strike
-        this.tongueStrikesRemaining--;
-        console.log(`👅 Tongue strikes remaining: ${this.tongueStrikesRemaining}`);
-        
-        // If no electrified strikes left, hide any visual indicators
-        if (this.electrifiedPinchesRemaining === 0) {
-            // Could add visual feedback here
-        }
     }
 
     /**
@@ -3647,31 +3630,6 @@ class CollectiblesGame {
                 console.log('❌ Not enough ingredients for Mana Potion');
                 alert('Not enough ingredients! Need: 1 Acorn, 1 Leaf, 50 Magic');
             }
-        } else if (recipe === 'toadtongue') {
-            // Check ingredients
-            if (this.inventory.mushroom >= 2 && this.inventory.acorn >= 1 && app.magic >= 33) {
-                // Consume ingredients
-                this.inventory.mushroom -= 2;
-                this.inventory.acorn--;
-                app.magic -= 33;
-                
-                // Reduce total collected count
-                this.collectedCount -= 3; // 2 mushrooms + 1 acorn
-                this.updateCounter();
-                
-                // Create potion
-                this.potions.toadtongue++;
-                
-                console.log('👅 Brewed Toad Tongue Potion!');
-                this.showBrewSuccessFeedback('toadtongue');
-                this.updateInventoryDisplay();
-                this.updateMagicList();
-                app.updateStatBars();
-                this.refreshBrewMenu();
-            } else {
-                console.log('❌ Not enough ingredients for Toad Tongue Potion');
-                alert('Not enough ingredients! Need: 2 Mushrooms, 1 Acorn, 33 Magic');
-            }
         }
     }
 
@@ -3708,14 +3666,6 @@ class CollectiblesGame {
             console.log(`🔮 Used Mana Potion! Magic: ${oldMagic.toFixed(1)} → ${app.magic.toFixed(1)} (+${magicRestored.toFixed(1)})`);
             this.updateMagicList();
             this.updatePotionDisplay();
-        } else if (potionType === 'toadtongue' && this.potions.toadtongue > 0) {
-            this.potions.toadtongue--;
-            // Activate tongue strikes
-            this.tongueStrikesRemaining = 20;
-            console.log('👅 Used Toad Tongue Potion! 20 tongue strikes available!');
-            this.updateMagicList();
-            this.updatePotionDisplay();
-            this.showToadTongueBuffFeedback();
         }
     }
 }
