@@ -2214,69 +2214,58 @@ class CollectiblesGame {
         const now = Date.now();
         this.lastTongueStrikeTime = now;
         
-        console.log(`👅 Tongue strike at (${position.x.toFixed(0)}, ${position.y.toFixed(0)})`);
+        console.log(`👅 Tongue strike!`);
         
-        // Check for collectibles first (within generous grab distance)
-        const grabDistance = 120;
+        // Check for collectibles first - grab any item on screen
         let itemCollected = false;
         
-        for (let i = this.collectibles.length - 1; i >= 0; i--) {
-            const item = this.collectibles[i];
-            const dist = this.distance(position, item);
+        if (this.collectibles.length > 0) {
+            // Grab the first collectible
+            const item = this.collectibles[0];
             
-            if (dist < grabDistance) {
-                // Collect the item
-                this.collectItem(item);
-                this.collectibles.splice(i, 1);
-                itemCollected = true;
-                console.log(`👅✨ Tongue grabbed ${item.type.name}!`);
-                
-                // Show tongue strike feedback
-                this.showTongueStrikeFeedback(position, true);
-                break; // Only collect one item per strike
-            }
+            // Collect the item
+            this.collectItem(item);
+            this.collectibles.splice(0, 1);
+            itemCollected = true;
+            console.log(`👅✨ Tongue grabbed ${item.type.name}!`);
+            
+            // Show tongue strike feedback at item position
+            this.showTongueStrikeFeedback(item, true);
         }
         
         // If no item was collected, check for enemies
         if (!itemCollected && this.enemies.length > 0) {
-            const hitDistance = 100;
+            // Hit the first enemy
+            const enemy = this.enemies[0];
             
-            for (let i = this.enemies.length - 1; i >= 0; i--) {
-                const enemy = this.enemies[i];
-                const dist = this.distance(position, enemy);
-                
-                if (dist < hitDistance) {
-                    // Calculate damage (works like an electrified pinch if shock touch is active)
-                    const isElectrified = this.electrifiedPinchesRemaining > 0;
-                    let damage = 5; // Base tongue strike damage
-                    let multiplier = 1;
-                    
-                    if (isElectrified) {
-                        multiplier = 4; // Electrified multiplier
-                        damage *= multiplier;
-                        this.electrifiedPinchesRemaining--;
-                        console.log(`⚡👅 ELECTRIFIED TONGUE STRIKE! ${this.electrifiedPinchesRemaining} remaining`);
-                    }
-                    
-                    // Apply damage
-                    enemy.health -= damage;
-                    console.log(`👅 Tongue strike hit ${enemy.type}! Damage: ${damage} (${isElectrified ? 'ELECTRIFIED x4' : 'normal'}), HP: ${enemy.health}/${enemy.maxHealth}`);
-                    
-                    // Show damage feedback
-                    this.showDamageFeedback(enemy, damage, isElectrified);
-                    
-                    // Remove enemy if dead
-                    if (enemy.health <= 0) {
-                        console.log(`💀 ${enemy.type} defeated by tongue strike!`);
-                        this.enemies.splice(i, 1);
-                        this.showDefeatFeedback(enemy);
-                    }
-                    
-                    // Show tongue strike feedback
-                    this.showTongueStrikeFeedback(position, false, isElectrified);
-                    break; // Only hit one enemy per strike
-                }
+            // Calculate damage (works like an electrified pinch if shock touch is active)
+            const isElectrified = this.electrifiedPinchesRemaining > 0;
+            let damage = 5; // Base tongue strike damage
+            let multiplier = 1;
+            
+            if (isElectrified) {
+                multiplier = 4; // Electrified multiplier
+                damage *= multiplier;
+                this.electrifiedPinchesRemaining--;
+                console.log(`⚡👅 ELECTRIFIED TONGUE STRIKE! ${this.electrifiedPinchesRemaining} remaining`);
             }
+            
+            // Apply damage
+            enemy.health -= damage;
+            console.log(`👅 Tongue strike hit ${enemy.type}! Damage: ${damage} (${isElectrified ? 'ELECTRIFIED x4' : 'normal'}), HP: ${enemy.health}/${enemy.maxHealth}`);
+            
+            // Show damage feedback
+            this.showDamageFeedback(enemy, damage, isElectrified);
+            
+            // Remove enemy if dead
+            if (enemy.health <= 0) {
+                console.log(`💀 ${enemy.type} defeated by tongue strike!`);
+                this.enemies.splice(0, 1);
+                this.showDefeatFeedback(enemy);
+            }
+            
+            // Show tongue strike feedback at enemy position
+            this.showTongueStrikeFeedback(enemy, false, isElectrified);
         }
     }
 
