@@ -2222,7 +2222,7 @@ class CollectiblesGame {
         
         for (let i = this.collectibles.length - 1; i >= 0; i--) {
             const item = this.collectibles[i];
-            const dist = this.calculateDistance(position, item);
+            const dist = this.distance(position, item);
             
             if (dist < grabDistance) {
                 // Collect the item
@@ -2243,7 +2243,7 @@ class CollectiblesGame {
             
             for (let i = this.enemies.length - 1; i >= 0; i--) {
                 const enemy = this.enemies[i];
-                const dist = this.calculateDistance(position, enemy);
+                const dist = this.distance(position, enemy);
                 
                 if (dist < hitDistance) {
                     // Calculate damage (works like an electrified pinch if shock touch is active)
