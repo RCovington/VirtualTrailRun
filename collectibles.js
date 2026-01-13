@@ -2253,14 +2253,10 @@ class CollectiblesGame {
             enemy.health -= damage;
             console.log(`👅 Tongue strike hit ${enemy.type}! Damage: ${damage} (${isElectrified ? 'ELECTRIFIED x4' : 'normal'}), HP: ${enemy.health}/${enemy.maxHealth}`);
             
-            // Show damage feedback
-            this.showDamageFeedback(enemy, damage, isElectrified);
-            
             // Remove enemy if dead
             if (enemy.health <= 0) {
                 console.log(`💀 ${enemy.type} defeated by tongue strike!`);
                 this.enemies.splice(0, 1);
-                this.showDefeatFeedback(enemy);
             }
             
             // Show tongue strike feedback at enemy position
