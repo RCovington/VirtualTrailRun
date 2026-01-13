@@ -2224,8 +2224,7 @@ class CollectiblesGame {
             const item = this.collectibles[0];
             
             // Collect the item
-            this.collectItem(item);
-            this.collectibles.splice(0, 1);
+            this.collectCollectible(item, 0);
             itemCollected = true;
             console.log(`👅✨ Tongue grabbed ${item.type.name}!`);
             
