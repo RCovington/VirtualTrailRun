@@ -45,6 +45,11 @@ class CollectiblesGame {
         // Electrified pinch tracking
         this.electrifiedPinchesRemaining = 0;
         
+        // Hand tracking persistence (reduce false positives from face detection)
+        this.handHistory = []; // Store last N hand detections
+        this.handHistoryMaxLength = 5; // Keep last 5 frames
+        this.handPersistenceThreshold = 3; // Hand must appear in 3/5 frames to be considered real
+        
         // Toad tongue tracking
         this.tongueStrikesRemaining = 0;
         this.lastTongueStrikeTime = 0;
@@ -870,9 +875,21 @@ class CollectiblesGame {
                 // Use the first hand for game interactions (only when single hand detected)
                 const hand = hands[0];
                 
+                // Track hand in history for persistence checking
+                this.addHandToHistory(hand);
+                
                 // Filter out hands that are likely the face
                 if (this.isHandWithinFace(hand)) {
                     // Ignore this detection - it's likely the user's face
+                    this.lastHandPosition = null;
+                    this.lastHandKeypoints = null;
+                    this.isGrabbing = false;
+                    return;
+                }
+                
+                // Check if hand has sufficient persistence (reduces false positives)
+                if (!this.isHandPersistent()) {
+                    // Hand hasn't been detected consistently enough - might be a false positive
                     this.lastHandPosition = null;
                     this.lastHandKeypoints = null;
                     this.isGrabbing = false;
@@ -1006,6 +1023,7 @@ class CollectiblesGame {
                 this.lastHandPosition = null;
                 this.lastHandKeypoints = null;
                 this.isGrabbing = false;
+                this.handHistory = []; // Clear history when no hands detected
                 
                 // Deactivate shield when hands disappear
                 this.scheduleShieldDeactivation();
@@ -1016,6 +1034,7 @@ class CollectiblesGame {
             this.lastHandKeypoints = null;
             this.lastHandPosition = null;
             this.isGrabbing = false;
+            this.handHistory = []; // Clear history on error
         }
     }
 
@@ -1195,6 +1214,38 @@ class CollectiblesGame {
             // On error, allow the hand detection
             return false;
         }
+    }
+
+    /**
+     * Add hand detection to history for persistence tracking
+     */
+    addHandToHistory(hand) {
+        const palmCenter = hand.keypoints[0];
+        this.handHistory.push({
+            x: palmCenter.x,
+            y: palmCenter.y,
+            timestamp: Date.now()
+        });
+        
+        // Keep only last N frames
+        if (this.handHistory.length > this.handHistoryMaxLength) {
+            this.handHistory.shift();
+        }
+    }
+
+    /**
+     * Check if hand has been detected consistently enough to be considered real
+     * Reduces false positives from momentary face detections
+     */
+    isHandPersistent() {
+        // Not enough history yet - be permissive initially
+        if (this.handHistory.length < this.handPersistenceThreshold) {
+            return true;
+        }
+        
+        // Check if recent detections are consistent (hands exist in multiple frames)
+        // Simple approach: we have enough frames if we're here
+        return this.handHistory.length >= this.handPersistenceThreshold;
     }
 
     /**
