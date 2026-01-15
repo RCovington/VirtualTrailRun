@@ -35,6 +35,7 @@ class VirtualTrailRunApp {
         
         // Shield system
         this.shieldActive = false;
+        this.shieldLevel = 0; // Shield level (0 = none, 1 = buckler, 2+= future shields)
         this.shieldStrength = 0; // Current shield points
         this.maxShield = 50; // Maximum shield capacity
         
@@ -901,6 +902,17 @@ class VirtualTrailRunApp {
      * Take damage (reduces health)
      */
     takeDamage(amount) {
+        const originalAmount = amount;
+        
+        // If shield is active, reduce damage based on shield level
+        if (this.shieldActive && this.shieldLevel > 0) {
+            const damageReduction = this.shieldLevel * 0.1; // 10% per level
+            const reducedAmount = amount * (1 - damageReduction);
+            const blocked = amount - reducedAmount;
+            amount = reducedAmount;
+            console.log(`🛡️ Shield (Level ${this.shieldLevel}) blocked ${blocked.toFixed(1)} damage (${(damageReduction * 100).toFixed(0)}% reduction)! ${originalAmount.toFixed(1)} → ${amount.toFixed(1)}`);
+        }
+        
         // Shield absorbs damage first
         if (this.shieldStrength > 0) {
             const shieldAbsorbed = Math.min(this.shieldStrength, amount);
@@ -910,6 +922,7 @@ class VirtualTrailRunApp {
             
             if (this.shieldStrength <= 0) {
                 this.shieldActive = false;
+                this.shieldLevel = 0;
                 console.log('🛡️ Shield depleted!');
                 
                 // Hide shield visual
@@ -935,13 +948,14 @@ class VirtualTrailRunApp {
     /**
      * Activate shield (from fist + elbow gesture)
      */
-    activateShield() {
-        console.log(`🛡️ activateShield() called. shieldActive=${this.shieldActive}, element exists=${!!this.elements.shieldVisual}`);
+    activateShield(shieldLevel = 0) {
+        console.log(`🛡️ activateShield() called. shieldLevel=${shieldLevel}, shieldActive=${this.shieldActive}, element exists=${!!this.elements.shieldVisual}`);
         
         // Always set shield active and show visual, even if already active
         this.shieldActive = true;
+        this.shieldLevel = shieldLevel; // Store shield level for damage reduction
         this.shieldStrength = this.maxShield;
-        console.log(`🛡️ Shield activated! Strength: ${this.shieldStrength}/${this.maxShield}`);
+        console.log(`🛡️ Shield activated! Level: ${shieldLevel}, Strength: ${this.shieldStrength}/${this.maxShield}`);
         this.updateStatBars();
         
         // Show shield visual - always ensure it's visible
@@ -960,6 +974,7 @@ class VirtualTrailRunApp {
     deactivateShield() {
         if (this.shieldActive) {
             this.shieldActive = false;
+            this.shieldLevel = 0;
             this.shieldStrength = 0;
             console.log('🛡️ Shield deactivated');
             this.updateStatBars();

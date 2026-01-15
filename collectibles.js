@@ -69,6 +69,9 @@ class CollectiblesGame {
             'buckler': 0
         };
         
+        // Track equipped shield (buckler = level 1)
+        this.equippedShield = null; // Will be set to 'buckler' when acquired
+        
         // Potion inventory
         this.potions = {
             'healing': 0,
@@ -723,6 +726,7 @@ class CollectiblesGame {
                     
                     // Award buckler shield armor
                     this.armor.buckler++;
+                    this.equippedShield = 'buckler'; // Auto-equip when acquired
                     console.log(`🛡️ LEGENDARY REWARD: Buckler Shield acquired!`);
                     this.updateInventoryDisplay();
                     
@@ -1520,10 +1524,12 @@ class CollectiblesGame {
                 this.shieldDeactivateTimer = null;
             }
             
-            // Activate shield
+            // Activate shield with level based on equipped shield
             const app = window.app;
             if (app && app.activateShield) {
-                app.activateShield();
+                // Get shield level (buckler = 1, future shields can be higher)
+                const shieldLevel = this.equippedShield === 'buckler' ? 1 : 0;
+                app.activateShield(shieldLevel);
             }
             return true;
         }
