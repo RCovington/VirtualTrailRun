@@ -2060,44 +2060,28 @@ class CollectiblesGame {
         
         console.log(`🔥 Casting fireball! Magic: ${app.magic}/${app.maxMagic}`);
         
-        // Calculate trajectory
-        let vx = 400; // Default: travels right
-        let vy = 0;
-        let damage = 50; // Default damage if no enemy
-        
+        // If there's an enemy on screen, instantly hit them (like tongue strike)
         if (this.enemies.length > 0) {
-            // Target first enemy
             const enemy = this.enemies[0];
-            const dx = enemy.x - startX;
-            const dy = enemy.y - startY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const damage = enemy.maxHealth * 0.4; // 40% damage
             
-            // Normalize and scale to speed
-            const speed = 500;
-            vx = (dx / distance) * speed;
-            vy = (dy / distance) * speed;
-            damage = enemy.maxHealth * 0.4; // 40% damage
+            enemy.health = Math.max(0, enemy.health - damage);
+            console.log(`🔥 Fireball hit ${enemy.type}! Damage: ${damage.toFixed(1)}, Remaining health: ${enemy.health.toFixed(1)}`);
             
-            console.log(`🎯 Fireball aimed at enemy: (${enemy.x.toFixed(0)}, ${enemy.y.toFixed(0)})`);
+            // Show impact animation at enemy location
+            this.showFireballImpactFeedback(enemy.x, enemy.y, damage);
+            
+            // Remove enemy if dead
+            if (enemy.health <= 0) {
+                console.log(`💀 ${enemy.type} defeated by fireball!`);
+                this.enemies.splice(0, 1);
+            }
         } else {
-            console.log('🔥 No enemies - fireball travels straight right');
+            console.log('🔥 No enemies on screen - fireball cast but no target');
         }
         
-        // Create fireball projectile
-        const fireball = {
-            x: startX,
-            y: startY,
-            vx: vx,
-            vy: vy,
-            size: 40,
-            createdAt: now,
-            lifetime: 2000, // 2 seconds
-            damage: damage
-        };
-        
-        this.fireballProjectiles.push(fireball);
         this.showFireballCastFeedback(startX, startY);
-        console.log(`✅ Fireball projectile created at (${startX.toFixed(0)}, ${startY.toFixed(0)})`);
+        console.log(`✅ Fireball cast complete`);
     }
 
     /**
