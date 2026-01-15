@@ -3209,7 +3209,7 @@ class CollectiblesGame {
                 name: 'Buckler Shield',
                 emoji: '🛡️',
                 count: this.armor.buckler,
-                description: 'Blocks enemy attacks with closed fist + elbow gesture'
+                description: 'Blocks enemy attacks with two closed fists gesture'
             });
         }
         
