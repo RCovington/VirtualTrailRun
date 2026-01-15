@@ -912,6 +912,11 @@ class VirtualTrailRunApp {
             xpText.textContent = `${this.xp}/${this.xpForNextLevel} XP`;
         }
         
+        // Update attribute points button if level display exists
+        if (levelDisplay) {
+            this.updateAttributePointsButton();
+        }
+        
         if (this.elements.shieldBar) {
             const shieldPercent = (this.shieldStrength / this.maxShield) * 100;
             this.elements.shieldBar.style.width = `${shieldPercent}%`;
