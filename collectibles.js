@@ -2795,6 +2795,17 @@ class CollectiblesGame {
             counter.style.cursor = 'pointer';
             counter.addEventListener('click', () => this.openInventory());
         }
+        
+        // Add click handler to bolt counter to open inventory on weapons tab
+        const boltCounter = document.querySelector('.bolt-counter');
+        if (boltCounter) {
+            boltCounter.style.cursor = 'pointer';
+            boltCounter.addEventListener('click', () => {
+                this.openInventory();
+                // Switch to weapons tab after a brief delay to ensure panel is open
+                setTimeout(() => this.switchTab('weapons'), 50);
+            });
+        }
     }
 
     /**

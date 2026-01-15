@@ -979,7 +979,7 @@ body:not(.debug-mode) .header {
 .bolt-counter {
     position: absolute;
     top: 20px;
-    left: 190px;
+    left: 140px;
     background: rgba(80, 45, 22, 0.9);
     border: 2px solid #8B4513;
     border-radius: 8px;
@@ -993,6 +993,7 @@ body:not(.debug-mode) .header {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     pointer-events: auto;
+    cursor: pointer;
     z-index: 10;
 }
 
