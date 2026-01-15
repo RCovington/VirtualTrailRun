@@ -2295,14 +2295,14 @@ class CollectiblesGame {
             }
             
             // Show tongue strike feedback at enemy position
-            this.showTongueStrikeFeedback(enemy, false, isElectrified);
+            this.showTongueStrikeFeedback(enemy, false, isElectrified, damage);
         }
     }
 
     /**
      * Show visual feedback for tongue strike
      */
-    showTongueStrikeFeedback(position, isCollect, isElectrified = false) {
+    showTongueStrikeFeedback(position, isCollect, isElectrified = false, damage = 0) {
         const feedback = document.createElement('div');
         feedback.className = 'tongue-strike-feedback';
         
@@ -2310,11 +2310,11 @@ class CollectiblesGame {
             feedback.textContent = '👅✨';
             feedback.style.color = '#10B981';
         } else if (isElectrified) {
-            feedback.textContent = '⚡👅⚡';
+            feedback.textContent = `⚡👅⚡ ${Math.round(damage)}`;
             feedback.style.color = '#FFFF00';
             feedback.style.textShadow = '0 0 20px #00FFFF, 0 0 40px #FFFF00';
         } else {
-            feedback.textContent = '👅💥';
+            feedback.textContent = `👅💥 ${Math.round(damage)}`;
             feedback.style.color = '#EF4444';
         }
         
