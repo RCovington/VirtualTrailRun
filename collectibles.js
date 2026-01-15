@@ -370,7 +370,7 @@ class CollectiblesGame {
             maxHealth: 100,
             state: 'idle', // idle, rearing, attacking
             attackCount: 0,
-            maxAttacks: this.getRandomInt(3, 6),
+            maxAttacks: this.getRandomInt(6, 12), // Doubled from 3-6 to 6-12
             lastAttackTime: Date.now(),
             nextAttackDelay: this.getRandomInt(2000, 7000),
             rearingStartTime: 0,
