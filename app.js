@@ -33,6 +33,18 @@ class VirtualTrailRunApp {
         this.level = 0; // Current level (0 = no level yet)
         this.xpForNextLevel = 100; // XP needed for level 1
         
+        // D20 Character Attributes
+        this.attributes = {
+            strength: 10,     // STR - affects damage
+            dexterity: 10,    // DEX - affects dodge/accuracy
+            constitution: 10, // CON - affects max health
+            intelligence: 10, // INT - affects magic power
+            wisdom: 10,       // WIS - affects magic regeneration
+            charisma: 10      // CHA - affects collectible drop rates
+        };
+        this.availableAttributePoints = 0; // Points to distribute
+        this.attributePointsPerLevel = 2; // Standard D20 system
+        
         // Shield system
         this.shieldActive = false;
         this.shieldLevel = 0; // Shield level (0 = none, 1 = buckler, 2+= future shields)
@@ -89,7 +101,9 @@ class VirtualTrailRunApp {
             collectiblesContainer: document.getElementById('collectiblesContainer'),
             shieldVisual: document.getElementById('shieldVisual'),
             daggerVisual: document.getElementById('daggerVisual'),
-            trackingPanel: document.querySelector('.tracking-panel')
+            trackingPanel: document.querySelector('.tracking-panel'),
+            attributePointsButton: null, // Will be created dynamically
+            characterPanel: null // Will be created dynamically
         };
     }
 
@@ -834,6 +848,13 @@ class VirtualTrailRunApp {
         console.log(`🎉 LEVEL UP! Now level ${this.level}! Max Health: ${oldMaxHealth} → ${this.maxHealth}, Max Magic: ${oldMaxMagic} → ${this.maxMagic}`);
         console.log(`📊 Next level at ${this.xpForNextLevel} XP`);
         
+        // Award attribute points every 4 levels (D20 standard)
+        if (this.level % 4 === 0) {
+            this.availableAttributePoints += this.attributePointsPerLevel;
+            console.log(`⭐ ATTRIBUTE POINTS! You have ${this.availableAttributePoints} points to distribute!`);
+            this.updateAttributePointsButton();
+        }
+        
         // Show level up feedback
         this.showLevelUpFeedback();
     }
@@ -1182,6 +1203,224 @@ class VirtualTrailRunApp {
         } catch (error) {
             console.error('Error saving workout:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Update or create the attribute points button
+     */
+    updateAttributePointsButton() {
+        if (!this.elements.attributePointsButton) {
+            // Create button if it doesn't exist
+            const button = document.createElement('button');
+            button.id = 'attributePointsButton';
+            button.className = 'attribute-points-button';
+            button.innerHTML = `⭐ <span id="attributePointsCount">${this.availableAttributePoints}</span>`;
+            button.title = 'Distribute Attribute Points';
+            button.onclick = () => this.openCharacterPanel();
+            
+            // Insert after level display in inventory
+            const levelDisplay = document.getElementById('levelDisplay');
+            if (levelDisplay && levelDisplay.parentElement) {
+                levelDisplay.parentElement.appendChild(button);
+            }
+            
+            this.elements.attributePointsButton = button;
+        } else {
+            // Update count
+            const countSpan = document.getElementById('attributePointsCount');
+            if (countSpan) {
+                countSpan.textContent = this.availableAttributePoints;
+            }
+        }
+        
+        // Show/hide based on available points
+        if (this.elements.attributePointsButton) {
+            this.elements.attributePointsButton.style.display = 
+                this.availableAttributePoints > 0 ? 'inline-block' : 'none';
+        }
+    }
+
+    /**
+     * Open the character panel
+     */
+    openCharacterPanel() {
+        if (this.elements.characterPanel) {
+            this.elements.characterPanel.style.display = 'flex';
+            return;
+        }
+        
+        // Create character panel
+        const panel = document.createElement('div');
+        panel.id = 'characterPanel';
+        panel.className = 'character-panel';
+        
+        panel.innerHTML = `
+            <div class="character-panel-content">
+                <div class="character-panel-header">
+                    <h2>⚔️ Character Attributes</h2>
+                    <button class="character-panel-close" id="characterPanelClose">✕</button>
+                </div>
+                <div class="character-panel-body">
+                    <div class="attribute-points-display">
+                        Available Points: <span class="attribute-points-value">${this.availableAttributePoints}</span>
+                    </div>
+                    <div class="attributes-list">
+                        ${this.createAttributeRow('strength', 'STR', 'Increases physical damage')}
+                        ${this.createAttributeRow('dexterity', 'DEX', 'Improves accuracy and dodge')}
+                        ${this.createAttributeRow('constitution', 'CON', 'Increases maximum health')}
+                        ${this.createAttributeRow('intelligence', 'INT', 'Boosts magic power')}
+                        ${this.createAttributeRow('wisdom', 'WIS', 'Improves magic regeneration')}
+                        ${this.createAttributeRow('charisma', 'CHA', 'Better collectible drops')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(panel);
+        this.elements.characterPanel = panel;
+        
+        // Add event listeners
+        document.getElementById('characterPanelClose').onclick = () => this.closeCharacterPanel();
+        panel.onclick = (e) => {
+            if (e.target === panel) this.closeCharacterPanel();
+        };
+        
+        // Add attribute button listeners
+        this.setupAttributeButtons();
+    }
+
+    /**
+     * Create HTML for an attribute row
+     */
+    createAttributeRow(attrName, attrShort, description) {
+        const value = this.attributes[attrName];
+        const modifier = Math.floor((value - 10) / 2);
+        const modifierStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
+        
+        return `
+            <div class="attribute-row">
+                <div class="attribute-info">
+                    <div class="attribute-name">${attrShort}</div>
+                    <div class="attribute-description">${description}</div>
+                </div>
+                <div class="attribute-controls">
+                    <button class="attribute-btn attribute-decrease" data-attr="${attrName}" ${value <= 8 ? 'disabled' : ''}>-</button>
+                    <div class="attribute-value-display">
+                        <span class="attribute-value">${value}</span>
+                        <span class="attribute-modifier">(${modifierStr})</span>
+                    </div>
+                    <button class="attribute-btn attribute-increase" data-attr="${attrName}" ${this.availableAttributePoints <= 0 ? 'disabled' : ''}>+</button>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Setup attribute increase/decrease buttons
+     */
+    setupAttributeButtons() {
+        const increaseButtons = document.querySelectorAll('.attribute-increase');
+        const decreaseButtons = document.querySelectorAll('.attribute-decrease');
+        
+        increaseButtons.forEach(btn => {
+            btn.onclick = () => {
+                const attr = btn.getAttribute('data-attr');
+                if (this.availableAttributePoints > 0 && this.attributes[attr] < 20) {
+                    this.attributes[attr]++;
+                    this.availableAttributePoints--;
+                    this.refreshCharacterPanel();
+                    this.updateAttributePointsButton();
+                    this.applyAttributeEffects();
+                }
+            };
+        });
+        
+        decreaseButtons.forEach(btn => {
+            btn.onclick = () => {
+                const attr = btn.getAttribute('data-attr');
+                if (this.attributes[attr] > 8) {
+                    this.attributes[attr]--;
+                    this.availableAttributePoints++;
+                    this.refreshCharacterPanel();
+                    this.updateAttributePointsButton();
+                    this.applyAttributeEffects();
+                }
+            };
+        });
+    }
+
+    /**
+     * Refresh the character panel display
+     */
+    refreshCharacterPanel() {
+        const panel = this.elements.characterPanel;
+        if (!panel) return;
+        
+        // Update available points
+        const pointsDisplay = panel.querySelector('.attribute-points-value');
+        if (pointsDisplay) {
+            pointsDisplay.textContent = this.availableAttributePoints;
+        }
+        
+        // Update each attribute row
+        Object.keys(this.attributes).forEach(attrName => {
+            const value = this.attributes[attrName];
+            const modifier = Math.floor((value - 10) / 2);
+            const modifierStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
+            
+            const row = panel.querySelector(`[data-attr="${attrName}"]`)?.closest('.attribute-row');
+            if (row) {
+                const valueSpan = row.querySelector('.attribute-value');
+                const modifierSpan = row.querySelector('.attribute-modifier');
+                const increaseBtn = row.querySelector('.attribute-increase');
+                const decreaseBtn = row.querySelector('.attribute-decrease');
+                
+                if (valueSpan) valueSpan.textContent = value;
+                if (modifierSpan) modifierSpan.textContent = `(${modifierStr})`;
+                if (increaseBtn) increaseBtn.disabled = this.availableAttributePoints <= 0 || value >= 20;
+                if (decreaseBtn) decreaseBtn.disabled = value <= 8;
+            }
+        });
+    }
+
+    /**
+     * Apply attribute effects to character stats
+     */
+    applyAttributeEffects() {
+        // Constitution affects max health (10 HP per point above 10)
+        const conMod = this.attributes.constitution - 10;
+        const baseMaxHealth = 100;
+        const newMaxHealth = baseMaxHealth + (conMod * 10);
+        
+        if (newMaxHealth !== this.maxHealth) {
+            const healthRatio = this.health / this.maxHealth;
+            this.maxHealth = newMaxHealth;
+            this.health = Math.min(this.maxHealth, Math.floor(this.maxHealth * healthRatio));
+            this.updateStatBars();
+            console.log(`💪 Constitution bonus! Max Health: ${this.maxHealth}`);
+        }
+        
+        // Intelligence affects max magic (10 magic per point above 10)
+        const intMod = this.attributes.intelligence - 10;
+        const baseMaxMagic = 100;
+        const newMaxMagic = baseMaxMagic + (intMod * 10);
+        
+        if (newMaxMagic !== this.maxMagic) {
+            const magicRatio = this.magic / this.maxMagic;
+            this.maxMagic = newMaxMagic;
+            this.magic = Math.min(this.maxMagic, Math.floor(this.maxMagic * magicRatio));
+            this.updateStatBars();
+            console.log(`🧙 Intelligence bonus! Max Magic: ${this.maxMagic}`);
+        }
+    }
+
+    /**
+     * Close the character panel
+     */
+    closeCharacterPanel() {
+        if (this.elements.characterPanel) {
+            this.elements.characterPanel.style.display = 'none';
         }
     }
 }
