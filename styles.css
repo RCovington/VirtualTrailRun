@@ -1073,7 +1073,7 @@ body:not(.debug-mode) .header {
 /* ===== Game Mode Toggle ===== */
 .game-mode-toggle {
     position: absolute;
-    bottom: 20px;
+    bottom: 80px;
     right: 20px;
     z-index: 1000;
     background: rgba(0, 0, 0, 0.7);
