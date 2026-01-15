@@ -3027,6 +3027,7 @@ class CollectiblesGame {
                     <button class="brew-btn-compact" data-recipe="mana" ${canBrewMana ? '' : 'disabled'}>Brew</button>
                 </div>
             </div>
+            <!--
             <div class="brew-recipe-compact">
                 <div class="brew-recipe-line">
                     <h4>👅 Toad Tongue</h4>
@@ -3038,6 +3039,7 @@ class CollectiblesGame {
                     <button class="brew-btn-compact" data-recipe="toadtongue" ${canBrewToadTongue ? '' : 'disabled'}>Brew</button>
                 </div>
             </div>
+            -->
         `;
         
         // Add brew button handlers
