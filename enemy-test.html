@@ -257,16 +257,23 @@
                 this.sequenceTimeout = null;
                 this.sequenceStartTime = null;
                 
-                // Define the full enemy sequence with timings
+                // Position animation
+                this.enemyX = 0.5; // Normalized position (0 = left, 0.5 = center, 1 = right)
+                this.targetX = 0.5;
+                this.positionTransitionStart = null;
+                this.positionTransitionDuration = 0;
+                this.positionStartX = 0.5;
+                
+                // Define the full enemy sequence with timings and positions
                 this.enemySequence = [
-                    { name: 'approaching', duration: 3000, label: 'Enemy approaching (3s)' },
-                    { name: 'pacing', duration: 2000, label: 'Pacing/Idle (2s)' },
-                    { name: 'menacing', duration: 2000, label: 'Menacing/Rearing (2s)' },
-                    { name: 'attack1', duration: 1500, label: 'Attack 1 (1.5s)' },
-                    { name: 'pacing', duration: 1000, label: 'Recovery pacing (1s)' },
-                    { name: 'attack2', duration: 1500, label: 'Attack 2 (1.5s)' },
-                    { name: 'menacing', duration: 1500, label: 'Final menacing (1.5s)' },
-                    { name: 'leaving', duration: 3000, label: 'Enemy leaving (3s)' }
+                    { name: 'approaching', duration: 3000, label: 'Enemy approaching (3s)', startPos: 0, endPos: 0.5 },
+                    { name: 'pacing', duration: 2000, label: 'Pacing/Idle (2s)', startPos: 0.5, endPos: 0.5 },
+                    { name: 'menacing', duration: 2000, label: 'Menacing/Rearing (2s)', startPos: 0.5, endPos: 0.5 },
+                    { name: 'attack1', duration: 1500, label: 'Attack 1 (1.5s)', startPos: 0.5, endPos: 0.5 },
+                    { name: 'pacing', duration: 1000, label: 'Recovery pacing (1s)', startPos: 0.5, endPos: 0.5 },
+                    { name: 'attack2', duration: 1500, label: 'Attack 2 (1.5s)', startPos: 0.5, endPos: 0.5 },
+                    { name: 'menacing', duration: 1500, label: 'Final menacing (1.5s)', startPos: 0.5, endPos: 0.5 },
+                    { name: 'leaving', duration: 3000, label: 'Enemy leaving (3s)', startPos: 0.5, endPos: 1 }
                 ];
                 
                 this.init();
@@ -348,7 +355,26 @@
                 buttons.forEach(btn => {
                     btn.addEventListener('click', () => {
                         const state = btn.dataset.state;
-                        this.setAnimation(state);
+                        
+                        // Set position based on animation state
+                        let targetPosition = 0.5; // Default to center
+                        if (state === 'approaching') {
+                            targetPosition = 0; // Start from left
+                            this.setPosition(targetPosition, 0); // Set to left instantly
+                            this.setAnimation(state);
+                            // Then animate to center
+                            setTimeout(() => this.setPosition(0.5, 3000), 50);
+                        } else if (state === 'leaving') {
+                            targetPosition = 0.5; // Start from center
+                            this.setPosition(targetPosition, 0);
+                            this.setAnimation(state);
+                            // Then animate to right
+                            setTimeout(() => this.setPosition(1, 3000), 50);
+                        } else {
+                            // For other animations, move to center
+                            this.setPosition(0.5, 500); // Quick move to center
+                            this.setAnimation(state);
+                        }
                         
                         // Update button states
                         buttons.forEach(b => b.classList.remove('active'));
@@ -470,6 +496,11 @@
                 document.getElementById('sequenceProgress').textContent = 
                     `Step ${stepIndex + 1}/${this.enemySequence.length}: ${step.label} (${(elapsedTime/1000).toFixed(1)}s elapsed)`;
                 
+                // Animate position for this step
+                if (step.startPos !== undefined && step.endPos !== undefined) {
+                    this.setPosition(step.endPos, step.duration);
+                }
+                
                 // Play this animation
                 this.setAnimation(step.name, false); // false = don't update UI buttons
                 
@@ -502,11 +533,16 @@
                 timelineDetails.innerHTML = html;
             }
             
-            setAnimation(animationName, updateUI = true) {
+            setAnimation(animationName, updateUI = true, targetPosition = null) {
                 // Stop current animation
                 if (this.currentAnimation && this.ratVideos[this.currentAnimation]) {
                     const currentVideo = this.ratVideos[this.currentAnimation];
                     currentVideo.pause();
+                }
+                
+                // Handle position if provided (for manual testing)
+                if (targetPosition !== null) {
+                    this.setPosition(targetPosition, 0); // Instant position change for manual testing
                 }
                 
                 // Determine which video to play
@@ -549,8 +585,41 @@
                 }
             }
             
+            setPosition(targetX, duration = 0) {
+                this.positionStartX = this.enemyX;
+                this.targetX = targetX;
+                this.positionTransitionStart = duration > 0 ? Date.now() : null;
+                this.positionTransitionDuration = duration;
+                
+                if (duration === 0) {
+                    this.enemyX = targetX;
+                }
+            }
+            
+            updatePosition() {
+                if (this.positionTransitionStart === null || this.positionTransitionDuration === 0) {
+                    return;
+                }
+                
+                const elapsed = Date.now() - this.positionTransitionStart;
+                const progress = Math.min(elapsed / this.positionTransitionDuration, 1);
+                
+                // Ease-in-out function for smooth movement
+                const easeProgress = progress < 0.5 
+                    ? 2 * progress * progress 
+                    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                
+                this.enemyX = this.positionStartX + (this.targetX - this.positionStartX) * easeProgress;
+                
+                if (progress >= 1) {
+                    this.enemyX = this.targetX;
+                    this.positionTransitionStart = null;
+                }
+            }
+            
             startAnimationLoop() {
                 const draw = () => {
+                    this.updatePosition();
                     this.draw();
                     this.animationFrame = requestAnimationFrame(draw);
                 };
@@ -583,8 +652,8 @@
                     return;
                 }
                 
-                // Draw video centered on canvas
-                const centerX = this.canvas.width / 2;
+                // Calculate position based on enemyX (0 to 1)
+                const canvasX = this.enemyX * this.canvas.width;
                 const centerY = this.canvas.height / 2;
                 
                 // Calculate size maintaining aspect ratio
@@ -602,10 +671,10 @@
                     this.ctx.shadowBlur = 0;
                 }
                 
-                // Draw video
+                // Draw video at calculated position
                 this.ctx.drawImage(
                     video,
-                    centerX - videoWidth / 2,
+                    canvasX - videoWidth / 2,
                     centerY - videoHeight / 2,
                     videoWidth,
                     videoHeight
@@ -620,7 +689,12 @@
                 this.ctx.font = 'bold 14px Arial';
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'top';
-                this.ctx.fillText(this.currentAnimation, centerX, centerY + videoHeight / 2 + 10);
+                this.ctx.fillText(this.currentAnimation, canvasX, centerY + videoHeight / 2 + 10);
+                
+                // Draw position indicator
+                this.ctx.fillStyle = '#666';
+                this.ctx.font = '10px Arial';
+                this.ctx.fillText(`Position: ${(this.enemyX * 100).toFixed(0)}%`, canvasX, 20);
             }
         }
         
