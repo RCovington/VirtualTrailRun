@@ -343,7 +343,8 @@
             
             saveSequences() {
                 localStorage.setItem('enemySequences', JSON.stringify(this.sequences));
-                this.showStatus('Sequences saved!', 'success');
+                console.log('Saved sequences to localStorage:', this.sequences.length, 'sequences');
+                this.showStatus(`✅ Saved ${this.sequences.length} sequence(s) to localStorage!`, 'success');
             }
             
             createNewSequence() {
@@ -354,8 +355,10 @@
                         steps: []
                     });
                     this.currentSequenceIndex = this.sequences.length - 1;
+                    console.log('Created new sequence:', name);
                     this.saveSequences();
                     this.render();
+                    this.showStatus(`✅ Created new sequence: "${name}"`, 'success');
                 }
             }
             
@@ -382,8 +385,10 @@
                     duration
                 });
                 
+                console.log('Added step:', animation, 'to sequence:', this.sequences[this.currentSequenceIndex].name);
                 this.saveSequences();
                 this.render();
+                this.showStatus(`✅ Step added to ${this.sequences[this.currentSequenceIndex].name}`, 'success');
             }
             
             removeStep(stepIndex) {
@@ -406,15 +411,20 @@
             }
             
             saveCurrentSequence() {
-                if (this.currentSequenceIndex < 0) return;
+                if (this.currentSequenceIndex < 0) {
+                    this.showStatus('⚠️ Please select a sequence first', 'error');
+                    return;
+                }
                 
                 const name = document.getElementById('sequenceName').value;
                 if (name) {
                     this.sequences[this.currentSequenceIndex].name = name;
                 }
                 
+                console.log('Saving sequence:', this.sequences[this.currentSequenceIndex].name);
                 this.saveSequences();
                 this.render();
+                this.showStatus(`✅ Sequence "${this.sequences[this.currentSequenceIndex].name}" saved!`, 'success');
             }
             
             deleteSequence(index) {
@@ -429,6 +439,7 @@
             }
             
             exportSequences() {
+                console.log('Exporting sequences:', this.sequences);
                 const json = JSON.stringify(this.sequences, null, 2);
                 document.getElementById('jsonOutput').value = json;
                 
@@ -441,7 +452,7 @@
                 a.click();
                 URL.revokeObjectURL(url);
                 
-                this.showStatus('Sequences exported!', 'success');
+                this.showStatus(`✅ Exported ${this.sequences.length} sequence(s)!`, 'success');
             }
             
             importSequences() {
