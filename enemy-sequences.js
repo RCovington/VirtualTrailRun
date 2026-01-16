@@ -4,6 +4,22 @@
 
 const ENEMY_SEQUENCES = {
     rat: [
+        // Default sequence - rat_sequence_2 - balanced encounter
+        {
+            name: 'rat_sequence_2',
+            steps: [
+                { animation: 'approaching', startPos: 0, endPos: 50, duration: 3000 },
+                { animation: 'pacing', startPos: 50, endPos: 50, duration: 1800 },
+                { animation: 'menacing', startPos: 50, endPos: 50, duration: 1600 },
+                { animation: 'attack1', startPos: 50, endPos: 50, duration: 1200 },
+                { animation: 'pacing', startPos: 50, endPos: 50, duration: 1200 },
+                { animation: 'attack2', startPos: 50, endPos: 50, duration: 1200 },
+                { animation: 'pacing', startPos: 50, endPos: 50, duration: 1000 },
+                { animation: 'attack1', startPos: 50, endPos: 50, duration: 1200 },
+                { animation: 'leaving', startPos: 50, endPos: 100, duration: 3000 }
+            ]
+        },
+        
         // Aggressive sequence - quick attacks
         {
             name: 'rat_aggressive',
