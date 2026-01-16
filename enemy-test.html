@@ -656,14 +656,30 @@
                     return;
                 }
                 
-                // Calculate position based on enemyX (0 to 1)
-                const canvasX = this.enemyX * this.canvas.width;
-                const centerY = this.canvas.height / 2;
-                
                 // Calculate size maintaining aspect ratio
                 const videoAspectRatio = video.videoWidth / video.videoHeight;
                 const videoHeight = this.enemySize * 2;
                 const videoWidth = videoHeight * videoAspectRatio;
+                
+                // Calculate position based on enemyX (0 to 1)
+                // enemyX: 0 = fully off-screen left, 0.5 = center, 1 = fully off-screen right
+                // Map positions so video is never cut off
+                let canvasX;
+                if (this.enemyX <= 0.5) {
+                    // Moving from off-screen left to center
+                    // At 0: position at -videoWidth (fully hidden left)
+                    // At 0.5: position at canvas.width/2 (centered)
+                    const progress = this.enemyX / 0.5; // 0 to 1
+                    canvasX = -videoWidth + progress * (this.canvas.width / 2 + videoWidth);
+                } else {
+                    // Moving from center to off-screen right
+                    // At 0.5: position at canvas.width/2 (centered)
+                    // At 1: position at canvas.width + videoWidth (fully hidden right)
+                    const progress = (this.enemyX - 0.5) / 0.5; // 0 to 1
+                    canvasX = this.canvas.width / 2 + progress * (this.canvas.width / 2 + videoWidth);
+                }
+                
+                const centerY = this.canvas.height / 2;
                 
                 // Add glow effect for attack/rearing animations
                 if (this.currentAnimation === 'attack1' || this.currentAnimation === 'attack2' || 
@@ -688,29 +704,56 @@
                 this.ctx.shadowColor = 'transparent';
                 this.ctx.shadowBlur = 0;
                 
-                // Draw position track line at bottom to show movement
-                this.ctx.strokeStyle = '#333';
+                // Draw canvas boundary indicators to show visible area
+                this.ctx.strokeStyle = '#4ade80';
                 this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([5, 5]);
+                this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.setLineDash([]);
+                
+                // Draw position track line at bottom to show movement range
+                const trackY = this.canvas.height - 40;
+                const trackMargin = 50;
+                
+                // Background track (full range including off-screen)
+                this.ctx.strokeStyle = '#222';
+                this.ctx.lineWidth = 4;
                 this.ctx.beginPath();
-                this.ctx.moveTo(0, this.canvas.height - 30);
-                this.ctx.lineTo(this.canvas.width, this.canvas.height - 30);
+                this.ctx.moveTo(trackMargin, trackY);
+                this.ctx.lineTo(this.canvas.width - trackMargin, trackY);
+                this.ctx.stroke();
+                
+                // Visible area on track (center portion)
+                this.ctx.strokeStyle = '#4ade80';
+                this.ctx.lineWidth = 4;
+                this.ctx.beginPath();
+                const visibleStartX = trackMargin + (this.canvas.width - 2 * trackMargin) * 0.25;
+                const visibleEndX = trackMargin + (this.canvas.width - 2 * trackMargin) * 0.75;
+                this.ctx.moveTo(visibleStartX, trackY);
+                this.ctx.lineTo(visibleEndX, trackY);
                 this.ctx.stroke();
                 
                 // Draw position markers
                 this.ctx.fillStyle = '#555';
                 this.ctx.font = '10px Arial';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText('LEFT', 0, this.canvas.height - 35);
-                this.ctx.fillText('CENTER', this.canvas.width / 2, this.canvas.height - 35);
-                this.ctx.fillText('RIGHT', this.canvas.width, this.canvas.height - 35);
+                const labelY = trackY - 8;
+                this.ctx.fillText('OFF-LEFT', trackMargin, labelY);
+                this.ctx.fillText('VISIBLE AREA', this.canvas.width / 2, labelY);
+                this.ctx.fillText('OFF-RIGHT', this.canvas.width - trackMargin, labelY);
                 
                 // Draw current position indicator on track
+                const trackWidth = this.canvas.width - 2 * trackMargin;
+                const indicatorX = trackMargin + this.enemyX * trackWidth;
                 this.ctx.fillStyle = '#fbbf24';
                 this.ctx.beginPath();
-                this.ctx.arc(canvasX, this.canvas.height - 30, 8, 0, Math.PI * 2);
+                this.ctx.arc(indicatorX, trackY, 6, 0, Math.PI * 2);
                 this.ctx.fill();
+                this.ctx.strokeStyle = '#000';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
                 
-                // Draw label below
+                // Draw label below video
                 this.ctx.fillStyle = '#4ade80';
                 this.ctx.font = 'bold 14px Arial';
                 this.ctx.textAlign = 'center';
