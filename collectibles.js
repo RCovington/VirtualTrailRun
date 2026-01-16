@@ -412,11 +412,18 @@ class CollectiblesGame {
         // Position rat on the trail (1/3 from bottom, same as collectibles)
         const y = this.canvas.height * 0.67; // 1/3 from bottom
         
+        // Get initial position from first step if sequence exists
+        let initialPos = 0;
+        if (sequence && sequence.steps.length > 0) {
+            initialPos = sequence.steps[0].startPos;
+            console.log(`📍 Initial position from sequence: ${initialPos}`);
+        }
+        
         const enemy = {
             id: Date.now() + Math.random(),
             type: 'rat',
             emoji: '🐀',
-            x: -100, // Start off-screen left
+            x: -100, // Will be calculated from enemyX in updateEnemies
             y: y,
             size: 60,
             health: 100,
@@ -426,9 +433,9 @@ class CollectiblesGame {
             currentStepIndex: 0,
             stepStartTime: Date.now(),
             // Position animation
-            enemyX: 0, // Normalized position 0-100
-            targetX: 0,
-            positionStartX: 0,
+            enemyX: initialPos, // Normalized position 0-100, start at first step's startPos
+            targetX: initialPos,
+            positionStartX: initialPos,
             positionTransitionStart: 0,
             // Video playback
             currentVideo: null,
@@ -451,24 +458,43 @@ class CollectiblesGame {
      * Start a specific step in an enemy's sequence
      */
     startEnemyStep(enemy, stepIndex) {
-        if (!enemy.sequence || stepIndex >= enemy.sequence.steps.length) return;
+        if (!enemy.sequence || stepIndex >= enemy.sequence.steps.length) {
+            console.warn(`⚠️ Cannot start step ${stepIndex} - no sequence or index out of bounds`);
+            return;
+        }
         
         const step = enemy.sequence.steps[stepIndex];
         enemy.currentStepIndex = stepIndex;
         enemy.stepStartTime = Date.now();
         
         // Set position targets
-        enemy.positionStartX = enemy.enemyX;
+        // For first step, use step.startPos as current position
+        if (stepIndex === 0) {
+            enemy.enemyX = step.startPos;
+            enemy.positionStartX = step.startPos;
+        } else {
+            enemy.positionStartX = enemy.enemyX;
+        }
         enemy.targetX = step.endPos;
         enemy.positionTransitionStart = Date.now();
         
+        console.log(`▶️ Step ${stepIndex + 1}/${enemy.sequence.steps.length}: ${step.animation} (${step.startPos}→${step.endPos}) for ${step.duration}ms, enemyX=${enemy.enemyX}`);
+        
         // Start video for this animation
+        if (!this.videosLoaded) {
+            console.warn(`⚠️ Videos not loaded yet - cannot play ${step.animation}`);
+            return;
+        }
+        
         const video = this.ratVideos[step.animation];
         if (video) {
             enemy.currentVideo = step.animation;
             video.currentTime = 0;
+            video.loop = false; // Ensure videos don't loop during sequences
             video.play().catch(e => console.warn('Video play failed:', e));
-            console.log(`▶️ Step ${stepIndex + 1}/${enemy.sequence.steps.length}: ${step.animation} (${step.startPos}→${step.endPos}) for ${step.duration}ms`);
+            console.log(`🎬 Playing video: ${step.animation}`);
+        } else {
+            console.warn(`⚠️ Video not found for animation: ${step.animation}`);
         }
     }
 
@@ -851,6 +877,18 @@ class CollectiblesGame {
                     // Moving from center to right
                     const t = (enemy.enemyX - 50) / 50;
                     enemy.x = center + (rightEdge - center) * t;
+                }
+                
+                // Debug logging every 60 frames (~1 second)
+                if (!enemy.debugFrameCount) enemy.debugFrameCount = 0;
+                enemy.debugFrameCount++;
+                if (enemy.debugFrameCount % 60 === 0) {
+                    console.log(`🐀 Enemy position: enemyX=${enemy.enemyX.toFixed(1)}, x=${enemy.x.toFixed(1)}, step=${enemy.currentStepIndex + 1}/${enemy.sequence.steps.length}, progress=${(stepProgress * 100).toFixed(0)}%`);
+                // Debug logging every 60 frames (~1 second)
+                if (!enemy.debugFrameCount) enemy.debugFrameCount = 0;
+                enemy.debugFrameCount++;
+                if (enemy.debugFrameCount % 60 === 0) {
+                    console.log(`🐀 Enemy position: enemyX=${enemy.enemyX.toFixed(1)}, x=${enemy.x.toFixed(1)}, step=${enemy.currentStepIndex + 1}/${enemy.sequence.steps.length}, progress=${(stepProgress * 100).toFixed(0)}%`);
                 }
                 
                 // Check if step is complete
