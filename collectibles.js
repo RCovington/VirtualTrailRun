@@ -397,14 +397,20 @@ class CollectiblesGame {
         if (!this.canvas) return;
         
         // Position rat on the trail (1/3 from bottom, same as collectibles)
+        const startX = -100;
         const targetX = this.canvas.width * 0.5 + (Math.random() - 0.5) * 100;
         const y = this.canvas.height * 0.67; // 1/3 from bottom
+        
+        // Calculate approach speed based on video duration
+        const approachDistance = targetX - startX;
+        const approachDuration = this.ratVideos.approaching?.duration || 8; // Default 8s
+        const approachSpeed = approachDistance / approachDuration;
         
         const enemy = {
             id: Date.now() + Math.random(),
             type: 'rat',
             emoji: '🐀',
-            x: -100, // Start off-screen left
+            x: startX, // Start off-screen left
             y: y,
             targetX: targetX, // Where to move to
             initialX: targetX, // Store initial position for pacing
@@ -429,7 +435,8 @@ class CollectiblesGame {
             currentVideo: null,
             videoStartTime: 0,
             // Movement
-            approachSpeed: 150 // pixels per second
+            approachSpeed: approachSpeed,
+            leavingSpeed: 0 // Will be calculated when leaving starts
         };
         
         this.enemies.push(enemy);
@@ -443,21 +450,27 @@ class CollectiblesGame {
         if (!this.canvas || this.bossSpawned) return;
         
         // Position boss in center of screen
+        const startX = -200; // Boss starts further left
         const targetX = this.canvas.width * 0.5;
         const y = this.canvas.height * 0.67; // 1/3 from bottom
+        
+        // Calculate approach speed based on video duration
+        const approachDistance = targetX - startX;
+        const approachDuration = this.ratVideos.approaching?.duration || 8;
+        const approachSpeed = approachDistance / approachDuration;
         
         const boss = {
             id: Date.now() + Math.random(),
             type: 'boss',
             emoji: '🐀',
-            x: -100, // Start off-screen left
+            x: startX, // Start off-screen left
             y: y,
             targetX: targetX,
             initialX: targetX,
             size: 180, // 3x normal size (60 * 3)
             health: 1000, // 10x normal health (100 * 10)
             maxHealth: 1000,
-            state: 'idle',
+            state: 'approaching',
             attackCount: 0,
             maxAttacks: 999, // Boss fights until defeated
             lastAttackTime: Date.now(),
@@ -476,7 +489,8 @@ class CollectiblesGame {
             currentVideo: null,
             videoStartTime: 0,
             // Movement
-            approachSpeed: 100 // pixels per second (slower for boss)
+            approachSpeed: approachSpeed,
+            leavingSpeed: 0 // Will be calculated when leaving starts
         };
         
         this.enemies.push(boss);
@@ -780,6 +794,11 @@ class CollectiblesGame {
                 console.log(`🏃 Rat fleeing after ${enemy.attackCount} attacks`);
                 enemy.state = 'leaving';
                 enemy.leavingStartTime = now;
+                
+                // Calculate leaving speed based on video duration
+                const exitDistance = (this.canvas.width + 200) - enemy.x;
+                const leavingDuration = this.ratVideos.leaving?.duration || 8;
+                enemy.leavingSpeed = exitDistance / leavingDuration;
             }
             
             // Handle state machine
@@ -787,15 +806,23 @@ class CollectiblesGame {
                 // Move from left toward target position
                 enemy.x += enemy.approachSpeed * deltaTime;
                 
-                // Check if reached target
-                if (enemy.x >= enemy.targetX) {
+                // Check if reached target or video completed
+                const approachingVideo = this.ratVideos.approaching;
+                if (enemy.x >= enemy.targetX || (approachingVideo && approachingVideo.ended)) {
                     enemy.x = enemy.targetX;
                     enemy.state = 'idle';
                     console.log(`✅ Enemy reached position, entering combat`);
                 }
             } else if (enemy.state === 'leaving') {
+                // Calculate leaving speed if not set yet
+                if (!enemy.leavingSpeed) {
+                    const exitDistance = (this.canvas.width + 200) - enemy.x;
+                    const leavingDuration = this.ratVideos.leaving?.duration || 8;
+                    enemy.leavingSpeed = exitDistance / leavingDuration;
+                }
+                
                 // Move to the right off screen
-                enemy.x += enemy.approachSpeed * deltaTime;
+                enemy.x += enemy.leavingSpeed * deltaTime;
                 
                 // Remove when fully off screen
                 if (enemy.x > this.canvas.width + 200) {
