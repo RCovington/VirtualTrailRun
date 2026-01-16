@@ -811,7 +811,18 @@ class CollectiblesGame {
                 if (enemy.x >= enemy.targetX || (approachingVideo && approachingVideo.ended)) {
                     enemy.x = enemy.targetX;
                     enemy.state = 'idle';
-                    console.log(`✅ Enemy reached position, entering combat`);
+                    
+                    // Pre-select and start idle video immediately to avoid gap
+                    const idleVideo = Math.random() > 0.5 ? 'pacing' : 'menacing';
+                    enemy.currentVideo = idleVideo;
+                    enemy.lastIdleVideoChange = now;
+                    if (this.ratVideos[idleVideo]) {
+                        const video = this.ratVideos[idleVideo];
+                        video.currentTime = 0;
+                        video.play().catch(e => console.warn('Video play failed:', e));
+                    }
+                    
+                    console.log(`✅ Enemy reached position, entering combat with ${idleVideo} video`);
                 }
             } else if (enemy.state === 'leaving') {
                 // Calculate leaving speed if not set yet
