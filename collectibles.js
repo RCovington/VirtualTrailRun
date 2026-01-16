@@ -884,11 +884,6 @@ class CollectiblesGame {
                 enemy.debugFrameCount++;
                 if (enemy.debugFrameCount % 60 === 0) {
                     console.log(`🐀 Enemy position: enemyX=${enemy.enemyX.toFixed(1)}, x=${enemy.x.toFixed(1)}, step=${enemy.currentStepIndex + 1}/${enemy.sequence.steps.length}, progress=${(stepProgress * 100).toFixed(0)}%`);
-                // Debug logging every 60 frames (~1 second)
-                if (!enemy.debugFrameCount) enemy.debugFrameCount = 0;
-                enemy.debugFrameCount++;
-                if (enemy.debugFrameCount % 60 === 0) {
-                    console.log(`🐀 Enemy position: enemyX=${enemy.enemyX.toFixed(1)}, x=${enemy.x.toFixed(1)}, step=${enemy.currentStepIndex + 1}/${enemy.sequence.steps.length}, progress=${(stepProgress * 100).toFixed(0)}%`);
                 }
                 
                 // Check if step is complete

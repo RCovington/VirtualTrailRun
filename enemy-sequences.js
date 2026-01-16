@@ -33,6 +33,10 @@ const ENEMY_SEQUENCES = {
                 { animation: 'leaving', startPos: 50, endPos: 100, duration: 3000 }
             ]
         },
+        
+        // Aggressive sequence - fast attacks
+        {
+            name: 'rat_aggressive',
             steps: [
                 { animation: 'approaching', startPos: 0, endPos: 50, duration: 3000 },
                 { animation: 'menacing', startPos: 50, endPos: 50, duration: 1500 },
