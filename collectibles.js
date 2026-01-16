@@ -396,6 +396,9 @@ class CollectiblesGame {
     spawnEnemy() {
         if (!this.canvas) return;
         
+        // Debug: Check if enemy-sequences.js loaded
+        console.log(`🔍 ENEMY_SEQUENCES exists: ${!!window.ENEMY_SEQUENCES}, rat array: ${window.ENEMY_SEQUENCES?.rat?.length || 0} sequences`);
+        
         // Select a random sequence from enemy-sequences.js
         let sequence = null;
         if (window.ENEMY_SEQUENCES && window.ENEMY_SEQUENCES.rat && window.ENEMY_SEQUENCES.rat.length > 0) {
@@ -407,6 +410,8 @@ class CollectiblesGame {
                 sequence = sequences[Math.floor(Math.random() * sequences.length)];
             }
             console.log(`🎬 Selected sequence: ${sequence.name} (${sequence.steps.length} steps)`);
+        } else {
+            console.error(`❌ ENEMY_SEQUENCES not found! Cannot spawn enemy with sequence.`);
         }
         
         // Position rat on the trail (1/3 from bottom, same as collectibles)
@@ -417,6 +422,8 @@ class CollectiblesGame {
         if (sequence && sequence.steps.length > 0) {
             initialPos = sequence.steps[0].startPos;
             console.log(`📍 Initial position from sequence: ${initialPos}`);
+        } else {
+            console.warn(`⚠️ No sequence found - enemy will use default position 0`);
         }
         
         const enemy = {
@@ -447,11 +454,14 @@ class CollectiblesGame {
         
         // Start first step if sequence exists
         if (sequence && sequence.steps.length > 0) {
+            console.log(`🚀 Calling startEnemyStep for first step...`);
             this.startEnemyStep(enemy, 0);
+        } else {
+            console.warn(`⚠️ Cannot start sequence - sequence is null or has no steps`);
         }
         
         this.enemies.push(enemy);
-        console.log(`🐀 RAT SPAWNED with sequence!`);
+        console.log(`🐀 RAT SPAWNED with sequence: ${sequence ? 'YES' : 'NO'}, enemyX=${enemy.enemyX}, x=${enemy.x}`);
     }
     
     /**
@@ -833,6 +843,13 @@ class CollectiblesGame {
         const now = Date.now();
         
         this.enemies = this.enemies.filter(enemy => {
+            // Debug: Log enemy state occasionally
+            if (!enemy.updateDebugCounter) enemy.updateDebugCounter = 0;
+            enemy.updateDebugCounter++;
+            if (enemy.updateDebugCounter % 120 === 0) { // Every 2 seconds
+                console.log(`🐀 Enemy update: sequence=${!!enemy.sequence}, x=${enemy.x}, enemyX=${enemy.enemyX}, health=${enemy.health}`);
+            }
+            
             // Check if enemy is dead
             if (enemy.health <= 0) {
                 // Jump to last step (leaving) if not already there
