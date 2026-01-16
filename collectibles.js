@@ -2542,8 +2542,11 @@ class CollectiblesGame {
             // Try to draw video, fall back to emoji
             if (this.videosLoaded && enemy.currentVideo && this.ratVideos[enemy.currentVideo]) {
                 const video = this.ratVideos[enemy.currentVideo];
-                const videoWidth = size * 2; // Make video wider
+                
+                // Maintain video's natural aspect ratio (videos are ~16:9, 213x120px)
+                const videoAspectRatio = video.videoWidth / video.videoHeight;
                 const videoHeight = size * 2;
+                const videoWidth = videoHeight * videoAspectRatio;
                 
                 // Add red glow when attacking/rearing
                 if (enemy.state !== 'idle') {
