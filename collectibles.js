@@ -100,6 +100,18 @@ class CollectiblesGame {
         this.bossSpawnTriggered = false;
         this.videoPausedForBoss = false;
         
+        // Rat video system
+        this.ratVideos = {
+            approaching: null,
+            attack1: null,
+            attack2: null,
+            leaving: null,
+            menacing: null,
+            pacing: null
+        };
+        this.videosLoaded = false;
+        this.loadRatVideos();
+        
         // Timing
         this.minSpawnTime = 10000; // 10 seconds
         this.maxSpawnTime = 20000; // 20 seconds
@@ -114,6 +126,36 @@ class CollectiblesGame {
         ];
         
         this.init();
+    }
+
+    /**
+     * Load rat animation videos
+     */
+    loadRatVideos() {
+        const videoNames = ['approaching', 'attack1', 'attack2', 'leaving', 'menacing', 'pacing'];
+        let loadedCount = 0;
+        
+        videoNames.forEach(name => {
+            const video = document.createElement('video');
+            video.src = `resources/enemies/rat/optimized/${name}.webm`;
+            video.loop = true;
+            video.muted = true;
+            video.playsInline = true;
+            
+            video.addEventListener('loadeddata', () => {
+                loadedCount++;
+                if (loadedCount === videoNames.length) {
+                    this.videosLoaded = true;
+                    console.log('✅ All rat videos loaded');
+                }
+            });
+            
+            video.addEventListener('error', (e) => {
+                console.warn(`⚠️ Failed to load ${name}.webm, will use emoji fallback`);
+            });
+            
+            this.ratVideos[name] = video;
+        });
     }
 
     /**
@@ -381,7 +423,10 @@ class CollectiblesGame {
             paceRange: 150, // Total distance to pace (75px each direction)
             jeerBobSpeed: 2, // Speed of up/down bobbing
             lastPinchHitTime: 0, // Track when last pinch hit occurred
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            // Video playback
+            currentVideo: null,
+            videoStartTime: 0
         };
         
         this.enemies.push(enemy);
@@ -422,7 +467,10 @@ class CollectiblesGame {
             lastPinchHitTime: 0,
             createdAt: Date.now(),
             isBoss: true,
-            damageMultiplier: 2 // Boss does 2x damage
+            damageMultiplier: 2, // Boss does 2x damage
+            // Video playback
+            currentVideo: null,
+            videoStartTime: 0
         };
         
         this.enemies.push(boss);
@@ -2448,46 +2496,76 @@ class CollectiblesGame {
         const now = Date.now();
         
         this.enemies.forEach(enemy => {
-            // Determine visual state
-            let displayEmoji = enemy.emoji;
+            // Select appropriate video based on state
+            let videoName = null;
+            if (enemy.state === 'idle') {
+                videoName = 'pacing';
+            } else if (enemy.state === 'rearing') {
+                videoName = 'menacing';
+            } else if (enemy.state === 'attacking') {
+                videoName = Math.random() > 0.5 ? 'attack1' : 'attack2';
+            }
+            
+            // Start video if changed or not started
+            if (videoName && this.videosLoaded && this.ratVideos[videoName]) {
+                if (enemy.currentVideo !== videoName) {
+                    enemy.currentVideo = videoName;
+                    enemy.videoStartTime = now;
+                    const video = this.ratVideos[videoName];
+                    video.currentTime = 0;
+                    video.play().catch(e => console.warn('Video play failed:', e));
+                }
+            }
+            
+            // Determine animation transforms
             let scale = 1;
             let rotation = 0;
             let yOffset = 0;
             
             if (enemy.state === 'idle') {
-                // Jeering animation - bob up and down with slight rotation
                 const timeSinceCreated = (now - enemy.createdAt) / 1000;
-                yOffset = Math.sin(timeSinceCreated * enemy.jeerBobSpeed) * 8; // Bob up/down 8px
-                rotation = Math.sin(timeSinceCreated * enemy.jeerBobSpeed * 1.5) * 0.15; // Slight wobble
-                scale = 1 + Math.sin(timeSinceCreated * enemy.jeerBobSpeed * 0.8) * 0.05; // Slight size change
+                yOffset = Math.sin(timeSinceCreated * enemy.jeerBobSpeed) * 8;
             } else if (enemy.state === 'rearing') {
-                // Rearing animation - scale up and rotate slightly
                 const rearingProgress = (now - enemy.rearingStartTime) / enemy.rearingDuration;
-                scale = 1 + (rearingProgress * 0.3); // Grow 30% larger
-                rotation = Math.sin(rearingProgress * Math.PI) * 0.2; // Slight tilt
+                scale = 1 + (rearingProgress * 0.3);
             } else if (enemy.state === 'attacking') {
-                // Attack animation - lunge forward
                 scale = 1.3;
                 rotation = 0.3;
             }
             
-            // Draw enemy emoji
             this.ctx.save();
             this.ctx.translate(enemy.x, enemy.y + yOffset);
             this.ctx.rotate(rotation);
             
             const size = enemy.size * scale;
-            this.ctx.font = `${size}px Arial`;
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'middle';
             
-            // Add red glow when attacking/rearing
-            if (enemy.state !== 'idle') {
-                this.ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
-                this.ctx.shadowBlur = 20;
+            // Try to draw video, fall back to emoji
+            if (this.videosLoaded && enemy.currentVideo && this.ratVideos[enemy.currentVideo]) {
+                const video = this.ratVideos[enemy.currentVideo];
+                const videoWidth = size * 2; // Make video wider
+                const videoHeight = size * 2;
+                
+                // Add red glow when attacking/rearing
+                if (enemy.state !== 'idle') {
+                    this.ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
+                    this.ctx.shadowBlur = 20;
+                }
+                
+                this.ctx.drawImage(video, -videoWidth/2, -videoHeight/2, videoWidth, videoHeight);
+            } else {
+                // Fallback to emoji
+                this.ctx.font = `${size}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                
+                if (enemy.state !== 'idle') {
+                    this.ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
+                    this.ctx.shadowBlur = 20;
+                }
+                
+                this.ctx.fillText(enemy.emoji, 0, 0);
             }
             
-            this.ctx.fillText(displayEmoji, 0, 0);
             this.ctx.restore();
             
             // Draw health bar above enemy

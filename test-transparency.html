@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Transparency Test</title>
+    <style>
+        body {
+            background: linear-gradient(45deg, #ff0000 25%, #00ff00 25%, #00ff00 50%, #ff0000 50%, #ff0000 75%, #00ff00 75%);
+            background-size: 40px 40px;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+        }
+        video {
+            width: 300px;
+            border: 2px solid black;
+            margin: 10px;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        .note {
+            background: #ffffcc;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ffcc00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Rat Video Transparency Test</h1>
+        <div class="note">
+            <strong>Expected:</strong> If transparency is working, you should see the red/green striped background through the video where the checkerboard was.<br>
+            <strong>If you see:</strong> White or gray checkerboard = transparency NOT working
+        </div>
+        
+        <h2>Approaching</h2>
+        <video src="resources/enemies/rat/optimized/approaching.webm" autoplay loop></video>
+        
+        <h2>Attack 1</h2>
+        <video src="resources/enemies/rat/optimized/attack1.webm" autoplay loop></video>
+        
+        <h2>Attack 2</h2>
+        <video src="resources/enemies/rat/optimized/attack2.webm" autoplay loop></video>
+        
+        <h2>Leaving</h2>
+        <video src="resources/enemies/rat/optimized/leaving.webm" autoplay loop></video>
+        
+        <h2>Menacing</h2>
+        <video src="resources/enemies/rat/optimized/menacing.webm" autoplay loop></video>
+        
+        <h2>Pacing</h2>
+        <video src="resources/enemies/rat/optimized/pacing.webm" autoplay loop></video>
+    </div>
+</body>
+</html>
