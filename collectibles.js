@@ -396,51 +396,80 @@ class CollectiblesGame {
     spawnEnemy() {
         if (!this.canvas) return;
         
-        // Position rat on the trail (1/3 from bottom, same as collectibles)
-        const startX = -100;
-        const targetX = this.canvas.width * 0.5 + (Math.random() - 0.5) * 100;
-        const y = this.canvas.height * 0.67; // 1/3 from bottom
+        // Select a random sequence from enemy-sequences.js
+        let sequence = null;
+        if (window.ENEMY_SEQUENCES && window.ENEMY_SEQUENCES.rat && window.ENEMY_SEQUENCES.rat.length > 0) {
+            // Find DEFAULT sequence first
+            sequence = window.ENEMY_SEQUENCES.rat.find(seq => seq.name.includes('DEFAULT'));
+            if (!sequence) {
+                // If no DEFAULT, pick random sequence
+                const sequences = window.ENEMY_SEQUENCES.rat;
+                sequence = sequences[Math.floor(Math.random() * sequences.length)];
+            }
+            console.log(`🎬 Selected sequence: ${sequence.name} (${sequence.steps.length} steps)`);
+        }
         
-        // Calculate approach speed based on video duration (3x for faster movement)
-        const approachDistance = targetX - startX;
-        const approachDuration = this.ratVideos.approaching?.duration || 8; // Default 8s
-        const approachSpeed = (approachDistance / approachDuration) * 3;
+        // Position rat on the trail (1/3 from bottom, same as collectibles)
+        const y = this.canvas.height * 0.67; // 1/3 from bottom
         
         const enemy = {
             id: Date.now() + Math.random(),
             type: 'rat',
             emoji: '🐀',
-            x: startX, // Start off-screen left
+            x: -100, // Start off-screen left
             y: y,
-            targetX: targetX, // Where to move to
-            initialX: targetX, // Store initial position for pacing
             size: 60,
             health: 100,
             maxHealth: 100,
-            state: 'approaching', // approaching, idle, rearing, attacking, leaving
-            attackCount: 0,
-            maxAttacks: this.getRandomInt(6, 12), // Doubled from 3-6 to 6-12
-            lastAttackTime: Date.now(),
-            nextAttackDelay: this.getRandomInt(2000, 7000),
-            rearingStartTime: 0,
-            rearingDuration: 500, // 0.5 second warning
-            // Pacing animation
-            paceDirection: 1, // 1 for right, -1 for left
-            paceSpeed: 50, // pixels per second
-            paceRange: 150, // Total distance to pace (75px each direction)
-            jeerBobSpeed: 2, // Speed of up/down bobbing
-            lastPinchHitTime: 0, // Track when last pinch hit occurred
-            createdAt: Date.now(),
+            // Sequence-based animation
+            sequence: sequence,
+            currentStepIndex: 0,
+            stepStartTime: Date.now(),
+            // Position animation
+            enemyX: 0, // Normalized position 0-100
+            targetX: 0,
+            positionStartX: 0,
+            positionTransitionStart: 0,
             // Video playback
             currentVideo: null,
             videoStartTime: 0,
-            // Movement
-            approachSpeed: approachSpeed,
-            leavingSpeed: 0 // Will be calculated when leaving starts
+            // Combat
+            lastPinchHitTime: 0,
+            createdAt: Date.now()
         };
         
+        // Start first step if sequence exists
+        if (sequence && sequence.steps.length > 0) {
+            this.startEnemyStep(enemy, 0);
+        }
+        
         this.enemies.push(enemy);
-        console.log(`🐀 RAT SPAWNED! Will make ${enemy.maxAttacks} attacks`);
+        console.log(`🐀 RAT SPAWNED with sequence!`);
+    }
+    
+    /**
+     * Start a specific step in an enemy's sequence
+     */
+    startEnemyStep(enemy, stepIndex) {
+        if (!enemy.sequence || stepIndex >= enemy.sequence.steps.length) return;
+        
+        const step = enemy.sequence.steps[stepIndex];
+        enemy.currentStepIndex = stepIndex;
+        enemy.stepStartTime = Date.now();
+        
+        // Set position targets
+        enemy.positionStartX = enemy.enemyX;
+        enemy.targetX = step.endPos;
+        enemy.positionTransitionStart = Date.now();
+        
+        // Start video for this animation
+        const video = this.ratVideos[step.animation];
+        if (video) {
+            enemy.currentVideo = step.animation;
+            video.currentTime = 0;
+            video.play().catch(e => console.warn('Video play failed:', e));
+            console.log(`▶️ Step ${stepIndex + 1}/${enemy.sequence.steps.length}: ${step.animation} (${step.startPos}→${step.endPos}) for ${step.duration}ms`);
+        }
     }
 
     /**
@@ -776,143 +805,85 @@ class CollectiblesGame {
      */
     updateEnemies() {
         const now = Date.now();
-        const deltaTime = 1/60; // Assuming ~60fps
         
         this.enemies = this.enemies.filter(enemy => {
             // Check if enemy is dead
             if (enemy.health <= 0) {
-                // Transition to leaving state instead of immediate removal
-                if (enemy.state !== 'leaving') {
-                    enemy.state = 'leaving';
-                    enemy.leavingStartTime = now;
-                    console.log(`🏃 Enemy leaving after defeat`);
+                // Jump to last step (leaving) if not already there
+                if (enemy.sequence && enemy.currentStepIndex < enemy.sequence.steps.length - 1) {
+                    const lastStepIndex = enemy.sequence.steps.length - 1;
+                    this.startEnemyStep(enemy, lastStepIndex);
+                    console.log(`🏃 Enemy defeated - jumping to leaving animation`);
                 }
             }
             
-            // Check if enemy has made all attacks
-            if (enemy.attackCount >= enemy.maxAttacks && enemy.state !== 'leaving') {
-                console.log(`🏃 Rat fleeing after ${enemy.attackCount} attacks`);
-                enemy.state = 'leaving';
-                enemy.leavingStartTime = now;
+            // Sequence-based animation
+            if (enemy.sequence) {
+                const step = enemy.sequence.steps[enemy.currentStepIndex];
+                if (!step) return false; // No more steps, remove enemy
                 
-                // Calculate leaving speed based on video duration (3x for faster movement)
-                const exitDistance = (this.canvas.width + 200) - enemy.x;
-                const leavingDuration = this.ratVideos.leaving?.duration || 8;
-                enemy.leavingSpeed = (exitDistance / leavingDuration) * 3;
-            }
-            
-            // Handle state machine
-            if (enemy.state === 'approaching') {
-                // Move from left toward target position
-                enemy.x += enemy.approachSpeed * deltaTime;
+                const stepElapsed = now - enemy.stepStartTime;
+                const stepProgress = Math.min(stepElapsed / step.duration, 1);
                 
-                // Check if reached target or video completed
-                const approachingVideo = this.ratVideos.approaching;
-                if (enemy.x >= enemy.targetX || (approachingVideo && approachingVideo.ended)) {
-                    enemy.x = enemy.targetX;
-                    enemy.state = 'idle';
-                    
-                    // Pre-select and start idle video immediately to avoid gap
-                    const idleVideo = Math.random() > 0.5 ? 'pacing' : 'menacing';
-                    enemy.currentVideo = idleVideo;
-                    enemy.lastIdleVideoChange = now;
-                    if (this.ratVideos[idleVideo]) {
-                        const video = this.ratVideos[idleVideo];
-                        video.currentTime = 0;
-                        video.play().catch(e => console.warn('Video play failed:', e));
+                // Update position with ease-in-out
+                const easeProgress = this.easeInOutCubic(stepProgress);
+                enemy.enemyX = enemy.positionStartX + (enemy.targetX - enemy.positionStartX) * easeProgress;
+                
+                // Convert normalized position (0-100) to canvas coordinates
+                // 0 = off-screen left, 50 = center, 100 = off-screen right
+                const video = this.ratVideos[step.animation];
+                const videoWidth = video ? video.videoWidth || 800 : 800;
+                const canvasWidth = this.canvas.width;
+                
+                // Map 0-100 to actual screen positions
+                // 0 = fully off-left (-videoWidth)
+                // 50 = center (canvasWidth/2 - videoWidth/2)
+                // 100 = fully off-right (canvasWidth + videoWidth)
+                const leftEdge = -videoWidth;
+                const center = (canvasWidth - videoWidth) / 2;
+                const rightEdge = canvasWidth;
+                
+                if (enemy.enemyX <= 50) {
+                    // Moving from left to center
+                    const t = enemy.enemyX / 50;
+                    enemy.x = leftEdge + (center - leftEdge) * t;
+                } else {
+                    // Moving from center to right
+                    const t = (enemy.enemyX - 50) / 50;
+                    enemy.x = center + (rightEdge - center) * t;
+                }
+                
+                // Check if step is complete
+                if (stepProgress >= 1) {
+                    const nextStepIndex = enemy.currentStepIndex + 1;
+                    if (nextStepIndex < enemy.sequence.steps.length) {
+                        // Start next step
+                        this.startEnemyStep(enemy, nextStepIndex);
+                    } else {
+                        // Sequence complete - remove enemy
+                        console.log(`✅ Enemy sequence complete - removing`);
+                        return false;
                     }
-                    
-                    console.log(`✅ Enemy reached position, entering combat with ${idleVideo} video`);
-                }
-            } else if (enemy.state === 'leaving') {
-                // Calculate leaving speed if not set yet (3x for faster movement)
-                if (!enemy.leavingSpeed) {
-                    const exitDistance = (this.canvas.width + 200) - enemy.x;
-                    const leavingDuration = this.ratVideos.leaving?.duration || 8;
-                    enemy.leavingSpeed = (exitDistance / leavingDuration) * 3;
                 }
                 
-                // Move to the right off screen
-                enemy.x += enemy.leavingSpeed * deltaTime;
-                
-                // Remove when fully off screen
-                if (enemy.x > this.canvas.width + 200) {
-                    const isBoss = enemy.isBoss || false;
-                    
-                    if (enemy.health <= 0) {
-                        // Enemy was defeated
-                        if (isBoss) {
-                            console.log(`👹💀 FINAL BOSS DEFEATED!`);
-                            
-                            const app = window.app;
-                            if (app && app.addXP) {
-                                app.addXP(70);
-                                console.log(`⭐ BOSS BONUS: +70 XP!`);
-                            }
-                            
-                            this.armor.buckler++;
-                            this.equippedShield = 'buckler';
-                            console.log(`🛡️ LEGENDARY REWARD: Buckler Shield acquired!`);
-                            this.updateInventoryDisplay();
-                            this.showBossVictoryFeedback();
-                        } else {
-                            console.log(`💀 Rat defeated!`);
-                            
-                            const app = window.app;
-                            if (app && app.addXP) {
-                                app.addXP(10);
-                                this.showEnemyDefeatFeedback(10);
-                            } else {
-                                console.warn('⚠️ Cannot award XP - app not found or addXP undefined');
-                            }
-                        }
-                    }
-                    
-                    return false; // Remove enemy
-                }
-            } else if (enemy.state === 'idle') {
-                // Animate pacing back and forth
-                const deltaTime = 1/60; // Assuming ~60fps
-                const oldX = enemy.x;
-                enemy.x += enemy.paceDirection * enemy.paceSpeed * deltaTime;
-                
-                // Debug logging occasionally
-                if (Math.random() < 0.01) { // 1% chance per frame
-                    console.log(`🐾 Rat pacing: x=${enemy.x.toFixed(1)}, moved ${(enemy.x - oldX).toFixed(2)}px, direction=${enemy.paceDirection}`);
-                }
-                
-                // Check if reached edge of pace range
-                const distanceFromCenter = enemy.x - enemy.initialX;
-                if (Math.abs(distanceFromCenter) >= enemy.paceRange / 2) {
-                    // Reverse direction
-                    enemy.paceDirection *= -1;
-                    // Clamp to range
-                    enemy.x = enemy.initialX + (enemy.paceRange / 2) * Math.sign(distanceFromCenter);
-                    console.log(`🔄 Rat reversed direction at x=${enemy.x.toFixed(1)}`);
-                }
-                
-                // Check if it's time to attack
-                if (now - enemy.lastAttackTime >= enemy.nextAttackDelay) {
-                    enemy.state = 'rearing';
-                    enemy.rearingStartTime = now;
-                    console.log(`⚠️ Rat rearing back!`);
-                }
-            } else if (enemy.state === 'rearing') {
-                // Check if rearing animation is complete
-                if (now - enemy.rearingStartTime >= enemy.rearingDuration) {
-                    enemy.state = 'attacking';
+                // Handle attacks - if step animation is attack1 or attack2, deal damage
+                if ((step.animation === 'attack1' || step.animation === 'attack2') && !enemy.hasAttackedThisStep) {
+                    enemy.hasAttackedThisStep = true;
                     this.enemyAttack(enemy);
+                } else if (step.animation !== 'attack1' && step.animation !== 'attack2') {
+                    enemy.hasAttackedThisStep = false; // Reset for next attack step
                 }
-            } else if (enemy.state === 'attacking') {
-                // Return to idle after attack
-                enemy.state = 'idle';
-                enemy.attackCount++;
-                enemy.lastAttackTime = now;
-                enemy.nextAttackDelay = this.getRandomInt(2000, 7000);
             }
             
             return true; // Keep enemy
         });
+    }
+    
+    /**
+     * Easing function for smooth animation
+     */
+    easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
     
     /**
@@ -2562,31 +2533,38 @@ class CollectiblesGame {
         const now = Date.now();
         
         this.enemies.forEach(enemy => {
-            // Select appropriate video based on state
+            // For sequence-based enemies, currentVideo is already set by startEnemyStep
+            // For legacy state-based enemies, use old logic
             let videoName = null;
-            if (enemy.state === 'approaching') {
-                videoName = 'approaching';
-            } else if (enemy.state === 'leaving') {
-                videoName = 'leaving';
-            } else if (enemy.state === 'idle') {
-                // During idle, randomly cycle between pacing and menacing
-                if (!enemy.currentVideo || !['pacing', 'menacing'].includes(enemy.currentVideo)) {
-                    videoName = Math.random() > 0.5 ? 'pacing' : 'menacing';
-                } else {
-                    // Keep current video unless it's time to change (every 3-5 seconds)
-                    if (!enemy.lastIdleVideoChange || now - enemy.lastIdleVideoChange > this.getRandomInt(3000, 5000)) {
-                        videoName = enemy.currentVideo === 'pacing' ? 'menacing' : 'pacing';
-                        enemy.lastIdleVideoChange = now;
+            if (enemy.sequence) {
+                // Sequence-based: use the currentVideo that was set by startEnemyStep
+                videoName = enemy.currentVideo;
+            } else {
+                // Legacy state machine (for backward compatibility)
+                if (enemy.state === 'approaching') {
+                    videoName = 'approaching';
+                } else if (enemy.state === 'leaving') {
+                    videoName = 'leaving';
+                } else if (enemy.state === 'idle') {
+                    // During idle, randomly cycle between pacing and menacing
+                    if (!enemy.currentVideo || !['pacing', 'menacing'].includes(enemy.currentVideo)) {
+                        videoName = Math.random() > 0.5 ? 'pacing' : 'menacing';
+                    } else {
+                        // Keep current video unless it's time to change (every 3-5 seconds)
+                        if (!enemy.lastIdleVideoChange || now - enemy.lastIdleVideoChange > this.getRandomInt(3000, 5000)) {
+                            videoName = enemy.currentVideo === 'pacing' ? 'menacing' : 'pacing';
+                            enemy.lastIdleVideoChange = now;
+                        }
                     }
+                } else if (enemy.state === 'rearing') {
+                    videoName = 'menacing';
+                } else if (enemy.state === 'attacking') {
+                    videoName = Math.random() > 0.5 ? 'attack1' : 'attack2';
                 }
-            } else if (enemy.state === 'rearing') {
-                videoName = 'menacing';
-            } else if (enemy.state === 'attacking') {
-                videoName = Math.random() > 0.5 ? 'attack1' : 'attack2';
             }
             
-            // Start video if changed or not started
-            if (videoName && this.videosLoaded && this.ratVideos[videoName]) {
+            // Start video if changed or not started (only for legacy enemies)
+            if (!enemy.sequence && videoName && this.videosLoaded && this.ratVideos[videoName]) {
                 if (enemy.currentVideo !== videoName) {
                     enemy.currentVideo = videoName;
                     enemy.videoStartTime = now;
@@ -2596,20 +2574,26 @@ class CollectiblesGame {
                 }
             }
             
-            // Determine animation transforms
+            // Determine animation transforms (simplified for sequence-based)
             let scale = 1;
             let rotation = 0;
             let yOffset = 0;
             
-            if (enemy.state === 'idle') {
-                const timeSinceCreated = (now - enemy.createdAt) / 1000;
-                yOffset = Math.sin(timeSinceCreated * enemy.jeerBobSpeed) * 8;
-            } else if (enemy.state === 'rearing') {
-                const rearingProgress = (now - enemy.rearingStartTime) / enemy.rearingDuration;
-                scale = 1 + (rearingProgress * 0.3);
-            } else if (enemy.state === 'attacking') {
-                scale = 1.3;
-                rotation = 0.3;
+            if (enemy.sequence) {
+                // For sequence-based enemies, just use current animation
+                // No special transforms needed - animations are in the videos
+            } else {
+                // Legacy transforms
+                if (enemy.state === 'idle') {
+                    const timeSinceCreated = (now - enemy.createdAt) / 1000;
+                    yOffset = Math.sin(timeSinceCreated * enemy.jeerBobSpeed) * 8;
+                } else if (enemy.state === 'rearing') {
+                    const rearingProgress = (now - enemy.rearingStartTime) / enemy.rearingDuration;
+                    scale = 1 + (rearingProgress * 0.3);
+                } else if (enemy.state === 'attacking') {
+                    scale = 1.3;
+                    rotation = 0.3;
+                }
             }
             
             this.ctx.save();
@@ -2627,8 +2611,9 @@ class CollectiblesGame {
                 const videoHeight = size * 2;
                 const videoWidth = videoHeight * videoAspectRatio;
                 
-                // Add red glow when attacking/rearing
-                if (enemy.state !== 'idle') {
+                // Add red glow when attacking
+                const isAttacking = enemy.currentVideo === 'attack1' || enemy.currentVideo === 'attack2';
+                if (isAttacking) {
                     this.ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
                     this.ctx.shadowBlur = 20;
                 }
@@ -2640,7 +2625,8 @@ class CollectiblesGame {
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
                 
-                if (enemy.state !== 'idle') {
+                const isAttacking = enemy.currentVideo === 'attack1' || enemy.currentVideo === 'attack2';
+                if (isAttacking) {
                     this.ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
                     this.ctx.shadowBlur = 20;
                 }
