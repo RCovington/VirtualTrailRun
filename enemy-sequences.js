@@ -4,25 +4,35 @@
 
 const ENEMY_SEQUENCES = {
     rat: [
-        // Default sequence - rat_sequence_2 - balanced encounter
+        // rat_sequence_2 - DEFAULT - 12 step sequence with 7 second durations
         {
             name: 'rat_sequence_2',
             steps: [
-                { animation: 'approaching', startPos: 0, endPos: 50, duration: 3000 },
-                { animation: 'pacing', startPos: 50, endPos: 50, duration: 1800 },
-                { animation: 'menacing', startPos: 50, endPos: 50, duration: 1600 },
-                { animation: 'attack1', startPos: 50, endPos: 50, duration: 1200 },
-                { animation: 'pacing', startPos: 50, endPos: 50, duration: 1200 },
-                { animation: 'attack2', startPos: 50, endPos: 50, duration: 1200 },
-                { animation: 'pacing', startPos: 50, endPos: 50, duration: 1000 },
-                { animation: 'attack1', startPos: 50, endPos: 50, duration: 1200 },
-                { animation: 'leaving', startPos: 50, endPos: 100, duration: 3000 }
+                { animation: 'approaching', startPos: 25, endPos: 50, duration: 7000 },
+                { animation: 'pacing', startPos: 50, endPos: 50, duration: 7000 },
+                { animation: 'menacing', startPos: 50, endPos: 50, duration: 7000 },
+                { animation: 'attack1', startPos: 50, endPos: 50, duration: 7000 },
+                { animation: 'menacing', startPos: 50, endPos: 50, duration: 7000 },
+                { animation: 'attack2', startPos: 50, endPos: 50, duration: 7000 },
+                { animation: 'pacing', startPos: 50, endPos: 50, duration: 7000 },
+                { animation: 'attack1', startPos: 50, endPos: 50, duration: 7000 },
+                { animation: 'menacing', startPos: 50, endPos: 50, duration: 7000 },
+                { animation: 'attack2', startPos: 50, endPos: 50, duration: 7000 },
+                { animation: 'pacing', startPos: 50, endPos: 50, duration: 7000 },
+                { animation: 'leaving', startPos: 50, endPos: 75, duration: 7000 }
             ]
         },
         
-        // Aggressive sequence - quick attacks
+        // rat_default - Simple 4 step sequence
         {
-            name: 'rat_aggressive',
+            name: 'rat_default',
+            steps: [
+                { animation: 'approaching', startPos: 0, endPos: 50, duration: 3000 },
+                { animation: 'pacing', startPos: 50, endPos: 50, duration: 2000 },
+                { animation: 'attack1', startPos: 50, endPos: 50, duration: 1500 },
+                { animation: 'leaving', startPos: 50, endPos: 100, duration: 3000 }
+            ]
+        },
             steps: [
                 { animation: 'approaching', startPos: 0, endPos: 50, duration: 3000 },
                 { animation: 'menacing', startPos: 50, endPos: 50, duration: 1500 },
