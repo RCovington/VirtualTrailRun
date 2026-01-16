@@ -397,20 +397,21 @@ class CollectiblesGame {
         if (!this.canvas) return;
         
         // Position rat on the trail (1/3 from bottom, same as collectibles)
-        const x = this.canvas.width * 0.5 + (Math.random() - 0.5) * 100;
+        const targetX = this.canvas.width * 0.5 + (Math.random() - 0.5) * 100;
         const y = this.canvas.height * 0.67; // 1/3 from bottom
         
         const enemy = {
             id: Date.now() + Math.random(),
             type: 'rat',
             emoji: '🐀',
-            x: x,
+            x: -100, // Start off-screen left
             y: y,
-            initialX: x, // Store initial position
+            targetX: targetX, // Where to move to
+            initialX: targetX, // Store initial position for pacing
             size: 60,
             health: 100,
             maxHealth: 100,
-            state: 'idle', // idle, rearing, attacking
+            state: 'approaching', // approaching, idle, rearing, attacking, leaving
             attackCount: 0,
             maxAttacks: this.getRandomInt(6, 12), // Doubled from 3-6 to 6-12
             lastAttackTime: Date.now(),
@@ -426,7 +427,9 @@ class CollectiblesGame {
             createdAt: Date.now(),
             // Video playback
             currentVideo: null,
-            videoStartTime: 0
+            videoStartTime: 0,
+            // Movement
+            approachSpeed: 150 // pixels per second
         };
         
         this.enemies.push(enemy);
@@ -440,16 +443,17 @@ class CollectiblesGame {
         if (!this.canvas || this.bossSpawned) return;
         
         // Position boss in center of screen
-        const x = this.canvas.width * 0.5;
+        const targetX = this.canvas.width * 0.5;
         const y = this.canvas.height * 0.67; // 1/3 from bottom
         
         const boss = {
             id: Date.now() + Math.random(),
             type: 'boss',
             emoji: '🐀',
-            x: x,
+            x: -100, // Start off-screen left
             y: y,
-            initialX: x,
+            targetX: targetX,
+            initialX: targetX,
             size: 180, // 3x normal size (60 * 3)
             health: 1000, // 10x normal health (100 * 10)
             maxHealth: 1000,
@@ -470,7 +474,9 @@ class CollectiblesGame {
             damageMultiplier: 2, // Boss does 2x damage
             // Video playback
             currentVideo: null,
-            videoStartTime: 0
+            videoStartTime: 0,
+            // Movement
+            approachSpeed: 100 // pixels per second (slower for boss)
         };
         
         this.enemies.push(boss);
@@ -756,55 +762,77 @@ class CollectiblesGame {
      */
     updateEnemies() {
         const now = Date.now();
+        const deltaTime = 1/60; // Assuming ~60fps
         
         this.enemies = this.enemies.filter(enemy => {
             // Check if enemy is dead
             if (enemy.health <= 0) {
-                const isBoss = enemy.isBoss || false;
-                
-                if (isBoss) {
-                    console.log(`👹💀 FINAL BOSS DEFEATED!`);
-                    
-                    // Award 7x XP for boss
-                    const app = window.app;
-                    if (app && app.addXP) {
-                        app.addXP(70); // 7 times normal 10 XP
-                        console.log(`⭐ BOSS BONUS: +70 XP!`);
-                    }
-                    
-                    // Award buckler shield armor
-                    this.armor.buckler++;
-                    this.equippedShield = 'buckler'; // Auto-equip when acquired
-                    console.log(`🛡️ LEGENDARY REWARD: Buckler Shield acquired!`);
-                    this.updateInventoryDisplay();
-                    
-                    // Show victory message
-                    this.showBossVictoryFeedback();
-                } else {
-                    console.log(`💀 Rat defeated!`);
-                    
-                    // Award normal XP to player
-                    const app = window.app;
-                    if (app && app.addXP) {
-                        app.addXP(10);
-                        // Show defeat feedback
-                        this.showEnemyDefeatFeedback(10);
-                    } else {
-                        console.warn('⚠️ Cannot award XP - app not found or addXP undefined');
-                    }
+                // Transition to leaving state instead of immediate removal
+                if (enemy.state !== 'leaving') {
+                    enemy.state = 'leaving';
+                    enemy.leavingStartTime = now;
+                    console.log(`🏃 Enemy leaving after defeat`);
                 }
-                
-                return false; // Remove enemy
             }
             
             // Check if enemy has made all attacks
-            if (enemy.attackCount >= enemy.maxAttacks) {
+            if (enemy.attackCount >= enemy.maxAttacks && enemy.state !== 'leaving') {
                 console.log(`🏃 Rat fleeing after ${enemy.attackCount} attacks`);
-                return false; // Remove enemy
+                enemy.state = 'leaving';
+                enemy.leavingStartTime = now;
             }
             
-            // Handle attack state machine
-            if (enemy.state === 'idle') {
+            // Handle state machine
+            if (enemy.state === 'approaching') {
+                // Move from left toward target position
+                enemy.x += enemy.approachSpeed * deltaTime;
+                
+                // Check if reached target
+                if (enemy.x >= enemy.targetX) {
+                    enemy.x = enemy.targetX;
+                    enemy.state = 'idle';
+                    console.log(`✅ Enemy reached position, entering combat`);
+                }
+            } else if (enemy.state === 'leaving') {
+                // Move to the right off screen
+                enemy.x += enemy.approachSpeed * deltaTime;
+                
+                // Remove when fully off screen
+                if (enemy.x > this.canvas.width + 200) {
+                    const isBoss = enemy.isBoss || false;
+                    
+                    if (enemy.health <= 0) {
+                        // Enemy was defeated
+                        if (isBoss) {
+                            console.log(`👹💀 FINAL BOSS DEFEATED!`);
+                            
+                            const app = window.app;
+                            if (app && app.addXP) {
+                                app.addXP(70);
+                                console.log(`⭐ BOSS BONUS: +70 XP!`);
+                            }
+                            
+                            this.armor.buckler++;
+                            this.equippedShield = 'buckler';
+                            console.log(`🛡️ LEGENDARY REWARD: Buckler Shield acquired!`);
+                            this.updateInventoryDisplay();
+                            this.showBossVictoryFeedback();
+                        } else {
+                            console.log(`💀 Rat defeated!`);
+                            
+                            const app = window.app;
+                            if (app && app.addXP) {
+                                app.addXP(10);
+                                this.showEnemyDefeatFeedback(10);
+                            } else {
+                                console.warn('⚠️ Cannot award XP - app not found or addXP undefined');
+                            }
+                        }
+                    }
+                    
+                    return false; // Remove enemy
+                }
+            } else if (enemy.state === 'idle') {
                 // Animate pacing back and forth
                 const deltaTime = 1/60; // Assuming ~60fps
                 const oldX = enemy.x;
@@ -2498,8 +2526,21 @@ class CollectiblesGame {
         this.enemies.forEach(enemy => {
             // Select appropriate video based on state
             let videoName = null;
-            if (enemy.state === 'idle') {
-                videoName = 'pacing';
+            if (enemy.state === 'approaching') {
+                videoName = 'approaching';
+            } else if (enemy.state === 'leaving') {
+                videoName = 'leaving';
+            } else if (enemy.state === 'idle') {
+                // During idle, randomly cycle between pacing and menacing
+                if (!enemy.currentVideo || !['pacing', 'menacing'].includes(enemy.currentVideo)) {
+                    videoName = Math.random() > 0.5 ? 'pacing' : 'menacing';
+                } else {
+                    // Keep current video unless it's time to change (every 3-5 seconds)
+                    if (!enemy.lastIdleVideoChange || now - enemy.lastIdleVideoChange > this.getRandomInt(3000, 5000)) {
+                        videoName = enemy.currentVideo === 'pacing' ? 'menacing' : 'pacing';
+                        enemy.lastIdleVideoChange = now;
+                    }
+                }
             } else if (enemy.state === 'rearing') {
                 videoName = 'menacing';
             } else if (enemy.state === 'attacking') {
