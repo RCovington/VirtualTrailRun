@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enemy Sequence Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #4ade80;
+        }
+
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: #2a2a2a;
+            border: 2px solid #4ade80;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .panel h2 {
+            color: #4ade80;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .preview-canvas {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            width: 100%;
+            height: 400px;
+        }
+
+        .sequence-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .sequence-item {
+            background: #1a1a1a;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .sequence-item:hover {
+            border-color: #4ade80;
+        }
+
+        .sequence-item.active {
+            border-color: #fbbf24;
+            background: #2d2d1a;
+        }
+
+        .step-list {
+            margin-bottom: 15px;
+        }
+
+        .step-item {
+            background: #1a1a1a;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #4ade80;
+        }
+
+        .step-item.selected {
+            background: #2d2d1a;
+            border-left-color: #fbbf24;
+        }
+
+        .step-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #4ade80;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #22c55e;
+            transform: translateY(-2px);
+        }
+
+        button.secondary {
+            background: #fbbf24;
+        }
+
+        button.danger {
+            background: #ef4444;
+        }
+
+        button.small {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .position-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .status {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .status.success {
+            background: #4ade80;
+            color: #1a1a1a;
+        }
+
+        .status.error {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .info-text {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .export-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #4ade80;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Enemy Sequence Editor</h1>
+        
+        <div id="status" style="display: none;"></div>
+        
+        <div class="editor-layout">
+            <!-- Left Panel: Sequences -->
+            <div class="panel">
+                <h2>Sequences</h2>
+                <div class="sequence-list" id="sequenceList"></div>
+                <div class="button-group">
+                    <button onclick="editor.createNewSequence()">+ New Sequence</button>
+                </div>
+                
+                <div class="export-section">
+                    <h2>Export/Import</h2>
+                    <div class="button-group">
+                        <button onclick="editor.exportSequences()">Export JSON</button>
+                        <button onclick="editor.importSequences()">Import JSON</button>
+                    </div>
+                    <textarea id="jsonOutput" placeholder="JSON will appear here..."></textarea>
+                </div>
+            </div>
+
+            <!-- Center Panel: Preview -->
+            <div class="panel">
+                <h2>Preview</h2>
+                <canvas id="previewCanvas" class="preview-canvas" width="800" height="400"></canvas>
+                <div class="button-group" style="margin-top: 15px;">
+                    <button onclick="editor.playCurrentSequence()">▶️ Play Sequence</button>
+                    <button class="danger" onclick="editor.stopPlayback()">⏹️ Stop</button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Step Editor -->
+            <div class="panel">
+                <h2>Sequence Steps</h2>
+                
+                <div class="form-group">
+                    <label>Sequence Name:</label>
+                    <input type="text" id="sequenceName" placeholder="e.g., rat_aggressive_1">
+                </div>
+                
+                <div class="step-list" id="stepList"></div>
+                
+                <h3 style="color: #fbbf24; margin: 20px 0 10px 0;">Add New Step</h3>
+                
+                <div class="form-group">
+                    <label>Animation:</label>
+                    <select id="newStepAnimation">
+                        <option value="approaching">Approaching</option>
+                        <option value="pacing">Pacing</option>
+                        <option value="menacing">Menacing</option>
+                        <option value="attack1">Attack 1</option>
+                        <option value="attack2">Attack 2</option>
+                        <option value="leaving">Leaving</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Start Position: <span id="startPosValue">50%</span></label>
+                    <input type="range" id="newStepStartPos" class="position-slider" 
+                           min="0" max="100" value="50" 
+                           oninput="document.getElementById('startPosValue').textContent = this.value + '%'">
+                    <div class="info-text">0% = Off-screen left, 50% = Center, 100% = Off-screen right</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>End Position: <span id="endPosValue">50%</span></label>
+                    <input type="range" id="newStepEndPos" class="position-slider" 
+                           min="0" max="100" value="50"
+                           oninput="document.getElementById('endPosValue').textContent = this.value + '%'">
+                </div>
+                
+                <div class="form-group">
+                    <label>Duration (ms):</label>
+                    <input type="number" id="newStepDuration" value="3000" min="100" step="100">
+                    <div class="info-text">Time for this animation step (milliseconds)</div>
+                </div>
+                
+                <div class="button-group">
+                    <button onclick="editor.addStep()">+ Add Step</button>
+                    <button class="secondary" onclick="editor.saveCurrentSequence()">💾 Save Sequence</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class EnemySequenceEditor {
+            constructor() {
+                this.sequences = [];
+                this.currentSequenceIndex = -1;
+                this.canvas = document.getElementById('previewCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.isPlaying = false;
+                this.playbackStep = 0;
+                this.animationFrame = null;
+                
+                // Load sequences from localStorage
+                this.loadSequences();
+                this.render();
+            }
+            
+            loadSequences() {
+                const saved = localStorage.getItem('enemySequences');
+                if (saved) {
+                    try {
+                        this.sequences = JSON.parse(saved);
+                    } catch (e) {
+                        console.error('Failed to load sequences:', e);
+                    }
+                }
+                
+                // Create default sequence if none exist
+                if (this.sequences.length === 0) {
+                    this.sequences.push({
+                        name: 'rat_default',
+                        steps: [
+                            { animation: 'approaching', startPos: 0, endPos: 50, duration: 3000 },
+                            { animation: 'pacing', startPos: 50, endPos: 50, duration: 2000 },
+                            { animation: 'attack1', startPos: 50, endPos: 50, duration: 1500 },
+                            { animation: 'leaving', startPos: 50, endPos: 100, duration: 3000 }
+                        ]
+                    });
+                    this.currentSequenceIndex = 0;
+                }
+            }
+            
+            saveSequences() {
+                localStorage.setItem('enemySequences', JSON.stringify(this.sequences));
+                this.showStatus('Sequences saved!', 'success');
+            }
+            
+            createNewSequence() {
+                const name = prompt('Enter sequence name:', `rat_sequence_${this.sequences.length + 1}`);
+                if (name) {
+                    this.sequences.push({
+                        name: name,
+                        steps: []
+                    });
+                    this.currentSequenceIndex = this.sequences.length - 1;
+                    this.saveSequences();
+                    this.render();
+                }
+            }
+            
+            selectSequence(index) {
+                this.currentSequenceIndex = index;
+                this.render();
+            }
+            
+            addStep() {
+                if (this.currentSequenceIndex < 0) {
+                    alert('Please select or create a sequence first!');
+                    return;
+                }
+                
+                const animation = document.getElementById('newStepAnimation').value;
+                const startPos = parseFloat(document.getElementById('newStepStartPos').value);
+                const endPos = parseFloat(document.getElementById('newStepEndPos').value);
+                const duration = parseInt(document.getElementById('newStepDuration').value);
+                
+                this.sequences[this.currentSequenceIndex].steps.push({
+                    animation,
+                    startPos,
+                    endPos,
+                    duration
+                });
+                
+                this.saveSequences();
+                this.render();
+            }
+            
+            removeStep(stepIndex) {
+                if (confirm('Remove this step?')) {
+                    this.sequences[this.currentSequenceIndex].steps.splice(stepIndex, 1);
+                    this.saveSequences();
+                    this.render();
+                }
+            }
+            
+            moveStep(stepIndex, direction) {
+                const steps = this.sequences[this.currentSequenceIndex].steps;
+                const newIndex = stepIndex + direction;
+                
+                if (newIndex >= 0 && newIndex < steps.length) {
+                    [steps[stepIndex], steps[newIndex]] = [steps[newIndex], steps[stepIndex]];
+                    this.saveSequences();
+                    this.render();
+                }
+            }
+            
+            saveCurrentSequence() {
+                if (this.currentSequenceIndex < 0) return;
+                
+                const name = document.getElementById('sequenceName').value;
+                if (name) {
+                    this.sequences[this.currentSequenceIndex].name = name;
+                }
+                
+                this.saveSequences();
+                this.render();
+            }
+            
+            deleteSequence(index) {
+                if (confirm('Delete this sequence?')) {
+                    this.sequences.splice(index, 1);
+                    if (this.currentSequenceIndex >= this.sequences.length) {
+                        this.currentSequenceIndex = this.sequences.length - 1;
+                    }
+                    this.saveSequences();
+                    this.render();
+                }
+            }
+            
+            exportSequences() {
+                const json = JSON.stringify(this.sequences, null, 2);
+                document.getElementById('jsonOutput').value = json;
+                
+                // Also download as file
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'enemy-sequences.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                this.showStatus('Sequences exported!', 'success');
+            }
+            
+            importSequences() {
+                const json = document.getElementById('jsonOutput').value;
+                if (!json) {
+                    alert('Please paste JSON into the text area first!');
+                    return;
+                }
+                
+                try {
+                    const imported = JSON.parse(json);
+                    if (Array.isArray(imported)) {
+                        this.sequences = imported;
+                        this.currentSequenceIndex = 0;
+                        this.saveSequences();
+                        this.render();
+                        this.showStatus('Sequences imported!', 'success');
+                    } else {
+                        throw new Error('Invalid format');
+                    }
+                } catch (e) {
+                    this.showStatus('Invalid JSON format!', 'error');
+                }
+            }
+            
+            playCurrentSequence() {
+                if (this.currentSequenceIndex < 0 || this.sequences[this.currentSequenceIndex].steps.length === 0) {
+                    alert('No sequence to play!');
+                    return;
+                }
+                
+                this.isPlaying = true;
+                this.playbackStep = 0;
+                this.playNextStep();
+            }
+            
+            playNextStep() {
+                if (!this.isPlaying) return;
+                
+                const sequence = this.sequences[this.currentSequenceIndex];
+                if (this.playbackStep >= sequence.steps.length) {
+                    this.stopPlayback();
+                    return;
+                }
+                
+                const step = sequence.steps[this.playbackStep];
+                this.animateStep(step, () => {
+                    this.playbackStep++;
+                    this.playNextStep();
+                });
+            }
+            
+            animateStep(step, onComplete) {
+                const startTime = Date.now();
+                const animate = () => {
+                    if (!this.isPlaying) {
+                        onComplete();
+                        return;
+                    }
+                    
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / step.duration, 1);
+                    
+                    // Ease-in-out
+                    const easeProgress = progress < 0.5 
+                        ? 2 * progress * progress 
+                        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                    
+                    const currentPos = step.startPos + (step.endPos - step.startPos) * easeProgress;
+                    
+                    this.drawPreview(step.animation, currentPos, progress);
+                    
+                    if (progress < 1) {
+                        this.animationFrame = requestAnimationFrame(animate);
+                    } else {
+                        onComplete();
+                    }
+                };
+                animate();
+            }
+            
+            drawPreview(animation, position, progress) {
+                // Clear canvas
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw position track
+                const trackY = this.canvas.height - 30;
+                this.ctx.strokeStyle = '#333';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(50, trackY);
+                this.ctx.lineTo(this.canvas.width - 50, trackY);
+                this.ctx.stroke();
+                
+                // Draw visible area
+                const visibleStart = 50 + (this.canvas.width - 100) * 0.25;
+                const visibleEnd = 50 + (this.canvas.width - 100) * 0.75;
+                this.ctx.strokeStyle = '#4ade80';
+                this.ctx.lineWidth = 4;
+                this.ctx.beginPath();
+                this.ctx.moveTo(visibleStart, trackY);
+                this.ctx.lineTo(visibleEnd, trackY);
+                this.ctx.stroke();
+                
+                // Calculate enemy position
+                const x = 50 + (this.canvas.width - 100) * (position / 100);
+                const y = this.canvas.height / 2;
+                
+                // Draw enemy (simplified)
+                this.ctx.fillStyle = animation.includes('attack') ? '#ef4444' : '#fbbf24';
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, 30, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Draw position indicator
+                this.ctx.fillStyle = '#fbbf24';
+                this.ctx.beginPath();
+                this.ctx.arc(x, trackY, 8, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Draw label
+                this.ctx.fillStyle = '#4ade80';
+                this.ctx.font = 'bold 14px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(animation, x, y + 50);
+                this.ctx.fillText(`${position.toFixed(0)}%`, x, y + 70);
+            }
+            
+            stopPlayback() {
+                this.isPlaying = false;
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                }
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            showStatus(message, type) {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                status.className = `status ${type}`;
+                status.style.display = 'block';
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 3000);
+            }
+            
+            render() {
+                // Render sequence list
+                const sequenceList = document.getElementById('sequenceList');
+                sequenceList.innerHTML = this.sequences.map((seq, i) => `
+                    <div class="sequence-item ${i === this.currentSequenceIndex ? 'active' : ''}"
+                         onclick="editor.selectSequence(${i})">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${seq.name}</strong><br>
+                                <small>${seq.steps.length} steps</small>
+                            </div>
+                            <button class="small danger" onclick="event.stopPropagation(); editor.deleteSequence(${i})">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Render current sequence steps
+                if (this.currentSequenceIndex >= 0) {
+                    const sequence = this.sequences[this.currentSequenceIndex];
+                    document.getElementById('sequenceName').value = sequence.name;
+                    
+                    const stepList = document.getElementById('stepList');
+                    stepList.innerHTML = sequence.steps.map((step, i) => `
+                        <div class="step-item">
+                            <div>
+                                <strong>${step.animation}</strong><br>
+                                <small>Pos: ${step.startPos}% → ${step.endPos}% | ${step.duration}ms</small>
+                            </div>
+                            <div class="step-controls">
+                                ${i > 0 ? `<button class="small" onclick="editor.moveStep(${i}, -1)">↑</button>` : ''}
+                                ${i < sequence.steps.length - 1 ? `<button class="small" onclick="editor.moveStep(${i}, 1)">↓</button>` : ''}
+                                <button class="small danger" onclick="editor.removeStep(${i})">✕</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+        
+        // Initialize editor
+        let editor;
+        document.addEventListener('DOMContentLoaded', () => {
+            editor = new EnemySequenceEditor();
+        });
+    </script>
+</body>
+</html>

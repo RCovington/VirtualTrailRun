@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enemy Animation Test</title>
+    <script src="enemy-sequences.js"></script>
     <style>
         * {
             margin: 0;
@@ -266,19 +267,48 @@
                 this.positionTransitionDuration = 0;
                 this.positionStartX = 0.5;
                 
-                // Define the full enemy sequence with timings and positions
-                this.enemySequence = [
-                    { name: 'approaching', duration: 3000, label: 'Enemy approaching (3s)', startPos: 0, endPos: 0.5 },
-                    { name: 'pacing', duration: 2000, label: 'Pacing/Idle (2s)', startPos: 0.5, endPos: 0.5 },
-                    { name: 'menacing', duration: 2000, label: 'Menacing/Rearing (2s)', startPos: 0.5, endPos: 0.5 },
-                    { name: 'attack1', duration: 1500, label: 'Attack 1 (1.5s)', startPos: 0.5, endPos: 0.5 },
-                    { name: 'pacing', duration: 1000, label: 'Recovery pacing (1s)', startPos: 0.5, endPos: 0.5 },
-                    { name: 'attack2', duration: 1500, label: 'Attack 2 (1.5s)', startPos: 0.5, endPos: 0.5 },
-                    { name: 'menacing', duration: 1500, label: 'Final menacing (1.5s)', startPos: 0.5, endPos: 0.5 },
-                    { name: 'leaving', duration: 3000, label: 'Enemy leaving (3s)', startPos: 0.5, endPos: 1 }
-                ];
+                // Load available sequences from enemy-sequences.js
+                this.availableSequences = [];
+                this.currentSequenceName = '';
+                if (typeof ENEMY_SEQUENCES !== 'undefined' && ENEMY_SEQUENCES.rat) {
+                    this.availableSequences = ENEMY_SEQUENCES.rat;
+                }
+                
+                // Start with first sequence or default
+                this.enemySequence = this.availableSequences.length > 0 
+                    ? this.convertSequence(this.availableSequences[0])
+                    : this.getDefaultSequence();
                 
                 this.init();
+            }
+            
+            getDefaultSequence() {
+                return [
+                    { animation: 'approaching', duration: 3000, label: 'Enemy approaching (3s)', startPos: 0, endPos: 50 },
+                    { animation: 'pacing', duration: 2000, label: 'Pacing/Idle (2s)', startPos: 50, endPos: 50 },
+                    { animation: 'menacing', duration: 2000, label: 'Menacing/Rearing (2s)', startPos: 50, endPos: 50 },
+                    { animation: 'attack1', duration: 1500, label: 'Attack 1 (1.5s)', startPos: 50, endPos: 50 },
+                    { animation: 'pacing', duration: 1000, label: 'Recovery pacing (1s)', startPos: 50, endPos: 50 },
+                    { animation: 'attack2', duration: 1500, label: 'Attack 2 (1.5s)', startPos: 50, endPos: 50 },
+                    { animation: 'menacing', duration: 1500, label: 'Final menacing (1.5s)', startPos: 50, endPos: 50 },
+                    { animation: 'leaving', duration: 3000, label: 'Enemy leaving (3s)', startPos: 50, endPos: 100 }
+                ].map(step => ({
+                    ...step,
+                    name: step.animation
+                }));
+            }
+            
+            convertSequence(sequence) {
+                // Convert from enemy-sequences.js format to internal format
+                this.currentSequenceName = sequence.name;
+                return sequence.steps.map(step => ({
+                    name: step.animation,
+                    animation: step.animation,
+                    duration: step.duration,
+                    startPos: step.startPos,
+                    endPos: step.endPos,
+                    label: `${step.animation} (${(step.duration/1000).toFixed(1)}s)`
+                }));
             }
             
             init() {
