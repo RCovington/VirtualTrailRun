@@ -2,7 +2,7 @@
 // Each sequence defines a complete enemy encounter from start to finish
 // The game will randomly select one sequence when spawning an enemy
 
-const ENEMY_SEQUENCES = {
+window.ENEMY_SEQUENCES = {
     rat: [
         // rat_sequence_2 - DEFAULT - 12 step sequence with 7 second durations
         {
