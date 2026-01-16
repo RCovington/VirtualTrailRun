@@ -256,6 +256,8 @@
                 this.isPlayingSequence = false;
                 this.sequenceTimeout = null;
                 this.sequenceStartTime = null;
+                this.currentStepIndex = -1;
+                this.videoEndedHandler = null;
                 
                 // Position animation
                 this.enemyX = 0.5; // Normalized position (0 = left, 0.5 = center, 1 = right)
@@ -298,7 +300,7 @@
                 videoNames.forEach(name => {
                     const video = document.createElement('video');
                     video.src = `resources/enemies/rat/optimized/${name}.webm`;
-                    video.loop = true;
+                    video.loop = false; // Don't loop - we'll control playback
                     video.muted = true;
                     video.playsInline = true;
                     
@@ -437,6 +439,13 @@
             
             stopSequence() {
                 this.isPlayingSequence = false;
+                this.currentStepIndex = -1;
+                
+                // Remove video ended handler
+                if (this.videoEndedHandler && this.currentAnimation && this.ratVideos[this.currentAnimation]) {
+                    this.ratVideos[this.currentAnimation].removeEventListener('ended', this.videoEndedHandler);
+                    this.videoEndedHandler = null;
+                }
                 
                 if (this.sequenceTimeout) {
                     clearTimeout(this.sequenceTimeout);
@@ -489,6 +498,7 @@
                     return;
                 }
                 
+                this.currentStepIndex = stepIndex;
                 const step = this.enemySequence[stepIndex];
                 const elapsedTime = Date.now() - this.sequenceStartTime;
                 
@@ -505,16 +515,36 @@
                     this.setPosition(step.endPos, step.duration);
                 }
                 
+                // Remove any previous video ended handler
+                if (this.videoEndedHandler && this.currentAnimation && this.ratVideos[this.currentAnimation]) {
+                    this.ratVideos[this.currentAnimation].removeEventListener('ended', this.videoEndedHandler);
+                }
+                
                 // Play this animation
                 this.setAnimation(step.name, false); // false = don't update UI buttons
                 
                 // Highlight current step in timeline
                 this.highlightTimelineStep(stepIndex);
                 
-                // Schedule next step
-                this.sequenceTimeout = setTimeout(() => {
-                    this.playSequenceStep(stepIndex + 1);
-                }, step.duration);
+                // Wait for video to end before moving to next step
+                const video = this.ratVideos[this.currentAnimation];
+                if (video) {
+                    this.videoEndedHandler = () => {
+                        console.log(`✅ Video ${this.currentAnimation} completed naturally`);
+                        // Small delay before next animation for smooth transition
+                        this.sequenceTimeout = setTimeout(() => {
+                            if (this.isPlayingSequence && this.currentStepIndex === stepIndex) {
+                                this.playSequenceStep(stepIndex + 1);
+                            }
+                        }, 100);
+                    };
+                    video.addEventListener('ended', this.videoEndedHandler, { once: true });
+                } else {
+                    // Fallback to duration if video not available
+                    this.sequenceTimeout = setTimeout(() => {
+                        this.playSequenceStep(stepIndex + 1);
+                    }, step.duration);
+                }
             }
             
             highlightTimelineStep(stepIndex) {
@@ -564,6 +594,10 @@
                     this.currentAnimation = videoName;
                     const video = this.ratVideos[videoName];
                     video.currentTime = 0;
+                    
+                    // Control looping: Don't loop during sequence playback, do loop for manual testing
+                    video.loop = !this.isPlayingSequence;
+                    
                     video.play().catch(e => console.warn('Video play failed:', e));
                     
                     // Update info
