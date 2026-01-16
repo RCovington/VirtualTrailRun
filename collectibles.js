@@ -401,10 +401,10 @@ class CollectiblesGame {
         const targetX = this.canvas.width * 0.5 + (Math.random() - 0.5) * 100;
         const y = this.canvas.height * 0.67; // 1/3 from bottom
         
-        // Calculate approach speed based on video duration (2x for faster movement)
+        // Calculate approach speed based on video duration (3x for faster movement)
         const approachDistance = targetX - startX;
         const approachDuration = this.ratVideos.approaching?.duration || 8; // Default 8s
-        const approachSpeed = (approachDistance / approachDuration) * 2;
+        const approachSpeed = (approachDistance / approachDuration) * 3;
         
         const enemy = {
             id: Date.now() + Math.random(),
@@ -454,10 +454,10 @@ class CollectiblesGame {
         const targetX = this.canvas.width * 0.5;
         const y = this.canvas.height * 0.67; // 1/3 from bottom
         
-        // Calculate approach speed based on video duration (2x for faster movement)
+        // Calculate approach speed based on video duration (3x for faster movement)
         const approachDistance = targetX - startX;
         const approachDuration = this.ratVideos.approaching?.duration || 8;
-        const approachSpeed = (approachDistance / approachDuration) * 2;
+        const approachSpeed = (approachDistance / approachDuration) * 3;
         
         const boss = {
             id: Date.now() + Math.random(),
@@ -795,10 +795,10 @@ class CollectiblesGame {
                 enemy.state = 'leaving';
                 enemy.leavingStartTime = now;
                 
-                // Calculate leaving speed based on video duration (2x for faster movement)
+                // Calculate leaving speed based on video duration (3x for faster movement)
                 const exitDistance = (this.canvas.width + 200) - enemy.x;
                 const leavingDuration = this.ratVideos.leaving?.duration || 8;
-                enemy.leavingSpeed = (exitDistance / leavingDuration) * 2;
+                enemy.leavingSpeed = (exitDistance / leavingDuration) * 3;
             }
             
             // Handle state machine
@@ -825,11 +825,11 @@ class CollectiblesGame {
                     console.log(`✅ Enemy reached position, entering combat with ${idleVideo} video`);
                 }
             } else if (enemy.state === 'leaving') {
-                // Calculate leaving speed if not set yet (2x for faster movement)
+                // Calculate leaving speed if not set yet (3x for faster movement)
                 if (!enemy.leavingSpeed) {
                     const exitDistance = (this.canvas.width + 200) - enemy.x;
                     const leavingDuration = this.ratVideos.leaving?.duration || 8;
-                    enemy.leavingSpeed = (exitDistance / leavingDuration) * 2;
+                    enemy.leavingSpeed = (exitDistance / leavingDuration) * 3;
                 }
                 
                 // Move to the right off screen
