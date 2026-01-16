@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enemy Animation Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #4ade80;
+        }
+
+        .test-area {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .canvas-container {
+            flex: 1;
+            background: #2a2a2a;
+            border: 2px solid #4ade80;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 500px;
+        }
+
+        #enemyCanvas {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            max-width: 100%;
+        }
+
+        .controls {
+            flex: 0 0 300px;
+            background: #2a2a2a;
+            border: 2px solid #4ade80;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .controls h2 {
+            margin-bottom: 20px;
+            color: #4ade80;
+            font-size: 1.2rem;
+        }
+
+        .button-group {
+            margin-bottom: 20px;
+        }
+
+        .button-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #4ade80;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #22c55e;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.active {
+            background: #fbbf24;
+            color: #1a1a1a;
+        }
+
+        .info-panel {
+            background: #2a2a2a;
+            border: 2px solid #4ade80;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .info-panel h2 {
+            margin-bottom: 15px;
+            color: #4ade80;
+            font-size: 1.2rem;
+        }
+
+        .info-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .info-item strong {
+            color: #4ade80;
+        }
+
+        .status {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .status.loading {
+            background: #fbbf24;
+            color: #1a1a1a;
+        }
+
+        .status.ready {
+            background: #4ade80;
+            color: #1a1a1a;
+        }
+
+        .status.error {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .size-controls {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+        }
+
+        .size-controls input[type="range"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .size-controls label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐀 Enemy Animation Test Page</h1>
+        
+        <div id="status" class="status loading">Loading videos...</div>
+        
+        <div class="test-area">
+            <div class="canvas-container">
+                <canvas id="enemyCanvas" width="400" height="300"></canvas>
+            </div>
+            
+            <div class="controls">
+                <h2>Animation States</h2>
+                
+                <div class="button-group">
+                    <label>Full Sequence:</label>
+                    <button id="playSequenceBtn" style="background: #f59e0b; font-size: 1.1rem; padding: 16px;">▶️ Play Full Sequence</button>
+                    <button id="stopSequenceBtn" style="background: #ef4444; display: none;">⏹️ Stop Sequence</button>
+                </div>
+                
+                <div class="button-group">
+                    <label>Select Animation:</label>
+                    <button data-state="approaching" class="state-btn">Approaching</button>
+                    <button data-state="pacing" class="state-btn">Pacing (Idle)</button>
+                    <button data-state="menacing" class="state-btn">Menacing (Idle)</button>
+                    <button data-state="rearing" class="state-btn">Rearing</button>
+                    <button data-state="attacking" class="state-btn">Attacking (Random)</button>
+                    <button data-state="attack1" class="state-btn">Attack 1</button>
+                    <button data-state="attack2" class="state-btn">Attack 2</button>
+                    <button data-state="leaving" class="state-btn">Leaving</button>
+                </div>
+                
+                <div class="size-controls">
+                    <label>Enemy Size: <span id="sizeValue">120</span>px</label>
+                    <input type="range" id="sizeSlider" min="60" max="300" value="120">
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h2>Animation Info</h2>
+            <div class="info-item">
+                <strong>Current Animation:</strong> <span id="currentAnimation">None</span>
+            </div>
+            <div class="info-item">
+                <strong>Video Status:</strong> <span id="videoStatus">Loading...</span>
+            </div>
+            <div class="info-item">
+                <strong>Video Dimensions:</strong> <span id="videoDimensions">-</span>
+            </div>
+            <div class="info-item">
+                <strong>Canvas Position:</strong> <span id="canvasPosition">Center</span>
+            </div>
+            <div class="info-item" style="display: none;" id="sequenceTimingInfo">
+                <strong>Sequence Progress:</strong> <span id="sequenceProgress">-</span>
+            </div>
+            <div class="info-item" style="display: none;" id="sequenceTimeline">
+                <strong>Timeline:</strong>
+                <div id="timelineDetails" style="margin-top: 8px; color: #ccc; font-size: 0.9em; line-height: 1.6;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class EnemyAnimationTest {
+            constructor() {
+                this.canvas = document.getElementById('enemyCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.ratVideos = {
+                    approaching: null,
+                    attack1: null,
+                    attack2: null,
+                    leaving: null,
+                    menacing: null,
+                    pacing: null
+                };
+                this.videosLoaded = false;
+                this.currentAnimation = null;
+                this.enemySize = 120;
+                this.animationFrame = null;
+                this.isPlayingSequence = false;
+                this.sequenceTimeout = null;
+                this.sequenceStartTime = null;
+                
+                // Define the full enemy sequence with timings
+                this.enemySequence = [
+                    { name: 'approaching', duration: 3000, label: 'Enemy approaching (3s)' },
+                    { name: 'pacing', duration: 2000, label: 'Pacing/Idle (2s)' },
+                    { name: 'menacing', duration: 2000, label: 'Menacing/Rearing (2s)' },
+                    { name: 'attack1', duration: 1500, label: 'Attack 1 (1.5s)' },
+                    { name: 'pacing', duration: 1000, label: 'Recovery pacing (1s)' },
+                    { name: 'attack2', duration: 1500, label: 'Attack 2 (1.5s)' },
+                    { name: 'menacing', duration: 1500, label: 'Final menacing (1.5s)' },
+                    { name: 'leaving', duration: 3000, label: 'Enemy leaving (3s)' }
+                ];
+                
+                this.init();
+            }
+            
+            init() {
+                this.loadRatVideos();
+                this.setupControls();
+                this.setupSizeControl();
+                this.setupSequenceControls();
+                this.startAnimationLoop();
+            }
+            
+            loadRatVideos() {
+                const videoNames = ['approaching', 'attack1', 'attack2', 'leaving', 'menacing', 'pacing'];
+                let loadedCount = 0;
+                let errorCount = 0;
+                
+                const statusEl = document.getElementById('status');
+                const videoStatusEl = document.getElementById('videoStatus');
+                
+                videoNames.forEach(name => {
+                    const video = document.createElement('video');
+                    video.src = `resources/enemies/rat/optimized/${name}.webm`;
+                    video.loop = true;
+                    video.muted = true;
+                    video.playsInline = true;
+                    
+                    video.addEventListener('loadeddata', () => {
+                        loadedCount++;
+                        console.log(`✅ Loaded ${name}.webm`);
+                        
+                        if (loadedCount + errorCount === videoNames.length) {
+                            if (loadedCount > 0) {
+                                this.videosLoaded = true;
+                                statusEl.textContent = `✅ ${loadedCount}/${videoNames.length} videos loaded`;
+                                statusEl.className = 'status ready';
+                                videoStatusEl.textContent = `${loadedCount} videos ready`;
+                                
+                                // Auto-play first animation
+                                this.setAnimation('approaching');
+                            } else {
+                                statusEl.textContent = '❌ No videos loaded';
+                                statusEl.className = 'status error';
+                                videoStatusEl.textContent = 'All videos failed to load';
+                            }
+                        }
+                    });
+                    
+                    video.addEventListener('error', (e) => {
+                        errorCount++;
+                        console.warn(`⚠️ Failed to load ${name}.webm`);
+                        
+                        if (loadedCount + errorCount === videoNames.length) {
+                            if (loadedCount > 0) {
+                                this.videosLoaded = true;
+                                statusEl.textContent = `⚠️ ${loadedCount}/${videoNames.length} videos loaded (${errorCount} failed)`;
+                                statusEl.className = loadedCount === videoNames.length ? 'status ready' : 'status error';
+                                videoStatusEl.textContent = `${loadedCount} ready, ${errorCount} failed`;
+                                
+                                // Auto-play first animation if available
+                                if (this.ratVideos.approaching) {
+                                    this.setAnimation('approaching');
+                                }
+                            } else {
+                                statusEl.textContent = '❌ All videos failed to load';
+                                statusEl.className = 'status error';
+                                videoStatusEl.textContent = 'Check file paths';
+                            }
+                        }
+                    });
+                    
+                    this.ratVideos[name] = video;
+                });
+            }
+            
+            setupControls() {
+                const buttons = document.querySelectorAll('.state-btn');
+                buttons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const state = btn.dataset.state;
+                        this.setAnimation(state);
+                        
+                        // Update button states
+                        buttons.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+            }
+            
+            setupSizeControl() {
+                const slider = document.getElementById('sizeSlider');
+                const valueDisplay = document.getElementById('sizeValue');
+                
+                slider.addEventListener('input', (e) => {
+                    this.enemySize = parseInt(e.target.value);
+                    valueDisplay.textContent = this.enemySize;
+                });
+            }
+            
+            setupSequenceControls() {
+                const playBtn = document.getElementById('playSequenceBtn');
+                const stopBtn = document.getElementById('stopSequenceBtn');
+                
+                playBtn.addEventListener('click', () => {
+                    this.startSequence();
+                });
+                
+                stopBtn.addEventListener('click', () => {
+                    this.stopSequence();
+                });
+            }
+            
+            startSequence() {
+                if (!this.videosLoaded) {
+                    alert('Please wait for videos to load!');
+                    return;
+                }
+                
+                this.isPlayingSequence = true;
+                this.sequenceStartTime = Date.now();
+                
+                // Update UI
+                document.getElementById('playSequenceBtn').style.display = 'none';
+                document.getElementById('stopSequenceBtn').style.display = 'block';
+                document.getElementById('sequenceTimingInfo').style.display = 'block';
+                document.getElementById('sequenceTimeline').style.display = 'block';
+                
+                // Deactivate all manual buttons
+                document.querySelectorAll('.state-btn').forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.classList.remove('active');
+                });
+                
+                // Build timeline display
+                this.buildTimelineDisplay();
+                
+                // Start the sequence
+                this.playSequenceStep(0);
+            }
+            
+            stopSequence() {
+                this.isPlayingSequence = false;
+                
+                if (this.sequenceTimeout) {
+                    clearTimeout(this.sequenceTimeout);
+                    this.sequenceTimeout = null;
+                }
+                
+                // Reset UI
+                document.getElementById('playSequenceBtn').style.display = 'block';
+                document.getElementById('stopSequenceBtn').style.display = 'none';
+                document.getElementById('sequenceTimingInfo').style.display = 'none';
+                document.getElementById('sequenceProgress').textContent = '-';
+                
+                // Re-enable manual buttons
+                document.querySelectorAll('.state-btn').forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                });
+            }
+            
+            buildTimelineDisplay() {
+                const timelineDetails = document.getElementById('timelineDetails');
+                let cumulativeTime = 0;
+                let html = '';
+                
+                this.enemySequence.forEach((step, index) => {
+                    const startTime = cumulativeTime;
+                    const endTime = cumulativeTime + step.duration;
+                    html += `${index + 1}. ${step.label} (${(startTime/1000).toFixed(1)}s - ${(endTime/1000).toFixed(1)}s)<br>`;
+                    cumulativeTime += step.duration;
+                });
+                
+                html += `<br><strong>Total Duration: ${(cumulativeTime/1000).toFixed(1)}s</strong>`;
+                timelineDetails.innerHTML = html;
+            }
+            
+            playSequenceStep(stepIndex) {
+                if (!this.isPlayingSequence || stepIndex >= this.enemySequence.length) {
+                    if (this.isPlayingSequence) {
+                        // Sequence completed successfully
+                        const totalTime = Date.now() - this.sequenceStartTime;
+                        document.getElementById('sequenceProgress').textContent = `Completed! (${(totalTime/1000).toFixed(1)}s)`;
+                        
+                        // Auto-reset after 2 seconds
+                        setTimeout(() => {
+                            if (this.isPlayingSequence) {
+                                this.stopSequence();
+                            }
+                        }, 2000);
+                    }
+                    return;
+                }
+                
+                const step = this.enemySequence[stepIndex];
+                const elapsedTime = Date.now() - this.sequenceStartTime;
+                
+                // Update progress
+                document.getElementById('sequenceProgress').textContent = 
+                    `Step ${stepIndex + 1}/${this.enemySequence.length}: ${step.label} (${(elapsedTime/1000).toFixed(1)}s elapsed)`;
+                
+                // Play this animation
+                this.setAnimation(step.name, false); // false = don't update UI buttons
+                
+                // Highlight current step in timeline
+                this.highlightTimelineStep(stepIndex);
+                
+                // Schedule next step
+                this.sequenceTimeout = setTimeout(() => {
+                    this.playSequenceStep(stepIndex + 1);
+                }, step.duration);
+            }
+            
+            highlightTimelineStep(stepIndex) {
+                const timelineDetails = document.getElementById('timelineDetails');
+                let cumulativeTime = 0;
+                let html = '';
+                
+                this.enemySequence.forEach((step, index) => {
+                    const startTime = cumulativeTime;
+                    const endTime = cumulativeTime + step.duration;
+                    const isCurrent = index === stepIndex;
+                    const style = isCurrent ? 'color: #fbbf24; font-weight: bold;' : '';
+                    const marker = isCurrent ? '▶️ ' : '';
+                    html += `<span style="${style}">${marker}${index + 1}. ${step.label} (${(startTime/1000).toFixed(1)}s - ${(endTime/1000).toFixed(1)}s)</span><br>`;
+                    cumulativeTime += step.duration;
+                });
+                
+                const totalDuration = cumulativeTime;
+                html += `<br><strong>Total Duration: ${(totalDuration/1000).toFixed(1)}s</strong>`;
+                timelineDetails.innerHTML = html;
+            }
+            
+            setAnimation(animationName, updateUI = true) {
+                // Stop current animation
+                if (this.currentAnimation && this.ratVideos[this.currentAnimation]) {
+                    const currentVideo = this.ratVideos[this.currentAnimation];
+                    currentVideo.pause();
+                }
+                
+                // Determine which video to play
+                let videoName = animationName;
+                
+                // Handle special cases
+                if (animationName === 'attacking') {
+                    videoName = Math.random() > 0.5 ? 'attack1' : 'attack2';
+                } else if (animationName === 'rearing') {
+                    videoName = 'menacing';
+                }
+                
+                // Start new animation
+                if (this.ratVideos[videoName]) {
+                    this.currentAnimation = videoName;
+                    const video = this.ratVideos[videoName];
+                    video.currentTime = 0;
+                    video.play().catch(e => console.warn('Video play failed:', e));
+                    
+                    // Update info
+                    document.getElementById('currentAnimation').textContent = videoName;
+                    const videoDimensions = video.videoWidth > 0 
+                        ? `${video.videoWidth}x${video.videoHeight}` 
+                        : 'Loading...';
+                    document.getElementById('videoDimensions').textContent = videoDimensions;
+                    
+                    // Update button states if requested
+                    if (updateUI) {
+                        document.querySelectorAll('.state-btn').forEach(btn => {
+                            if (btn.dataset.state === animationName || btn.dataset.state === videoName) {
+                                btn.classList.add('active');
+                            } else {
+                                btn.classList.remove('active');
+                            }
+                        });
+                    }
+                } else {
+                    console.warn(`Video not available: ${videoName}`);
+                    document.getElementById('currentAnimation').textContent = `${animationName} (not available)`;
+                }
+            }
+            
+            startAnimationLoop() {
+                const draw = () => {
+                    this.draw();
+                    this.animationFrame = requestAnimationFrame(draw);
+                };
+                draw();
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                if (!this.videosLoaded || !this.currentAnimation) {
+                    // Draw placeholder
+                    this.ctx.fillStyle = '#444';
+                    this.ctx.font = '20px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText('Loading animations...', this.canvas.width / 2, this.canvas.height / 2);
+                    return;
+                }
+                
+                const video = this.ratVideos[this.currentAnimation];
+                if (!video || video.readyState < 2) {
+                    // Video not ready
+                    this.ctx.fillStyle = '#fbbf24';
+                    this.ctx.font = '16px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(`Loading ${this.currentAnimation}...`, this.canvas.width / 2, this.canvas.height / 2);
+                    return;
+                }
+                
+                // Draw video centered on canvas
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                
+                // Calculate size maintaining aspect ratio
+                const videoAspectRatio = video.videoWidth / video.videoHeight;
+                const videoHeight = this.enemySize * 2;
+                const videoWidth = videoHeight * videoAspectRatio;
+                
+                // Add glow effect for attack/rearing animations
+                if (this.currentAnimation === 'attack1' || this.currentAnimation === 'attack2' || 
+                    this.currentAnimation === 'menacing') {
+                    this.ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
+                    this.ctx.shadowBlur = 20;
+                } else {
+                    this.ctx.shadowColor = 'transparent';
+                    this.ctx.shadowBlur = 0;
+                }
+                
+                // Draw video
+                this.ctx.drawImage(
+                    video,
+                    centerX - videoWidth / 2,
+                    centerY - videoHeight / 2,
+                    videoWidth,
+                    videoHeight
+                );
+                
+                // Reset shadow
+                this.ctx.shadowColor = 'transparent';
+                this.ctx.shadowBlur = 0;
+                
+                // Draw label below
+                this.ctx.fillStyle = '#4ade80';
+                this.ctx.font = 'bold 14px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'top';
+                this.ctx.fillText(this.currentAnimation, centerX, centerY + videoHeight / 2 + 10);
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.enemyTest = new EnemyAnimationTest();
+        });
+    </script>
+</body>
+</html>
