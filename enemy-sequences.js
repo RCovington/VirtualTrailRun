@@ -6,7 +6,7 @@ window.ENEMY_SEQUENCES = {
     rat: [
         // rat_sequence_2 - DEFAULT - 12 step sequence with 7 second durations
         {
-            name: 'rat_sequence_2',
+            name: 'rat_sequence_2 (DEFAULT)',
             steps: [
                 { animation: 'approaching', startPos: 25, endPos: 50, duration: 7000 },
                 { animation: 'pacing', startPos: 50, endPos: 50, duration: 7000 },
