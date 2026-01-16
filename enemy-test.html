@@ -496,8 +496,12 @@
                 document.getElementById('sequenceProgress').textContent = 
                     `Step ${stepIndex + 1}/${this.enemySequence.length}: ${step.label} (${(elapsedTime/1000).toFixed(1)}s elapsed)`;
                 
-                // Animate position for this step
+                // Set starting position first (instant), then animate to end position
                 if (step.startPos !== undefined && step.endPos !== undefined) {
+                    // Instantly set to start position
+                    this.enemyX = step.startPos;
+                    this.positionStartX = step.startPos;
+                    // Then animate to end position
                     this.setPosition(step.endPos, step.duration);
                 }
                 
@@ -684,6 +688,28 @@
                 this.ctx.shadowColor = 'transparent';
                 this.ctx.shadowBlur = 0;
                 
+                // Draw position track line at bottom to show movement
+                this.ctx.strokeStyle = '#333';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, this.canvas.height - 30);
+                this.ctx.lineTo(this.canvas.width, this.canvas.height - 30);
+                this.ctx.stroke();
+                
+                // Draw position markers
+                this.ctx.fillStyle = '#555';
+                this.ctx.font = '10px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('LEFT', 0, this.canvas.height - 35);
+                this.ctx.fillText('CENTER', this.canvas.width / 2, this.canvas.height - 35);
+                this.ctx.fillText('RIGHT', this.canvas.width, this.canvas.height - 35);
+                
+                // Draw current position indicator on track
+                this.ctx.fillStyle = '#fbbf24';
+                this.ctx.beginPath();
+                this.ctx.arc(canvasX, this.canvas.height - 30, 8, 0, Math.PI * 2);
+                this.ctx.fill();
+                
                 // Draw label below
                 this.ctx.fillStyle = '#4ade80';
                 this.ctx.font = 'bold 14px Arial';
@@ -691,10 +717,10 @@
                 this.ctx.textBaseline = 'top';
                 this.ctx.fillText(this.currentAnimation, canvasX, centerY + videoHeight / 2 + 10);
                 
-                // Draw position indicator
-                this.ctx.fillStyle = '#666';
-                this.ctx.font = '10px Arial';
-                this.ctx.fillText(`Position: ${(this.enemyX * 100).toFixed(0)}%`, canvasX, 20);
+                // Draw position indicator with actual pixel position
+                this.ctx.fillStyle = '#fbbf24';
+                this.ctx.font = 'bold 12px Arial';
+                this.ctx.fillText(`X: ${canvasX.toFixed(0)}px (${(this.enemyX * 100).toFixed(0)}%)`, canvasX, centerY + videoHeight / 2 + 30);
             }
         }
         
