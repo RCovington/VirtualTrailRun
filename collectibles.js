@@ -873,18 +873,18 @@ class CollectiblesGame {
                 enemy.enemyX = enemy.positionStartX + (enemy.targetX - enemy.positionStartX) * easeProgress;
                 
                 // Convert normalized position (0-100) to canvas coordinates
-                // 0 = off-screen left, 50 = center, 100 = off-screen right
+                // 0 = off-screen left (center of video off-left), 50 = center of screen, 100 = off-screen right
                 const video = this.ratVideos[step.animation];
                 const videoWidth = video ? video.videoWidth || 800 : 800;
                 const canvasWidth = this.canvas.width;
                 
-                // Map 0-100 to actual screen positions
-                // 0 = fully off-left (-videoWidth)
-                // 50 = center (canvasWidth/2 - videoWidth/2)
-                // 100 = fully off-right (canvasWidth + videoWidth)
-                const leftEdge = -videoWidth;
-                const center = (canvasWidth - videoWidth) / 2;
-                const rightEdge = canvasWidth;
+                // Map 0-100 to actual screen positions (enemy.x is the CENTER of the video)
+                // 0 = fully off-left (center at -videoWidth/2)
+                // 50 = center of screen (center at canvasWidth/2)
+                // 100 = fully off-right (center at canvasWidth + videoWidth/2)
+                const leftEdge = -videoWidth / 2;
+                const center = canvasWidth / 2;
+                const rightEdge = canvasWidth + videoWidth / 2;
                 
                 if (enemy.enemyX <= 50) {
                     // Moving from left to center
