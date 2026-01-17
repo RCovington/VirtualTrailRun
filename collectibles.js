@@ -525,7 +525,6 @@ class CollectiblesGame {
             console.warn(`⚠️ Video not found for animation: ${step.animation}`);
         }
     }
-    }
 
     /**
      * Spawn the final boss (giant rat)
@@ -930,7 +929,15 @@ class CollectiblesGame {
                         // Start next step
                         this.startEnemyStep(enemy, nextStepIndex);
                     } else {
-                        // Sequence complete - remove enemy
+                        // Sequence complete - remove enemy and award XP if defeated
+                        if (enemy.isDead) {
+                            console.log(`💀 Defeated enemy leaving - awarding XP`);
+                            const app = window.app;
+                            if (app && app.addXP) {
+                                app.addXP(10);
+                                this.showEnemyDefeatFeedback(10);
+                            }
+                        }
                         console.log(`✅ Enemy sequence complete - removing`);
                         return false;
                     }
