@@ -170,6 +170,47 @@ class VirtualTrailRunApp {
                 }
             });
             
+            // Set up tap-and-hold on "Game Mode" label for debug mode (for mobile)
+            const gameModeLabel = document.getElementById('gameModeLabel');
+            if (gameModeLabel) {
+                let holdTimer = null;
+                let isHolding = false;
+                
+                const startHold = (e) => {
+                    e.preventDefault();
+                    isHolding = true;
+                    holdTimer = setTimeout(() => {
+                        if (isHolding) {
+                            console.log('🎮 Debug mode triggered by tap-and-hold');
+                            this.toggleDebugMode();
+                            // Visual feedback
+                            gameModeLabel.style.opacity = '0.5';
+                            setTimeout(() => {
+                                gameModeLabel.style.opacity = '1';
+                            }, 200);
+                        }
+                    }, 3000); // 3 seconds
+                };
+                
+                const endHold = () => {
+                    isHolding = false;
+                    if (holdTimer) {
+                        clearTimeout(holdTimer);
+                        holdTimer = null;
+                    }
+                };
+                
+                // Touch events for mobile
+                gameModeLabel.addEventListener('touchstart', startHold, { passive: false });
+                gameModeLabel.addEventListener('touchend', endHold);
+                gameModeLabel.addEventListener('touchcancel', endHold);
+                
+                // Mouse events for desktop testing
+                gameModeLabel.addEventListener('mousedown', startHold);
+                gameModeLabel.addEventListener('mouseup', endHold);
+                gameModeLabel.addEventListener('mouseleave', endHold);
+            }
+            
             // Initialize debug mode state (start with it hidden)
             this.toggleDebugMode(false);
             

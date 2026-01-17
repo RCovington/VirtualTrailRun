@@ -262,11 +262,20 @@ class HeadTracker {
         const currentDirection = movement > this.bobThreshold ? 'down' : 
                                 movement < -this.bobThreshold ? 'up' : null;
         
+        // Log occasionally for debugging
+        if (!this.bobDebugCounter) this.bobDebugCounter = 0;
+        this.bobDebugCounter++;
+        if (this.bobDebugCounter % 60 === 0) { // Every 60 frames (~1 second)
+            console.log(`👤 Bob detection: movement=${movement.toFixed(3)}, threshold=${this.bobThreshold}, direction=${currentDirection}, lastDir=${this.lastBobDirection}`);
+        }
+        
         if (currentDirection && this.lastBobDirection && 
             currentDirection !== this.lastBobDirection) {
             // Direction changed - count as a bob
             this.bobCount++;
             this.bobTimestamps.push(Date.now());
+            
+            console.log(`🎯 BOB DETECTED! Count: ${this.bobCount}, Direction: ${this.lastBobDirection} → ${currentDirection}`);
             
             // Keep only last minute of timestamps
             const oneMinuteAgo = Date.now() - 60000;
