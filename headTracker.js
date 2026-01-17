@@ -266,7 +266,9 @@ class HeadTracker {
         if (!this.bobDebugCounter) this.bobDebugCounter = 0;
         this.bobDebugCounter++;
         if (this.bobDebugCounter % 60 === 0) { // Every 60 frames (~1 second)
-            console.log(`👤 Bob detection: movement=${movement.toFixed(3)}, threshold=${this.bobThreshold}, direction=${currentDirection}, lastDir=${this.lastBobDirection}`);
+            const logMsg = `movement=${movement.toFixed(3)}, threshold=${this.bobThreshold}, dir=${currentDirection}, lastDir=${this.lastBobDirection}`;
+            console.log(`👤 Bob detection: ${logMsg}`);
+            this.addDebugLog(logMsg);
         }
         
         if (currentDirection && this.lastBobDirection && 
@@ -275,7 +277,9 @@ class HeadTracker {
             this.bobCount++;
             this.bobTimestamps.push(Date.now());
             
-            console.log(`🎯 BOB DETECTED! Count: ${this.bobCount}, Direction: ${this.lastBobDirection} → ${currentDirection}`);
+            const bobMsg = `🎯 BOB #${this.bobCount}: ${this.lastBobDirection} → ${currentDirection}`;
+            console.log(bobMsg);
+            this.addDebugLog(bobMsg, 'success');
             
             // Keep only last minute of timestamps
             const oneMinuteAgo = Date.now() - 60000;
@@ -289,6 +293,30 @@ class HeadTracker {
         if (currentDirection) {
             this.lastBobDirection = currentDirection;
         }
+    }
+    
+    /**
+     * Add a log message to the debug panel
+     */
+    addDebugLog(message, type = 'normal') {
+        const logElement = document.getElementById('bobDebugLog');
+        if (!logElement) return;
+        
+        const timestamp = new Date().toLocaleTimeString();
+        const color = type === 'success' ? '#4ade80' : '#aaa';
+        const logEntry = document.createElement('div');
+        logEntry.style.color = color;
+        logEntry.textContent = `[${timestamp}] ${message}`;
+        
+        logElement.appendChild(logEntry);
+        
+        // Keep only last 20 log entries
+        while (logElement.children.length > 20) {
+            logElement.removeChild(logElement.firstChild);
+        }
+        
+        // Auto-scroll to bottom
+        logElement.parentElement.scrollTop = logElement.parentElement.scrollHeight;
     }
 
     /**
