@@ -141,9 +141,11 @@ class CollectiblesGame {
             video.loop = true;
             video.muted = true;
             video.playsInline = true;
+            video.preload = 'auto'; // Preload for better mobile performance
             
             video.addEventListener('loadeddata', () => {
                 loadedCount++;
+                console.log(`📹 Loaded ${name}.webm (${loadedCount}/${videoNames.length})`);
                 if (loadedCount === videoNames.length) {
                     this.videosLoaded = true;
                     console.log('✅ All rat videos loaded');
@@ -151,8 +153,16 @@ class CollectiblesGame {
             });
             
             video.addEventListener('error', (e) => {
-                console.warn(`⚠️ Failed to load ${name}.webm, will use emoji fallback`);
+                console.warn(`⚠️ Failed to load ${name}.webm:`, e);
+                loadedCount++;
+                if (loadedCount === videoNames.length) {
+                    console.warn('⚠️ Some videos failed, will use emoji fallback');
+                    this.videosLoaded = true; // Still mark as "loaded" so game continues
+                }
             });
+            
+            // Try to load the video
+            video.load();
             
             this.ratVideos[name] = video;
         });
@@ -501,11 +511,20 @@ class CollectiblesGame {
             enemy.currentVideo = step.animation;
             video.currentTime = 0;
             video.loop = false; // Ensure videos don't loop during sequences
-            video.play().catch(e => console.warn('Video play failed:', e));
-            console.log(`🎬 Playing video: ${step.animation}`);
+            
+            // Mobile browsers need video to be muted for autoplay
+            video.muted = true;
+            
+            video.play().then(() => {
+                console.log(`🎬 Playing video: ${step.animation}`);
+            }).catch(e => {
+                console.warn(`⚠️ Video play failed (using emoji fallback): ${e.message}`);
+                enemy.currentVideo = null; // Force emoji fallback
+            });
         } else {
             console.warn(`⚠️ Video not found for animation: ${step.animation}`);
         }
+    }
     }
 
     /**
@@ -855,6 +874,7 @@ class CollectiblesGame {
                 // Jump to last step (leaving) if not already there
                 if (enemy.sequence && enemy.currentStepIndex < enemy.sequence.steps.length - 1) {
                     const lastStepIndex = enemy.sequence.steps.length - 1;
+                    enemy.isDead = true; // Mark as dead to prevent further attacks
                     this.startEnemyStep(enemy, lastStepIndex);
                     console.log(`🏃 Enemy defeated - jumping to leaving animation`);
                 }
@@ -916,8 +936,8 @@ class CollectiblesGame {
                     }
                 }
                 
-                // Handle attacks - if step animation is attack1 or attack2, deal damage
-                if ((step.animation === 'attack1' || step.animation === 'attack2') && !enemy.hasAttackedThisStep) {
+                // Handle attacks - if step animation is attack1 or attack2, deal damage (but not if dead)
+                if (!enemy.isDead && (step.animation === 'attack1' || step.animation === 'attack2') && !enemy.hasAttackedThisStep) {
                     enemy.hasAttackedThisStep = true;
                     this.enemyAttack(enemy);
                 } else if (step.animation !== 'attack1' && step.animation !== 'attack2') {
