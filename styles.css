@@ -2042,11 +2042,59 @@ body:not(.debug-mode) .header {
     border: 3px solid var(--orange);
     border-radius: 12px;
     padding: 30px;
-    max-width: 600px;
+    max-width: 800px;
     max-height: 80vh;
     overflow-y: auto;
     position: relative;
     width: 90%;
+}
+
+.equip-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .equip-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
+
+.equip-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.equip-dropdown {
+    width: 100%;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 140, 0, 0.4);
+    border-radius: 6px;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.equip-dropdown:hover {
+    border-color: rgba(255, 140, 0, 0.7);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.equip-dropdown:focus {
+    outline: none;
+    border-color: var(--orange);
+    box-shadow: 0 0 10px rgba(255, 140, 0, 0.3);
+}
+
+.equip-dropdown option {
+    background: #2d3e1f;
+    color: white;
 }
 
 .equip-close-x {

@@ -64,12 +64,46 @@ class CollectiblesGame {
             'bolt': 0
         };
         
-        // Armor inventory
+        // Equipment inventory (unequipped items)
+        this.equipment = {
+            head: {
+                'simple cap': 1  // DEBUG: Start with simple cap
+            },
+            armor: {
+                'cotton overalls': 1,  // DEBUG: Start with cotton overalls
+                'buckler': 0  // Buckler shield (legacy)
+            },
+            feet: {
+                'sandals': 1  // DEBUG: Start with sandals
+            },
+            weapon: {
+                'simple knife': 1  // DEBUG: Start with simple knife
+            },
+            shield: {
+                'oak log shield': 1  // DEBUG: Start with oak log shield
+            },
+            accessory: {
+                'Ring of Fireball': 1  // DEBUG: Start with Ring of Fireball
+            }
+        };
+        
+        // Armor inventory (legacy - for backwards compatibility)
         this.armor = {
             'buckler': 0
         };
         
-        // Track equipped shield (buckler = level 1)
+        // Track equipped items
+        this.equippedItems = {
+            head: null,
+            armor: null,
+            feet: null,
+            weapon: null,
+            shield: null,
+            accessory1: null,
+            accessory2: null
+        };
+        
+        // Track equipped shield (buckler = level 1) - legacy
         this.equippedShield = null; // Will be set to 'buckler' when acquired
         
         // Potion inventory
@@ -3289,35 +3323,66 @@ class CollectiblesGame {
                 <h2>⚔️ Equipment Manager</h2>
                 <p class="equip-subtitle">Equip weapons, armor, and magic items</p>
                 
-                <div class="equip-section">
-                    <h3>🗡️ Main Hand</h3>
-                    <div class="equip-slot" id="mainHandSlot">
-                        <div class="equip-slot-empty">No weapon equipped</div>
-                    </div>
-                </div>
-                
-                <div class="equip-section">
-                    <h3>🛡️ Off Hand</h3>
-                    <div class="equip-slot" id="offHandSlot">
-                        <div class="equip-slot-empty">No shield/weapon equipped</div>
-                    </div>
-                </div>
-                
-                <div class="equip-section">
-                    <h3>🎽 Armor</h3>
-                    <div class="equip-slot" id="armorSlot">
-                        <div class="equip-slot-empty">No armor equipped</div>
-                    </div>
-                </div>
-                
-                <div class="equip-section">
-                    <h3>💍 Accessories</h3>
-                    <div class="equip-accessories">
-                        <div class="equip-slot equip-slot-small" id="accessory1Slot">
-                            <div class="equip-slot-empty">Empty</div>
+                <div class="equip-grid">
+                    <!-- Left Column -->
+                    <div class="equip-column">
+                        <div class="equip-section">
+                            <h3>🗡️ Weapon</h3>
+                            <select class="equip-dropdown" id="weaponDropdown">
+                                <option value="">None</option>
+                                ${this.getEquipmentOptions('weapon')}
+                            </select>
                         </div>
-                        <div class="equip-slot equip-slot-small" id="accessory2Slot">
-                            <div class="equip-slot-empty">Empty</div>
+                        
+                        <div class="equip-section">
+                            <h3>👤 Head</h3>
+                            <select class="equip-dropdown" id="headDropdown">
+                                <option value="">None</option>
+                                ${this.getEquipmentOptions('head')}
+                            </select>
+                        </div>
+                        
+                        <div class="equip-section">
+                            <h3>🎽 Armor</h3>
+                            <select class="equip-dropdown" id="armorDropdown">
+                                <option value="">None</option>
+                                ${this.getEquipmentOptions('armor')}
+                            </select>
+                        </div>
+                        
+                        <div class="equip-section">
+                            <h3>👟 Feet</h3>
+                            <select class="equip-dropdown" id="feetDropdown">
+                                <option value="">None</option>
+                                ${this.getEquipmentOptions('feet')}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="equip-column">
+                        <div class="equip-section">
+                            <h3>🛡️ Shield</h3>
+                            <select class="equip-dropdown" id="shieldDropdown">
+                                <option value="">None</option>
+                                ${this.getEquipmentOptions('shield')}
+                            </select>
+                        </div>
+                        
+                        <div class="equip-section">
+                            <h3>💍 Accessory 1</h3>
+                            <select class="equip-dropdown" id="accessory1Dropdown">
+                                <option value="">None</option>
+                                ${this.getEquipmentOptions('accessory')}
+                            </select>
+                        </div>
+                        
+                        <div class="equip-section">
+                            <h3>💍 Accessory 2</h3>
+                            <select class="equip-dropdown" id="accessory2Dropdown">
+                                <option value="">None</option>
+                                ${this.getEquipmentOptions('accessory')}
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -3327,6 +3392,17 @@ class CollectiblesGame {
         `;
         
         document.body.appendChild(equipModal);
+        
+        // Add dropdown change handlers
+        ['weapon', 'head', 'armor', 'feet', 'shield', 'accessory1', 'accessory2'].forEach(slot => {
+            const dropdown = equipModal.querySelector(`#${slot}Dropdown`);
+            if (dropdown) {
+                dropdown.value = this.equippedItems[slot] || '';
+                dropdown.addEventListener('change', (e) => {
+                    this.equipItem(slot, e.target.value);
+                });
+            }
+        });
         
         // Add close button handlers
         const closeBtn = equipModal.querySelector('.equip-close-btn');
@@ -3338,9 +3414,61 @@ class CollectiblesGame {
         closeX.addEventListener('click', () => {
             equipModal.remove();
         });
+    }
+    
+    /**
+     * Get equipment options for dropdown
+     */
+    getEquipmentOptions(category) {
+        const items = this.equipment[category] || {};
+        return Object.entries(items)
+            .filter(([name, count]) => count > 0)
+            .map(([name, count]) => `<option value="${name}">${name} (${count})</option>`)
+            .join('');
+    }
+    
+    /**
+     * Equip an item
+     */
+    equipItem(slot, itemName) {
+        if (!itemName) {
+            // Unequip
+            if (this.equippedItems[slot]) {
+                const category = this.getItemCategory(slot);
+                const oldItem = this.equippedItems[slot];
+                this.equipment[category][oldItem]++;
+                this.equippedItems[slot] = null;
+                console.log(`Unequipped ${oldItem} from ${slot}`);
+            }
+            return;
+        }
         
-        // TODO: Populate equipped items and add equip/unequip handlers
-        console.log('Equipment menu opened - equipment management system coming soon!');
+        const category = this.getItemCategory(slot);
+        
+        // Check if item is available
+        if (!this.equipment[category][itemName] || this.equipment[category][itemName] <= 0) {
+            console.warn(`Cannot equip ${itemName} - not in inventory`);
+            return;
+        }
+        
+        // Unequip current item if any
+        if (this.equippedItems[slot]) {
+            const oldItem = this.equippedItems[slot];
+            this.equipment[category][oldItem]++;
+        }
+        
+        // Equip new item
+        this.equipment[category][itemName]--;
+        this.equippedItems[slot] = itemName;
+        console.log(`Equipped ${itemName} to ${slot}`);
+    }
+    
+    /**
+     * Get item category from slot name
+     */
+    getItemCategory(slot) {
+        if (slot === 'accessory1' || slot === 'accessory2') return 'accessory';
+        return slot;
     }
 
     /**
