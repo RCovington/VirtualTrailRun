@@ -3422,7 +3422,19 @@ class CollectiblesGame {
     getEquipmentOptions(category) {
         const items = this.equipment[category] || {};
         return Object.entries(items)
-            .filter(([name, count]) => count > 0)
+            .filter(([name, count]) => {
+                // Only show items that are available (count > 0)
+                if (count <= 0) return false;
+                
+                // Don't show items that are already equipped elsewhere
+                // Check all equipped slots to see if this item is equipped
+                for (const [slot, equippedItem] of Object.entries(this.equippedItems)) {
+                    if (equippedItem === name) {
+                        return false;
+                    }
+                }
+                return true;
+            })
             .map(([name, count]) => `<option value="${name}">${name} (${count})</option>`)
             .join('');
     }
@@ -3439,6 +3451,8 @@ class CollectiblesGame {
                 this.equipment[category][oldItem]++;
                 this.equippedItems[slot] = null;
                 console.log(`Unequipped ${oldItem} from ${slot}`);
+                this.refreshEquipmentDropdowns();
+                this.updateInventoryDisplay();
             }
             return;
         }
@@ -3451,6 +3465,19 @@ class CollectiblesGame {
             return;
         }
         
+        // Check if item is already equipped elsewhere
+        for (const [equippedSlot, equippedItem] of Object.entries(this.equippedItems)) {
+            if (equippedItem === itemName && equippedSlot !== slot) {
+                console.warn(`Cannot equip ${itemName} - already equipped in ${equippedSlot}`);
+                // Reset dropdown to current value
+                const dropdown = document.getElementById(`${slot}Dropdown`);
+                if (dropdown) {
+                    dropdown.value = this.equippedItems[slot] || '';
+                }
+                return;
+            }
+        }
+        
         // Unequip current item if any
         if (this.equippedItems[slot]) {
             const oldItem = this.equippedItems[slot];
@@ -3461,6 +3488,45 @@ class CollectiblesGame {
         this.equipment[category][itemName]--;
         this.equippedItems[slot] = itemName;
         console.log(`Equipped ${itemName} to ${slot}`);
+        
+        // Refresh all dropdowns to update availability
+        this.refreshEquipmentDropdowns();
+        this.updateInventoryDisplay();
+    }
+    
+    /**
+     * Refresh all equipment dropdowns to reflect current availability
+     */
+    refreshEquipmentDropdowns() {
+        const slots = ['weapon', 'head', 'armor', 'feet', 'shield', 'accessory1', 'accessory2'];
+        
+        slots.forEach(slot => {
+            const dropdown = document.getElementById(`${slot}Dropdown`);
+            if (dropdown) {
+                const currentValue = this.equippedItems[slot] || '';
+                const category = this.getItemCategory(slot);
+                
+                // Rebuild options
+                dropdown.innerHTML = `
+                    <option value="">None</option>
+                    ${this.getEquipmentOptions(category)}
+                `;
+                
+                // If current item is equipped, add it back to options and select it
+                if (currentValue) {
+                    const hasOption = Array.from(dropdown.options).some(opt => opt.value === currentValue);
+                    if (!hasOption) {
+                        const option = document.createElement('option');
+                        option.value = currentValue;
+                        option.textContent = `${currentValue} (equipped)`;
+                        dropdown.insertBefore(option, dropdown.options[1]);
+                    }
+                }
+                
+                // Set value
+                dropdown.value = currentValue;
+            }
+        });
     }
     
     /**
