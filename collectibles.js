@@ -3513,12 +3513,15 @@ class CollectiblesGame {
             });
         }
         
-        // Update weapons tab (Bolts)
+        // Update weapons tab (Bolts + Equipment Weapons)
         const weaponsList = document.getElementById('weaponsList');
         if (weaponsList) {
+            let html = '';
+            
+            // Add bolts if any
             const boltType = this.types.find(type => type.name === 'bolt');
             if (boltType && this.boltCount > 0) {
-                weaponsList.innerHTML = `
+                html += `
                     <div class="inventory-list-item" data-type="bolt">
                         <div class="inventory-list-emoji">${boltType.emoji}</div>
                         <div class="inventory-list-info">
@@ -3529,9 +3532,29 @@ class CollectiblesGame {
                         </div>
                     </div>
                 `;
-            } else {
-                weaponsList.innerHTML = '<div class="inventory-empty">No weapons yet</div>';
             }
+            
+            // Add equipment weapons
+            if (this.equipment.weapon) {
+                Object.entries(this.equipment.weapon).forEach(([name, count]) => {
+                    if (count > 0) {
+                        const isEquipped = this.equippedItems.weapon === name;
+                        html += `
+                            <div class="inventory-list-item" data-type="${name}">
+                                <div class="inventory-list-emoji">🗡️</div>
+                                <div class="inventory-list-info">
+                                    <div class="inventory-list-name">${name}${isEquipped ? ' (Equipped)' : ''}</div>
+                                    <div class="inventory-list-count">
+                                        Quantity: <span class="count-value">${count}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            
+            weaponsList.innerHTML = html || '<div class="inventory-empty">No weapons yet</div>';
         }
         
         // Update armor tab
@@ -3548,20 +3571,81 @@ class CollectiblesGame {
         const armorList = document.getElementById('armorList');
         if (!armorList) return;
         
-        if (this.armor.buckler === 0) {
-            armorList.innerHTML = '<div class="inventory-empty">No armor yet</div>';
-            return;
-        }
-        
         const armorItems = [];
         
+        // Add equipment head items
+        if (this.equipment.head) {
+            Object.entries(this.equipment.head).forEach(([name, count]) => {
+                if (count > 0) {
+                    const isEquipped = this.equippedItems.head === name;
+                    armorItems.push({
+                        name: name + (isEquipped ? ' (Equipped)' : ''),
+                        emoji: '🧢',
+                        count: count,
+                        category: 'Head'
+                    });
+                }
+            });
+        }
+        
+        // Add equipment armor items
+        if (this.equipment.armor) {
+            Object.entries(this.equipment.armor).forEach(([name, count]) => {
+                if (count > 0 && name !== 'buckler') {
+                    const isEquipped = this.equippedItems.armor === name;
+                    armorItems.push({
+                        name: name + (isEquipped ? ' (Equipped)' : ''),
+                        emoji: '🎽',
+                        count: count,
+                        category: 'Armor'
+                    });
+                }
+            });
+        }
+        
+        // Add equipment feet items
+        if (this.equipment.feet) {
+            Object.entries(this.equipment.feet).forEach(([name, count]) => {
+                if (count > 0) {
+                    const isEquipped = this.equippedItems.feet === name;
+                    armorItems.push({
+                        name: name + (isEquipped ? ' (Equipped)' : ''),
+                        emoji: '👟',
+                        count: count,
+                        category: 'Feet'
+                    });
+                }
+            });
+        }
+        
+        // Add equipment shield items
+        if (this.equipment.shield) {
+            Object.entries(this.equipment.shield).forEach(([name, count]) => {
+                if (count > 0) {
+                    const isEquipped = this.equippedItems.shield === name;
+                    armorItems.push({
+                        name: name + (isEquipped ? ' (Equipped)' : ''),
+                        emoji: '🛡️',
+                        count: count,
+                        category: 'Shield'
+                    });
+                }
+            });
+        }
+        
+        // Legacy buckler
         if (this.armor.buckler > 0) {
             armorItems.push({
                 name: 'Buckler Shield',
                 emoji: '🛡️',
                 count: this.armor.buckler,
-                description: 'Blocks enemy attacks with two closed fists gesture'
+                category: 'Shield (Legacy)'
             });
+        }
+        
+        if (armorItems.length === 0) {
+            armorList.innerHTML = '<div class="inventory-empty">No armor yet</div>';
+            return;
         }
         
         armorList.innerHTML = armorItems.map(item => `
@@ -3569,7 +3653,7 @@ class CollectiblesGame {
                 <div class="inventory-list-emoji">${item.emoji}</div>
                 <div class="inventory-list-info">
                     <div class="inventory-list-name">${item.name}</div>
-                    <div class="inventory-list-description">${item.description}</div>
+                    <div class="inventory-list-description">${item.category}</div>
                     <div class="inventory-list-count">
                         Quantity: <span class="count-value">${item.count}</span>
                     </div>
@@ -3599,12 +3683,33 @@ class CollectiblesGame {
         const magicList = document.getElementById('magicList');
         if (!magicList) return;
         
-        if (this.potions.healing === 0 && this.potions.electricity === 0 && this.potions.mana === 0) {
+        let html = '';
+        
+        // Add equipment accessories
+        if (this.equipment.accessory) {
+            Object.entries(this.equipment.accessory).forEach(([name, count]) => {
+                if (count > 0) {
+                    const isEquipped = this.equippedItems.accessory1 === name || this.equippedItems.accessory2 === name;
+                    html += `
+                        <div class="inventory-list-item magic-item">
+                            <div class="inventory-list-emoji">💍</div>
+                            <div class="inventory-list-info">
+                                <div class="inventory-list-name">${name}${isEquipped ? ' (Equipped)' : ''}</div>
+                                <div class="inventory-list-description">Magic Accessory</div>
+                                <div class="inventory-list-count">
+                                    Quantity: <span class="count-value">${count}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        if (this.potions.healing === 0 && this.potions.electricity === 0 && this.potions.mana === 0 && !html) {
             magicList.innerHTML = '<div class="inventory-empty">No magic items yet</div>';
             return;
         }
-        
-        let html = '';
         if (this.potions.healing > 0) {
             html += `
                 <div class="inventory-list-item" data-type="healing">
