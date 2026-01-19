@@ -3456,9 +3456,7 @@ class CollectiblesGame {
         if (!itemName) {
             // Unequip
             if (this.equippedItems[slot]) {
-                const category = this.getItemCategory(slot);
                 const oldItem = this.equippedItems[slot];
-                this.equipment[category][oldItem]++;
                 this.equippedItems[slot] = null;
                 console.log(`Unequipped ${oldItem} from ${slot}`);
                 this.refreshEquipmentDropdowns();
@@ -3488,14 +3486,7 @@ class CollectiblesGame {
             }
         }
         
-        // Unequip current item if any
-        if (this.equippedItems[slot]) {
-            const oldItem = this.equippedItems[slot];
-            this.equipment[category][oldItem]++;
-        }
-        
-        // Equip new item
-        this.equipment[category][itemName]--;
+        // Just swap equipped items without changing inventory counts
         this.equippedItems[slot] = itemName;
         console.log(`Equipped ${itemName} to ${slot}`);
         
@@ -3613,13 +3604,13 @@ class CollectiblesGame {
             // Add equipment weapons
             if (this.equipment.weapon) {
                 Object.entries(this.equipment.weapon).forEach(([name, count]) => {
-                    if (count > 0) {
-                        const isEquipped = this.equippedItems.weapon === name;
+                    const isEquipped = this.equippedItems.weapon === name;
+                    if (count > 0 || isEquipped) {
                         html += `
                             <div class="inventory-list-item" data-type="${name}">
                                 <div class="inventory-list-emoji">🗡️</div>
                                 <div class="inventory-list-info">
-                                    <div class="inventory-list-name">${name}${isEquipped ? ' (Equipped)' : ''}</div>
+                                    <div class="inventory-list-name">${name}${isEquipped ? ' ✓ Equipped' : ''}</div>
                                     <div class="inventory-list-count">
                                         Quantity: <span class="count-value">${count}</span>
                                     </div>
@@ -3652,10 +3643,10 @@ class CollectiblesGame {
         // Add equipment head items
         if (this.equipment.head) {
             Object.entries(this.equipment.head).forEach(([name, count]) => {
-                if (count > 0) {
-                    const isEquipped = this.equippedItems.head === name;
+                const isEquipped = this.equippedItems.head === name;
+                if (count > 0 || isEquipped) {
                     armorItems.push({
-                        name: name + (isEquipped ? ' (Equipped)' : ''),
+                        name: name + (isEquipped ? ' ✓ Equipped' : ''),
                         emoji: '🧢',
                         count: count,
                         category: 'Head'
@@ -3667,10 +3658,10 @@ class CollectiblesGame {
         // Add equipment armor items
         if (this.equipment.armor) {
             Object.entries(this.equipment.armor).forEach(([name, count]) => {
-                if (count > 0 && name !== 'buckler') {
-                    const isEquipped = this.equippedItems.armor === name;
+                const isEquipped = this.equippedItems.armor === name;
+                if ((count > 0 || isEquipped) && name !== 'buckler') {
                     armorItems.push({
-                        name: name + (isEquipped ? ' (Equipped)' : ''),
+                        name: name + (isEquipped ? ' ✓ Equipped' : ''),
                         emoji: '🎽',
                         count: count,
                         category: 'Armor'
@@ -3682,10 +3673,10 @@ class CollectiblesGame {
         // Add equipment feet items
         if (this.equipment.feet) {
             Object.entries(this.equipment.feet).forEach(([name, count]) => {
-                if (count > 0) {
-                    const isEquipped = this.equippedItems.feet === name;
+                const isEquipped = this.equippedItems.feet === name;
+                if (count > 0 || isEquipped) {
                     armorItems.push({
-                        name: name + (isEquipped ? ' (Equipped)' : ''),
+                        name: name + (isEquipped ? ' ✓ Equipped' : ''),
                         emoji: '👟',
                         count: count,
                         category: 'Feet'
@@ -3697,10 +3688,10 @@ class CollectiblesGame {
         // Add equipment shield items
         if (this.equipment.shield) {
             Object.entries(this.equipment.shield).forEach(([name, count]) => {
-                if (count > 0) {
-                    const isEquipped = this.equippedItems.shield === name;
+                const isEquipped = this.equippedItems.shield === name;
+                if (count > 0 || isEquipped) {
                     armorItems.push({
-                        name: name + (isEquipped ? ' (Equipped)' : ''),
+                        name: name + (isEquipped ? ' ✓ Equipped' : ''),
                         emoji: '🛡️',
                         count: count,
                         category: 'Shield'
@@ -3764,13 +3755,13 @@ class CollectiblesGame {
         // Add equipment accessories
         if (this.equipment.accessory) {
             Object.entries(this.equipment.accessory).forEach(([name, count]) => {
-                if (count > 0) {
-                    const isEquipped = this.equippedItems.accessory1 === name || this.equippedItems.accessory2 === name;
+                const isEquipped = this.equippedItems.accessory1 === name || this.equippedItems.accessory2 === name;
+                if (count > 0 || isEquipped) {
                     html += `
                         <div class="inventory-list-item magic-item">
                             <div class="inventory-list-emoji">💍</div>
                             <div class="inventory-list-info">
-                                <div class="inventory-list-name">${name}${isEquipped ? ' (Equipped)' : ''}</div>
+                                <div class="inventory-list-name">${name}${isEquipped ? ' ✓ Equipped' : ''}</div>
                                 <div class="inventory-list-description">Magic Accessory</div>
                                 <div class="inventory-list-count">
                                     Quantity: <span class="count-value">${count}</span>
