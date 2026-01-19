@@ -2273,10 +2273,15 @@ class CollectiblesGame {
             // Show impact animation at enemy location
             this.showFireballImpactFeedback(enemy.x, enemy.y, damage);
             
-            // Remove enemy if dead
+            // Remove enemy if dead and award XP
             if (enemy.health <= 0) {
                 console.log(`💀 ${enemy.type} defeated by fireball!`);
                 this.enemies.splice(0, 1);
+                const app = window.app;
+                if (app && app.addXP) {
+                    app.addXP(10);
+                    this.showEnemyDefeatFeedback(10);
+                }
             }
         } else {
             console.log('🔥 No enemies on screen - fireball cast but no target');
@@ -2490,10 +2495,15 @@ class CollectiblesGame {
             enemy.health -= damage;
             console.log(`👅 Tongue strike hit ${enemy.type}! Damage: ${damage} (${isElectrified ? 'ELECTRIFIED x4' : 'normal'}), HP: ${enemy.health}/${enemy.maxHealth}`);
             
-            // Remove enemy if dead
+            // Remove enemy if dead and award XP
             if (enemy.health <= 0) {
                 console.log(`💀 ${enemy.type} defeated by tongue strike!`);
                 this.enemies.splice(0, 1);
+                const app = window.app;
+                if (app && app.addXP) {
+                    app.addXP(10);
+                    this.showEnemyDefeatFeedback(10);
+                }
             }
             
             // Show tongue strike feedback at enemy position
