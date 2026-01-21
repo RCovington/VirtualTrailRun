@@ -902,15 +902,16 @@ class CollectiblesGame {
                 console.log(`🐀 Enemy update: sequence=${!!enemy.sequence}, x=${enemy.x}, enemyX=${enemy.enemyX}, health=${enemy.health}`);
             }
             
-            // Check if enemy is dead
-            if (enemy.health <= 0) {
-                // Jump to last step (leaving) if not already there
-                if (enemy.sequence && enemy.currentStepIndex < enemy.sequence.steps.length - 1) {
-                    const lastStepIndex = enemy.sequence.steps.length - 1;
-                    enemy.isDead = true; // Mark as dead to prevent further attacks
-                    this.startEnemyStep(enemy, lastStepIndex);
-                    console.log(`🏃 Enemy defeated - jumping to leaving animation`);
+            // Check if enemy is dead - remove immediately and award XP
+            if (enemy.health <= 0 && !enemy.isDead) {
+                enemy.isDead = true;
+                console.log(`💀 Enemy defeated - removing immediately`);
+                const app = window.app;
+                if (app && app.addXP) {
+                    app.addXP(10);
+                    this.showEnemyDefeatFeedback(10);
                 }
+                return false; // Remove enemy
             }
             
             // Sequence-based animation
@@ -963,15 +964,7 @@ class CollectiblesGame {
                         // Start next step
                         this.startEnemyStep(enemy, nextStepIndex);
                     } else {
-                        // Sequence complete - remove enemy and award XP if defeated
-                        if (enemy.isDead) {
-                            console.log(`💀 Defeated enemy leaving - awarding XP`);
-                            const app = window.app;
-                            if (app && app.addXP) {
-                                app.addXP(10);
-                                this.showEnemyDefeatFeedback(10);
-                            }
-                        }
+                        // Sequence complete - remove enemy
                         console.log(`✅ Enemy sequence complete - removing`);
                         return false;
                     }
