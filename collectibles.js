@@ -3333,7 +3333,7 @@ class CollectiblesGame {
                             <h3>🗡️ Weapon</h3>
                             <select class="equip-dropdown" id="weaponDropdown">
                                 <option value="">None</option>
-                                ${this.getEquipmentOptions('weapon')}
+                                ${this.getEquipmentOptions('weapon', 'weapon')}
                             </select>
                         </div>
                         
@@ -3341,7 +3341,7 @@ class CollectiblesGame {
                             <h3>👤 Head</h3>
                             <select class="equip-dropdown" id="headDropdown">
                                 <option value="">None</option>
-                                ${this.getEquipmentOptions('head')}
+                                ${this.getEquipmentOptions('head', 'head')}
                             </select>
                         </div>
                         
@@ -3349,7 +3349,7 @@ class CollectiblesGame {
                             <h3>🎽 Armor</h3>
                             <select class="equip-dropdown" id="armorDropdown">
                                 <option value="">None</option>
-                                ${this.getEquipmentOptions('armor')}
+                                ${this.getEquipmentOptions('armor', 'armor')}
                             </select>
                         </div>
                         
@@ -3357,7 +3357,7 @@ class CollectiblesGame {
                             <h3>👟 Feet</h3>
                             <select class="equip-dropdown" id="feetDropdown">
                                 <option value="">None</option>
-                                ${this.getEquipmentOptions('feet')}
+                                ${this.getEquipmentOptions('feet', 'feet')}
                             </select>
                         </div>
                     </div>
@@ -3368,7 +3368,7 @@ class CollectiblesGame {
                             <h3>🛡️ Shield</h3>
                             <select class="equip-dropdown" id="shieldDropdown">
                                 <option value="">None</option>
-                                ${this.getEquipmentOptions('shield')}
+                                ${this.getEquipmentOptions('shield', 'shield')}
                             </select>
                         </div>
                         
@@ -3376,7 +3376,7 @@ class CollectiblesGame {
                             <h3>💍 Accessory 1</h3>
                             <select class="equip-dropdown" id="accessory1Dropdown">
                                 <option value="">None</option>
-                                ${this.getEquipmentOptions('accessory')}
+                                ${this.getEquipmentOptions('accessory', 'accessory1')}
                             </select>
                         </div>
                         
@@ -3384,7 +3384,7 @@ class CollectiblesGame {
                             <h3>💍 Accessory 2</h3>
                             <select class="equip-dropdown" id="accessory2Dropdown">
                                 <option value="">None</option>
-                                ${this.getEquipmentOptions('accessory')}
+                                ${this.getEquipmentOptions('accessory', 'accessory2')}
                             </select>
                         </div>
                     </div>
@@ -3422,7 +3422,7 @@ class CollectiblesGame {
     /**
      * Get equipment options for dropdown
      */
-    getEquipmentOptions(category) {
+    getEquipmentOptions(category, currentSlot = null) {
         const items = this.equipment[category] || {};
         return Object.entries(items)
             .filter(([name, count]) => {
@@ -3430,9 +3430,9 @@ class CollectiblesGame {
                 if (count <= 0) return false;
                 
                 // Don't show items that are already equipped elsewhere
-                // Check all equipped slots to see if this item is equipped
+                // But allow the item if it's equipped in the current slot we're viewing
                 for (const [slot, equippedItem] of Object.entries(this.equippedItems)) {
-                    if (equippedItem === name) {
+                    if (equippedItem === name && slot !== currentSlot) {
                         return false;
                     }
                 }
@@ -3500,24 +3500,13 @@ class CollectiblesGame {
                 const currentValue = this.equippedItems[slot] || '';
                 const category = this.getItemCategory(slot);
                 
-                // Rebuild options
+                // Rebuild options with current slot passed so equipped item appears
                 dropdown.innerHTML = `
                     <option value="">None</option>
-                    ${this.getEquipmentOptions(category)}
+                    ${this.getEquipmentOptions(category, slot)}
                 `;
                 
-                // If current item is equipped, add it back to options and select it
-                if (currentValue) {
-                    const hasOption = Array.from(dropdown.options).some(opt => opt.value === currentValue);
-                    if (!hasOption) {
-                        const option = document.createElement('option');
-                        option.value = currentValue;
-                        option.textContent = `${currentValue} (equipped)`;
-                        dropdown.insertBefore(option, dropdown.options[1]);
-                    }
-                }
-                
-                // Set value
+                // Set value to currently equipped item
                 dropdown.value = currentValue;
             }
         });
