@@ -3326,67 +3326,104 @@ class CollectiblesGame {
                 <h2>⚔️ Equipment Manager</h2>
                 <p class="equip-subtitle">Equip weapons, armor, and magic items</p>
                 
-                <div class="equip-grid">
-                    <!-- Left Column -->
-                    <div class="equip-column">
-                        <div class="equip-section">
-                            <h3>🗡️ Weapon</h3>
-                            <select class="equip-dropdown" id="weaponDropdown">
-                                <option value="">None</option>
-                                ${this.getEquipmentOptions('weapon', 'weapon')}
-                            </select>
-                        </div>
-                        
-                        <div class="equip-section">
-                            <h3>👤 Head</h3>
-                            <select class="equip-dropdown" id="headDropdown">
-                                <option value="">None</option>
-                                ${this.getEquipmentOptions('head', 'head')}
-                            </select>
-                        </div>
-                        
-                        <div class="equip-section">
-                            <h3>🎽 Armor</h3>
-                            <select class="equip-dropdown" id="armorDropdown">
-                                <option value="">None</option>
-                                ${this.getEquipmentOptions('armor', 'armor')}
-                            </select>
-                        </div>
-                        
-                        <div class="equip-section">
-                            <h3>👟 Feet</h3>
-                            <select class="equip-dropdown" id="feetDropdown">
-                                <option value="">None</option>
-                                ${this.getEquipmentOptions('feet', 'feet')}
-                            </select>
-                        </div>
+                <div class="equip-layout">
+                    <svg class="equip-connections" width="100%" height="100%">
+                        <line class="equip-line" x1="0" y1="0" x2="0" y2="0" data-slot="head" />
+                        <line class="equip-line" x1="0" y1="0" x2="0" y2="0" data-slot="armor" />
+                        <line class="equip-line" x1="0" y1="0" x2="0" y2="0" data-slot="feet" />
+                        <line class="equip-line" x1="0" y1="0" x2="0" y2="0" data-slot="weapon" />
+                        <line class="equip-line" x1="0" y1="0" x2="0" y2="0" data-slot="shield" />
+                        <line class="equip-line" x1="0" y1="0" x2="0" y2="0" data-slot="accessory1" />
+                        <line class="equip-line" x1="0" y1="0" x2="0" y2="0" data-slot="accessory2" />
+                    </svg>
+                    
+                    <!-- Human Figure -->
+                    <div class="equip-figure">
+                        <svg viewBox="0 0 200 400" class="human-svg">
+                            <!-- Head -->
+                            <circle cx="100" cy="50" r="35" fill="none" stroke="#fbbf24" stroke-width="3" data-part="head"/>
+                            <!-- Neck -->
+                            <line x1="100" y1="85" x2="100" y2="110" stroke="#fbbf24" stroke-width="3"/>
+                            <!-- Torso -->
+                            <rect x="65" y="110" width="70" height="100" rx="10" fill="none" stroke="#fbbf24" stroke-width="3" data-part="armor"/>
+                            <!-- Left Arm (weapon side) -->
+                            <line x1="65" y1="120" x2="30" y2="140" stroke="#fbbf24" stroke-width="3" data-part="weapon"/>
+                            <line x1="30" y1="140" x2="20" y2="180" stroke="#fbbf24" stroke-width="3"/>
+                            <circle cx="20" cy="185" r="8" fill="none" stroke="#fbbf24" stroke-width="2" data-part="accessory1"/>
+                            <!-- Right Arm (shield side) -->
+                            <line x1="135" y1="120" x2="170" y2="140" stroke="#fbbf24" stroke-width="3" data-part="shield"/>
+                            <line x1="170" y1="140" x2="180" y2="180" stroke="#fbbf24" stroke-width="3"/>
+                            <circle cx="180" cy="185" r="8" fill="none" stroke="#fbbf24" stroke-width="2" data-part="accessory2"/>
+                            <!-- Left Leg -->
+                            <line x1="80" y1="210" x2="70" y2="310" stroke="#fbbf24" stroke-width="3"/>
+                            <ellipse cx="70" cy="320" rx="15" ry="8" fill="none" stroke="#fbbf24" stroke-width="2" data-part="feet"/>
+                            <!-- Right Leg -->
+                            <line x1="120" y1="210" x2="130" y2="310" stroke="#fbbf24" stroke-width="3"/>
+                            <ellipse cx="130" cy="320" rx="15" ry="8" fill="none" stroke="#fbbf24" stroke-width="2" data-part="feet"/>
+                        </svg>
                     </div>
                     
-                    <!-- Right Column -->
-                    <div class="equip-column">
-                        <div class="equip-section">
-                            <h3>🛡️ Shield</h3>
-                            <select class="equip-dropdown" id="shieldDropdown">
-                                <option value="">None</option>
-                                ${this.getEquipmentOptions('shield', 'shield')}
-                            </select>
-                        </div>
-                        
-                        <div class="equip-section">
-                            <h3>💍 Accessory 1</h3>
-                            <select class="equip-dropdown" id="accessory1Dropdown">
-                                <option value="">None</option>
-                                ${this.getEquipmentOptions('accessory', 'accessory1')}
-                            </select>
-                        </div>
-                        
-                        <div class="equip-section">
-                            <h3>💍 Accessory 2</h3>
-                            <select class="equip-dropdown" id="accessory2Dropdown">
-                                <option value="">None</option>
-                                ${this.getEquipmentOptions('accessory', 'accessory2')}
-                            </select>
-                        </div>
+                    <!-- Head Dropdown (top) -->
+                    <div class="equip-section equip-pos-head" data-slot="head">
+                        <h3>👤 Head</h3>
+                        <select class="equip-dropdown" id="headDropdown">
+                            <option value="">None</option>
+                            ${this.getEquipmentOptions('head', 'head')}
+                        </select>
+                    </div>
+                    
+                    <!-- Armor Dropdown (left middle) -->
+                    <div class="equip-section equip-pos-armor" data-slot="armor">
+                        <h3>🎽 Armor</h3>
+                        <select class="equip-dropdown" id="armorDropdown">
+                            <option value="">None</option>
+                            ${this.getEquipmentOptions('armor', 'armor')}
+                        </select>
+                    </div>
+                    
+                    <!-- Feet Dropdown (bottom) -->
+                    <div class="equip-section equip-pos-feet" data-slot="feet">
+                        <h3>👟 Feet</h3>
+                        <select class="equip-dropdown" id="feetDropdown">
+                            <option value="">None</option>
+                            ${this.getEquipmentOptions('feet', 'feet')}
+                        </select>
+                    </div>
+                    
+                    <!-- Weapon Dropdown (left) -->
+                    <div class="equip-section equip-pos-weapon" data-slot="weapon">
+                        <h3>🗡️ Weapon</h3>
+                        <select class="equip-dropdown" id="weaponDropdown">
+                            <option value="">None</option>
+                            ${this.getEquipmentOptions('weapon', 'weapon')}
+                        </select>
+                    </div>
+                    
+                    <!-- Shield Dropdown (right) -->
+                    <div class="equip-section equip-pos-shield" data-slot="shield">
+                        <h3>🛡️ Shield</h3>
+                        <select class="equip-dropdown" id="shieldDropdown">
+                            <option value="">None</option>
+                            ${this.getEquipmentOptions('shield', 'shield')}
+                        </select>
+                    </div>
+                    
+                    <!-- Accessory 1 Dropdown (left hand) -->
+                    <div class="equip-section equip-pos-accessory1" data-slot="accessory1">
+                        <h3>💍 Accessory 1</h3>
+                        <select class="equip-dropdown" id="accessory1Dropdown">
+                            <option value="">None</option>
+                            ${this.getEquipmentOptions('accessory', 'accessory1')}
+                        </select>
+                    </div>
+                    
+                    <!-- Accessory 2 Dropdown (right hand) -->
+                    <div class="equip-section equip-pos-accessory2" data-slot="accessory2">
+                        <h3>💍 Accessory 2</h3>
+                        <select class="equip-dropdown" id="accessory2Dropdown">
+                            <option value="">None</option>
+                            ${this.getEquipmentOptions('accessory', 'accessory2')}
+                        </select>
                     </div>
                 </div>
                 
@@ -3395,6 +3432,9 @@ class CollectiblesGame {
         `;
         
         document.body.appendChild(equipModal);
+        
+        // Update connection lines after render
+        setTimeout(() => this.updateEquipmentLines(equipModal), 10);
         
         // Add dropdown change handlers
         ['weapon', 'head', 'armor', 'feet', 'shield', 'accessory1', 'accessory2'].forEach(slot => {
@@ -3416,6 +3456,53 @@ class CollectiblesGame {
         const closeX = equipModal.querySelector('.equip-close-x');
         closeX.addEventListener('click', () => {
             equipModal.remove();
+        });
+    }
+    
+    /**
+     * Update connection lines between dropdowns and body parts
+     */
+    updateEquipmentLines(modal) {
+        const figure = modal.querySelector('.equip-figure');
+        if (!figure) return;
+        
+        const figureRect = figure.getBoundingClientRect();
+        const layout = modal.querySelector('.equip-layout');
+        const layoutRect = layout.getBoundingClientRect();
+        
+        // Body part positions (relative to figure, normalized 0-1)
+        const bodyParts = {
+            head: { x: 0.5, y: 0.125 },      // Top of head
+            armor: { x: 0.5, y: 0.4 },       // Center of torso
+            feet: { x: 0.5, y: 0.8 },        // Bottom feet
+            weapon: { x: 0.15, y: 0.45 },    // Left hand weapon
+            shield: { x: 0.85, y: 0.45 },    // Right hand shield
+            accessory1: { x: 0.1, y: 0.46 }, // Left hand
+            accessory2: { x: 0.9, y: 0.46 }  // Right hand
+        };
+        
+        Object.keys(bodyParts).forEach(slot => {
+            const dropdown = modal.querySelector(`[data-slot="${slot}"]`);
+            const line = modal.querySelector(`line[data-slot="${slot}"]`);
+            
+            if (dropdown && line) {
+                const dropdownRect = dropdown.getBoundingClientRect();
+                const part = bodyParts[slot];
+                
+                // Calculate body part position in layout coordinates
+                const bodyX = (figureRect.left - layoutRect.left) + (figureRect.width * part.x);
+                const bodyY = (figureRect.top - layoutRect.top) + (figureRect.height * part.y);
+                
+                // Calculate dropdown center position
+                const dropX = (dropdownRect.left - layoutRect.left) + (dropdownRect.width / 2);
+                const dropY = (dropdownRect.top - layoutRect.top) + (dropdownRect.height / 2);
+                
+                // Update line
+                line.setAttribute('x1', dropX);
+                line.setAttribute('y1', dropY);
+                line.setAttribute('x2', bodyX);
+                line.setAttribute('y2', bodyY);
+            }
         });
     }
     

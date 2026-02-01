@@ -2042,11 +2042,124 @@ body:not(.debug-mode) .header {
     border: 3px solid var(--orange);
     border-radius: 12px;
     padding: 30px;
-    max-width: 800px;
-    max-height: 80vh;
+    max-width: 900px;
+    max-height: 90vh;
     overflow-y: auto;
     position: relative;
     width: 90%;
+}
+
+.equip-layout {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    margin-bottom: 20px;
+}
+
+.equip-connections {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.equip-line {
+    stroke: rgba(251, 191, 36, 0.4);
+    stroke-width: 2;
+    stroke-dasharray: 5, 5;
+}
+
+.equip-figure {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 400px;
+    z-index: 2;
+}
+
+.human-svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.3));
+}
+
+.equip-section {
+    position: absolute;
+    z-index: 3;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 140, 0, 0.4);
+    border-radius: 8px;
+    padding: 10px;
+    min-width: 180px;
+}
+
+.equip-section h3 {
+    color: #fbbf24;
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+}
+
+/* Position dropdowns around the figure */
+.equip-pos-head {
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.equip-pos-armor {
+    top: 35%;
+    left: 5%;
+}
+
+.equip-pos-feet {
+    bottom: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.equip-pos-weapon {
+    top: 25%;
+    left: 5%;
+}
+
+.equip-pos-shield {
+    top: 25%;
+    right: 5%;
+}
+
+.equip-pos-accessory1 {
+    top: 45%;
+    left: 5%;
+}
+
+.equip-pos-accessory2 {
+    top: 45%;
+    right: 5%;
+}
+
+@media (max-width: 768px) {
+    .equip-layout {
+        height: 500px;
+    }
+    
+    .equip-figure {
+        width: 150px;
+        height: 300px;
+    }
+    
+    .equip-section {
+        min-width: 140px;
+        padding: 8px;
+    }
+    
+    .equip-section h3 {
+        font-size: 0.9rem;
+    }
 }
 
 .equip-grid {
