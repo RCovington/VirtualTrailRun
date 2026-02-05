@@ -73,7 +73,27 @@ class VirtualTrailRunApp {
             "Begin Quest",
             "Get Moving",
             "Trail Awaits",
-            "Go Explore"
+            "Go Explore",
+            "Lace Up!",
+            "Time To Run",
+            "Forest Beckons",
+            "Nature Calls",
+            "Stride Forward",
+            "Chase The Horizon",
+            "Blaze A Trail",
+            "Into The Wild",
+            "Run Free",
+            "Path Awaits",
+            "Summit Awaits",
+            "Feel The Earth",
+            "Embrace Adventure",
+            "Conquer Miles",
+            "Find Your Pace",
+            "Breathe Deep",
+            "Run Wild",
+            "Unleash Energy",
+            "Journey Begins",
+            "Trek On"
         ];
         
         // DOM elements

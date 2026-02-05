@@ -22,7 +22,7 @@ class HeadTracker {
         this.maxHistoryLength = 30; // Track last 30 frames
         
         // Bob detection
-        this.bobThreshold = 5; // Minimum vertical movement to count as a bob
+        this.bobThreshold = 2; // Minimum vertical movement to count as a bob (lowered for sensitivity)
         this.bobCount = 0;
         this.lastBobDirection = null; // 'up' or 'down'
         this.bobsPerMinuteHistory = [];
@@ -206,6 +206,7 @@ class HeadTracker {
             } else {
                 // No face detected - reset tracking
                 this.previousNoseY = null;
+                this.lastBobDirection = null; // Also reset bob direction
                 this.verticalMovement = 0;
             }
             
@@ -271,28 +272,33 @@ class HeadTracker {
             this.addDebugLog(logMsg);
         }
         
-        if (currentDirection && this.lastBobDirection && 
-            currentDirection !== this.lastBobDirection) {
-            // Direction changed - count as a bob
-            this.bobCount++;
-            this.bobTimestamps.push(Date.now());
-            
-            const bobMsg = `🎯 BOB #${this.bobCount}: ${this.lastBobDirection} → ${currentDirection}`;
-            console.log(bobMsg);
-            this.addDebugLog(bobMsg, 'success');
-            
-            // Keep only last minute of timestamps
-            const oneMinuteAgo = Date.now() - 60000;
-            this.bobTimestamps = this.bobTimestamps.filter(t => t > oneMinuteAgo);
-            
-            if (this.onBobDetectedCallback) {
-                this.onBobDetectedCallback(this.bobCount);
-            }
-        }
-        
+        // Only update lastBobDirection if we have a clear direction
+        // But check for direction change even if current movement is small
         if (currentDirection) {
+            // Check if direction changed from last recorded direction
+            if (this.lastBobDirection && currentDirection !== this.lastBobDirection) {
+                // Direction changed - count as a bob
+                this.bobCount++;
+                this.bobTimestamps.push(Date.now());
+                
+                const bobMsg = `🎯 BOB #${this.bobCount}: ${this.lastBobDirection} → ${currentDirection}`;
+                console.log(bobMsg);
+                this.addDebugLog(bobMsg, 'success');
+                
+                // Keep only last minute of timestamps
+                const oneMinuteAgo = Date.now() - 60000;
+                this.bobTimestamps = this.bobTimestamps.filter(t => t > oneMinuteAgo);
+                
+                if (this.onBobDetectedCallback) {
+                    this.onBobDetectedCallback(this.bobCount);
+                }
+            }
+            
+            // Update direction after checking for change
             this.lastBobDirection = currentDirection;
         }
+        // If currentDirection is null (movement below threshold), keep lastBobDirection
+        // This allows small movements to not break the bob detection cycle
     }
     
     /**
