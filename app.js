@@ -163,6 +163,11 @@ class VirtualTrailRunApp {
                         this.collectiblesGame.start(cameraFeed);
                     }
                 }
+                // Hide login button during video playback
+                const loginButton = document.getElementById('loginButton');
+                if (loginButton) {
+                    loginButton.style.display = 'none';
+                }
             });
             
             this.videoPlayer.onPause(() => {
@@ -171,6 +176,11 @@ class VirtualTrailRunApp {
                     this.headTracker.stopTracking();
                 }
                 this.pauseWorkoutTimer();
+                // Show login button when video is paused
+                const loginButton = document.getElementById('loginButton');
+                if (loginButton) {
+                    loginButton.style.display = 'flex';
+                }
             });
             
             // Set up head tracker callbacks
